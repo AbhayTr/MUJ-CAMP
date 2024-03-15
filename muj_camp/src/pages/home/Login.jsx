@@ -94,7 +94,7 @@ let Login = ({
         setLBDisabled(true);
         setRBLoading(true);
         setCBDisabled(true);
-        axios.post(`${process.env.REACT_APP_BACKEND}/signin`, {
+        axios.post(`${process.env.REACT_APP_BACKEND}/signin/login`, {
             authManipalId: authDetails.authEmail,
             sid: authDetails.sid
         })
@@ -106,7 +106,7 @@ let Login = ({
             setCBDisabled(false);
             setRBDisabled(true);
 
-            let timeToWait = 10;
+            let timeToWait = 11;
 
             function updateTime() {
                 if (timeToWait === 0) {
@@ -244,7 +244,7 @@ let Login = ({
             setLBDisabled(true);
             setUserInputIgnored(true);
                             
-            let timeToWait = 5;
+            let timeToWait = 6;
 
             function updateTime() {
                 if (timeToWait === 0) {
@@ -273,7 +273,7 @@ let Login = ({
         }
 
         if (authDetails.authState === 1) {
-            axios.post(`${process.env.REACT_APP_BACKEND}/signin`, {
+            axios.post(`${process.env.REACT_APP_BACKEND}/signin/login`, {
                 authManipalId: authDetails.authManipalId
             })
             .then((response) => {
@@ -332,7 +332,7 @@ let Login = ({
                 appDown();
             });
         } else if (authDetails.authState === 3) {
-            axios.post(`${process.env.REACT_APP_BACKEND}/d2`, {
+            axios.post(`${process.env.REACT_APP_BACKEND}/signin/validate`, {
                 authEmail: authDetails.authEmail,
                 sid: authDetails.sid,
                 otp: document.getElementById(elementMap.LOGIN_INPUT).value

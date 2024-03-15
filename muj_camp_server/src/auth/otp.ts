@@ -126,7 +126,7 @@ class CAMPOTP {
         }
     }
 
-    static async #createSession(authEmail: string, app: Application) {
+    static async #createSession(authEmail: string, sessionID: string, app: Application) {
         const userCollection: CAMPCollection = app.locals.campdb.collection("users");
         
         const result = await userCollection.updateOne(
@@ -136,7 +136,8 @@ class CAMPOTP {
             {
                 $push: {
                     sessions: {
-                        expiry: currentTime() + parseInt(process.env.SESSION_TIME!)
+                        expiry: currentTime() + parseInt(process.env.SESSION_TIME!),
+                        sid: sessionID
                     }
                 }
             } 
@@ -170,9 +171,9 @@ class CAMPOTP {
 
     static async sendOTP(authEmail: string, authName: string, sessionID: string, isResendRequest: boolean, app: Application) {
         const otpToSend: string = String(this.#generateOTP());
-        const otpToken: string = JWTManger.generateOTPToken(authEmail, otpToSend, sessionID);
+        const otpToken: string = JWTManger.generateOTPToken(authEmail, otpToSend, sessionID, true);
         if (!isResendRequest) {
-            await this.#createSession(authEmail, app);
+            await this.#createSession(authEmail, sessionID, app);
         }
         await this.#storeOTP(authEmail, sessionID, otpToken, app, isResendRequest);
         await app.locals.campMailer.sendOTP(authEmail, authName, otpToSend);
@@ -180,6 +181,102 @@ class CAMPOTP {
 
     static #generateOTP(): number {
         return Math.floor(100000 + Math.random() * 900000);
+    }
+
+    static #isValidOTP(otp: string): boolean {
+        return (otp.length === 6 && !Number.isNaN(otp));
+    }
+
+    static async #isEligibleToValidateOTP(authEmail: string, sessionID: string, app: Application): Promise<number> {
+        const otpCollection: CAMPCollection = app.locals.campdb.collection("otp");
+
+        // Check for previous otp validation attempt time.
+        const dataToBeFetched: any = {};
+        let key = "attemptTime";
+        dataToBeFetched[key] = 1;
+        const attemptTime: Array<Document> = await (await otpCollection.find({
+            email: authEmail,
+            sid: sessionID
+        })).project(dataToBeFetched).toArray();
+        if (attemptTime == null || attemptTime.length === 0) {
+            return 0;
+        } else {
+            const timeToPrevAttempt = (currentTime() - parseInt(attemptTime[0][key]));
+            if (timeToPrevAttempt < parseInt(process.env.OTP_ATTEMPT_GAP!)) {
+                return parseInt(process.env.OTP_ATTEMPT_GAP!) - timeToPrevAttempt;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    static async #isCorrectOTP(authEmail: string, sessionID: string, otp: string, app: Application): Promise<boolean> {
+        const otpCollection: CAMPCollection = app.locals.campdb.collection("otp");
+        const userCollection: CAMPCollection = app.locals.campdb.collection("users");
+        
+        const otpToken: string = JWTManger.generateOTPToken(authEmail, otp, sessionID, true);
+        const checkAndDeleteOTP = await otpCollection.deleteMany({
+            sid: sessionID,
+            email: authEmail,
+            otp: otpToken
+        });
+        if (!(checkAndDeleteOTP.deletedCount > 0)) {
+            await otpCollection.updateOne({
+                sid: sessionID,
+                email: authEmail
+            }, {
+                $set: {
+                    attemptTime: currentTime()
+                }
+            });
+            return false;
+        } else {
+            await userCollection.updateMany(
+                {
+                    email: authEmail
+                },
+                {
+                    $pull: {
+                        sessions: {
+                            sid: sessionID
+                        }
+                    } as unknown as PullOperator<Document>
+                }
+            );
+            return true;
+        }
+    }
+
+    static async validateOTP(userData: any, sessionID: string, otp: string, app: Application): Promise<object> {
+        let userResponse = {};
+        if (!this.#isValidOTP(otp)) {
+            userResponse = {
+                status: "f",
+                error: ""
+            };
+        } else {
+            const timeBeforeOTPCanBeValidated: number = await this.#isEligibleToValidateOTP(userData.email, sessionID, app);
+            if (timeBeforeOTPCanBeValidated === 0) {
+                if (await this.#isCorrectOTP(userData.email, sessionID, otp, app)) {
+                    userResponse = {
+                        status: "s",
+                        authRoles: userData.roles,
+                        authToken: JWTManger.generateToken(userData.regNo, userData.email)
+                    };
+                } else {
+                    userResponse = {
+                        status: "f",
+                        error: "Wrong OTP ❌. Please ensure that you are entering the Correct OTP 🔒 and try again."
+                    }
+                }
+            } else {
+                userResponse = {
+                    status: "f",
+                    error: `Please wait for ${timeBeforeOTPCanBeValidated} seconds, before trying to continue again.`
+                }
+            }
+        }
+        return userResponse;
     }
 
 }

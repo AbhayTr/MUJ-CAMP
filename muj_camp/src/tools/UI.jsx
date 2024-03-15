@@ -19,6 +19,9 @@ const playSound = (soundCode) => {
 }
 
 const showAlert = (message, messageTypeCallback = toast.success, sound = true) => {
+    if (message[message.length - 1] === ".") {
+        message = message.substring(0, message.length - 1);
+    }
     if (sound === true) {
         if (messageTypeCallback === toast.success) {
             playSound("s");

@@ -30,23 +30,12 @@ app.get("/", function (req, res) {
     `);
 });
 
-app.post("/signin", async (req: Request, res: Response) => {
+app.post("/signin/login", async (req: Request, res: Response) => {
     CAMPAuthManager.handleSignIn(req, res, app);
 });
 
-app.post("/d2", (req: Request, res: Response) => {
-    if (req.body.otp === "108108") {
-        res.send({
-            status: "s",
-            authToken: "abcd",
-            authRoles: ["Student"]
-        });
-    } else {
-        res.send({
-            status: "f",
-            error: "Wrong OTP"
-        });
-    }
+app.post("/signin/validate", (req: Request, res: Response) => {
+    CAMPAuthManager.validateSignIn(req, res, app);
 });
 
 app.post("/d3", (req: Request, res: Response) => {

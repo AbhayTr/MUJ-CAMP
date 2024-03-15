@@ -3,8 +3,13 @@ import { Application, Request, Response } from "express";
 import User from "./user";
 import CAMPOTP from "./otp";
 import * as Common from "../utils/common";
+import JWTManger from "./jwtmanager";
 
 class CAMPAuthManager {
+
+    static #validateSID(sessionID: string): boolean {
+        return (/^[a-z0-9]+$/i.test(sessionID));
+    }
 
     static async #sendOTP(authEmail: string, authName: string, sessionID: string, isResendRequest: boolean, app: Application): Promise<object> {
         try {
@@ -29,8 +34,12 @@ class CAMPAuthManager {
     }
 
     static async handleSignIn(req: Request, res: Response, app: Application) {
-        let userRequest = req.body;
-        let userSessionID = userRequest.sid;
+        let userRequest: any = req.body;
+        let userSessionID: string = userRequest.sid;
+        if (userSessionID != null && !this.#validateSID(userSessionID)) {
+            res.status(403).send({});
+            return;
+        }
         let isResendRequest = !(userSessionID == null);
         let userData = await User.getUserDetails(userRequest.authManipalId, app.locals.campdb);
         let userResponse: object = {};
@@ -71,6 +80,35 @@ class CAMPAuthManager {
                 status: "f",
                 error: "This ID is not a valid Manipal ID (Reg. No. 🔢 or Outlook E-Mail 📧) 😡!"
             }
+        }
+        res.send(userResponse);
+    }
+
+    static async validateSignIn(req: Request, res: Response, app: Application) {
+        let userRequest = req.body;
+        let otp: string = userRequest.otp;
+        let userResponse: object = {};
+        let userData = await User.getUserDetails(userRequest.authEmail, app.locals.campdb);
+        let userSessionID: string = userRequest.sid;
+        if ((userData.bypassAuth !== true) && (userSessionID == null || !this.#validateSID(userSessionID))) {
+            res.status(403).send({});
+            return;
+        }
+        if (userData != null) {
+            if (userData.bypassAuth === true) {
+                userResponse = {
+                    status: "s",
+                    authRoles: userData.roles,
+                    authToken: JWTManger.generateToken(userData.regNo, userData.email)
+                };
+            } else {
+                userResponse = await CAMPOTP.validateOTP(userData, userSessionID, otp, app);
+            }
+        } else {
+            userResponse = {
+                status: "f",
+                error: ""
+            };
         }
         res.send(userResponse);
     }
