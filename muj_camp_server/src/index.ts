@@ -38,14 +38,8 @@ app.post("/signin/validate", (req: Request, res: Response) => {
     CAMPAuthManager.validateSignIn(req, res, app);
 });
 
-app.post("/d3", (req: Request, res: Response) => {
-    let response: any = {
-        status: "s"
-    }
-    if (req.body.fetchRoles) {
-        response["authRoles"] = ["Student"];
-    }
-    res.status(200).send(response);
+app.post("/auth/validate", (req: Request, res: Response) => {
+    CAMPAuthManager.validateToken(req, res, app);
 });
 
 app.post("/d4", async (req: Request, res: Response) => {

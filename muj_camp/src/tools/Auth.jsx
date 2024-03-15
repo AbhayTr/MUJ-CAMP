@@ -1,7 +1,7 @@
 import axios from "axios";
 
 import { AuthStore } from "../app_state/auth/auth";
-import { setSessionRoles, revokeSessionAccess } from "../app_state/auth/auth_actions";
+import { setSessionRoles, setSessionRole, revokeSessionAccess } from "../app_state/auth/auth_actions";
 
 const validateToken = (onLoggedOut) => {
     let authState = AuthStore.getState();
@@ -25,7 +25,7 @@ const validateSession = (onLoggedOut, onLoggedIn = null, fetchRoles = false, val
         onLoggedOut(true);
         return;
     }
-    axios.post(`${process.env.REACT_APP_BACKEND}/d3`, {
+    axios.post(`${process.env.REACT_APP_BACKEND}/auth/validate`, {
         authEmail: authState.authEmail,
         fetchRoles: fetchRoles
     }, {
@@ -36,6 +36,7 @@ const validateSession = (onLoggedOut, onLoggedIn = null, fetchRoles = false, val
     .then((response) => {
         if (response.data.status === "s") {
             if (fetchRoles) {
+                AuthStore.dispatch(setSessionRole(null));
                 AuthStore.dispatch(setSessionRoles(response.data.authRoles));
             }
             if (onLoggedIn !== null) {

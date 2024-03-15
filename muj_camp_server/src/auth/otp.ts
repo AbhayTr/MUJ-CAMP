@@ -110,7 +110,7 @@ class CAMPOTP {
         const dataToBeFetched: any = {};
         let key = "resentTime";
         dataToBeFetched[key] = 1;
-        const sendDataTime: Array<Document> = await (await otpCollection.find({
+        const sendDataTime: Document[] = await (await otpCollection.find({
             email: authEmail,
             sid: sessionID
         })).project(dataToBeFetched).toArray();

@@ -113,6 +113,43 @@ class CAMPAuthManager {
         res.send(userResponse);
     }
 
+    static async #getRoles(authEmail: string, app: Application): Promise<string[]> {
+        let userCollection = app.locals.campdb.collection("users");
+
+        const userRolesData: Document[] = await (await userCollection.find({
+            email: authEmail
+        })).project({
+            roles: 1
+        }).toArray();
+        return userRolesData[0]["roles" as keyof Document] as unknown as string[];
+    }
+
+    static async validateToken(req: Request, res: Response, app: Application) {
+        let userRequest = req.body;
+        let userToken: string = String(req.headers.authorization).replace("Bearer ", "");
+        let fetchRoles = userRequest.fetchRoles;
+        const userData = JWTManger.validateTokenAndReturnUser(userToken);
+        if (typeof userData === "object") {
+            if (userRequest.authEmail === userData.email) {
+                const userRoles = await this.#getRoles(userRequest.authEmail, app);
+                if (fetchRoles) {
+                    res.send({
+                        status: "s",
+                        authRoles: userRoles
+                    });
+                } else {
+                    res.send({
+                        status: "s"
+                    });
+                }
+            } else {
+                res.status(403).send({});
+            }
+        } else {
+            res.status(403).send({});
+        }
+    }
+
 }
 
 export default CAMPAuthManager;

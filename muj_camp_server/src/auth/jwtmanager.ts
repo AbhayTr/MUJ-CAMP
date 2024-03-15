@@ -28,9 +28,9 @@ class JWTManger {
         });
     }
 
-    static validateTokenAndReturnUser(token: string) {
+    static validateTokenAndReturnUser(token: string): any {
         try {
-            return jwt.verify(token, process.env.JWT_KEY!);
+            return JSON.parse(JSON.stringify(jwt.verify(token, process.env.JWT_KEY!)));
         } catch (error) {
             return false;
         }
