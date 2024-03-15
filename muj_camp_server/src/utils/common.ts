@@ -8,8 +8,8 @@ function getSessionID(email: string): string {
     return String(email.toAlphaNumeric() + String(Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)));
 }
 
-function currentTime() {
-    return (new Date().getTime() / 1000);
+function currentTime(): number {
+    return Math.floor(new Date().getTime() / 1000);
 }
 
 function timestampToHumanTime(timestamp: number): string {

@@ -6,10 +6,13 @@ class CAMPMailer {
     #creds: Object = {
         host: process.env.M_HOST,
         port: process.env.M_PORT,
-        secure: false,
+        secureConnection: true,
         auth: {
             user: process.env.M_MAIL,
             pass: process.env.M_PASS
+        },
+        tls: {
+            rejectUnauthorized: false
         }
     };
 
@@ -81,7 +84,7 @@ class CAMPMailer {
                         <img src="${process.env.M_ASSET}/assets/camp/camp_logo.png" class="campLogo light">
                     </div>
                     <div>
-                        <p style="font-size:1em">Dear ${authName},<br><br>Welcome to MUJ CAMP 🎓! Your One Time Password (OTP) 🔐 to continue is:<br><br><b style="width: 100%; display: block; text-align: center; font-size: 2em; font-family: sans-serif;">${otp}</b><br>If you are not trying to access MUJ CAMP, then you can simply ignore this mail 📧, as some friend of yours might be playing with you 😂!<br><br><b>Thanks and regards 👍,<br>MUJ CAMP 🎓<br></b></p>
+                        <p style="font-size:1em">Hey ${authName} 👋<br><br>Welcome to MUJ CAMP 🎓! Your One Time Password (OTP) 🔐 to continue is:<br><br><b style="width: 100%; display: block; text-align: center; font-size: 2em; font-family: sans-serif;">${otp}</b><br>If you are not trying to access MUJ CAMP, then you can simply ignore this mail 📧, as some friend of yours might be playing with you 😂!<br><br><b>Thanks and regards 👍,<br>MUJ CAMP 🎓<br></b></p>
                     </div>
                 </body>
             </html>
@@ -90,8 +93,6 @@ class CAMPMailer {
         this.#transporter.sendMail(mailOptions, function(mailError, mailInfo) {
             if (mailError) {
                 console.log("E: " + mailError);
-            } else {
-                console.log("Success!");
             }
         });
     }

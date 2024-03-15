@@ -94,8 +94,9 @@ let Login = ({
         setLBDisabled(true);
         setRBLoading(true);
         setCBDisabled(true);
-        axios.post(`${process.env.REACT_APP_BACKEND}/d4`, {
-            authEmail: authDetails.authEmail
+        axios.post(`${process.env.REACT_APP_BACKEND}/signin`, {
+            authManipalId: authDetails.authEmail,
+            sid: authDetails.sid
         })
         .then((response) => {
             if (InputConfigState.getInputVerified(elementMap.LOGIN_INPUT, inputConfigState)) {
@@ -123,11 +124,15 @@ let Login = ({
             if (response.data.status === "s") {
                 showAlert(`OTP successfully resent to ${authDetails.authEmail}!`);
             } else {
-                setAuthDetails({
-                    ...authDetails,
-                    authState: 0
-                });
-                appDown();
+                if (response.data.status === "f" && response.data.error != null) {
+                    showAlert(response.data.error, toast.error);
+                } else {
+                    setAuthDetails({
+                        ...authDetails,
+                        authState: 0
+                    });
+                    appDown();
+                }
             }
         })
         .catch((errorReason) => {
@@ -283,7 +288,8 @@ let Login = ({
                     setAuthDetails({
                         authState: 2,
                         authName: response.data.authName,
-                        authEmail: response.data.authEmail
+                        authEmail: response.data.authEmail,
+                        sid: response.data.sid
                     });
                 } else {
                     setAuthDetails({
@@ -328,6 +334,7 @@ let Login = ({
         } else if (authDetails.authState === 3) {
             axios.post(`${process.env.REACT_APP_BACKEND}/d2`, {
                 authEmail: authDetails.authEmail,
+                sid: authDetails.sid,
                 otp: document.getElementById(elementMap.LOGIN_INPUT).value
             })
             .then((response) => {
@@ -491,10 +498,11 @@ let Login = ({
                                                 <> 
                                                     Hey <b>{authDetails.authName}</b> 👋<br/>
                                                     <br/>
-                                                    An OTP has been sent to 📧:<br/>
+                                                    An OTP has been sent to 📧:<br/><br/>
                                                     <b>{authDetails.authEmail}</b><br/>
+                                                    (check spam mail as well)<br/>
                                                     <br/>
-                                                    Please enter that OTP below 👇
+                                                    It may take upto a minute for the mail to be sent. Please enter that OTP below 👇
                                                 </> :
                                                 <></>
                                             }

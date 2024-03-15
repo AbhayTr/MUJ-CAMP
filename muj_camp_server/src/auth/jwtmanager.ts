@@ -3,10 +3,11 @@ import * as Common from "../utils/common";
 
 class JWTManger {
 
-    static generateOTPToken(email: string, otp: string): string {
+    static generateOTPToken(email: string, otp: string, sessionID: string): string {
         let jwtData = {
             email: email,
-            otp: otp
+            otp: otp,
+            sid: sessionID
         };
         return String(email.toAlphaNumeric() + Common.sha256(jwt.sign(jwtData, process.env.JWT_KEY!, {
             expiresIn: "1d"

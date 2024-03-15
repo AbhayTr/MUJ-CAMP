@@ -1,6 +1,6 @@
 import { Application } from "express";
 
-import { CAMPCollection, CAMPDB } from "../utils/campdb";
+import { CAMPCollection } from "../utils/campdb";
 import JWTManger from "./jwtmanager";
 import { AggregationCursor, Document, PullOperator } from "mongodb";
 import { currentTime } from "../utils/common";
@@ -67,7 +67,7 @@ class CAMPOTP {
             return 0;
         }
         const userSessionsCount: number = (await userSessions.next())?.sessionCount;
-        if (userSessionsCount != null && userSessionsCount > 7) {
+        if (userSessionsCount != null && userSessionsCount >= parseInt(process.env.SESSIONS_LIMIT!)) {
 
             // Get the latest token to expire, to inform the user.
             const sessionWithMinExpiry: AggregationCursor = await userCollection.aggregate([
@@ -97,21 +97,18 @@ class CAMPOTP {
             if (sessionWithMinExpiry == null) {
                 throw new Error("Session Min Expiry Problem.");
             }
-            return sessionWithMinExpiryTime;
+            return (sessionWithMinExpiryTime - currentTime());
         } else {
             return 0;
         }
     }
 
-    static async isEligibleToReceiveOTP(authEmail: string, sessionID: string, app: Application, resent: boolean = false): Promise<number> {
+    static async isEligibleToReceiveOTP(authEmail: string, sessionID: string, app: Application): Promise<number> {
         const otpCollection: CAMPCollection = app.locals.campdb.collection("otp");
 
         // Check for previous sent/resent otp time.
         const dataToBeFetched: any = {};
-        let key = "sentTime";
-        if (resent) {
-            key = "resentTime";
-        }
+        let key = "resentTime";
         dataToBeFetched[key] = 1;
         const sendDataTime: Array<Document> = await (await otpCollection.find({
             email: authEmail,
@@ -120,16 +117,68 @@ class CAMPOTP {
         if (sendDataTime == null || sendDataTime.length === 0) {
             return 0;
         } else {
-            const timeToPrevOTP = (parseInt(sendDataTime[0][key]) - currentTime());
-            if (timeToPrevOTP < 10) {
-                return timeToPrevOTP;
+            const timeToPrevOTP = (currentTime() - parseInt(sendDataTime[0][key]));
+            if (timeToPrevOTP < parseInt(process.env.OTP_TIME_GAP!)) {
+                return parseInt(process.env.OTP_TIME_GAP!) - timeToPrevOTP;
             } else {
                 return 0;
             }
         }
     }
 
-    #generateOTP(): number {
+    static async #createSession(authEmail: string, app: Application) {
+        const userCollection: CAMPCollection = app.locals.campdb.collection("users");
+        
+        const result = await userCollection.updateOne(
+            {
+                email: authEmail
+            },
+            {
+                $push: {
+                    sessions: {
+                        expiry: currentTime() + parseInt(process.env.SESSION_TIME!)
+                    }
+                }
+            } 
+        );
+        if (!(result.modifiedCount > 0)) {
+            throw new Error("Session Create Error.");
+        }
+    }
+
+    static async #storeOTP(authEmail: string, sessionID: string, otp: string, app: Application, isResendRequest: boolean) {
+        const otpCollection: CAMPCollection = app.locals.campdb.collection("otp")
+
+        if (isResendRequest) {
+            const result = await otpCollection.deleteMany({
+                sid: sessionID
+            });
+            if (!(result.deletedCount > 0)) {
+                throw new Error("SIDInjection");
+            }
+        }
+        const toInsert: any = {
+            sid: sessionID,
+            email: authEmail,
+            otp: otp
+        };
+        if (isResendRequest) {
+            toInsert.resentTime = currentTime()
+        }
+        await otpCollection.insertOne(toInsert);
+    }
+
+    static async sendOTP(authEmail: string, authName: string, sessionID: string, isResendRequest: boolean, app: Application) {
+        const otpToSend: string = String(this.#generateOTP());
+        const otpToken: string = JWTManger.generateOTPToken(authEmail, otpToSend, sessionID);
+        if (!isResendRequest) {
+            await this.#createSession(authEmail, app);
+        }
+        await this.#storeOTP(authEmail, sessionID, otpToken, app, isResendRequest);
+        await app.locals.campMailer.sendOTP(authEmail, authName, otpToSend);
+    }
+
+    static #generateOTP(): number {
         return Math.floor(100000 + Math.random() * 900000);
     }
 

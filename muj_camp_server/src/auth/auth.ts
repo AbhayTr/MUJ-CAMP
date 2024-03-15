@@ -6,41 +6,64 @@ import * as Common from "../utils/common";
 
 class CAMPAuthManager {
 
+    static async #sendOTP(authEmail: string, authName: string, sessionID: string, isResendRequest: boolean, app: Application): Promise<object> {
+        try {
+            CAMPOTP.sendOTP(authEmail, authName, sessionID, isResendRequest, app);
+        } catch (error) {
+            if (String(error) !== "SIDInjection") {
+                throw error;
+            }
+        }
+        if (isResendRequest) {
+            return {
+                status: "s"
+            }
+        } else {
+            return {
+                status: "s",
+                authEmail: authEmail,
+                authName: authName,
+                sid: sessionID
+            };
+        }
+    }
+
     static async handleSignIn(req: Request, res: Response, app: Application) {
         let userRequest = req.body;
         let userSessionID = userRequest.sid;
-        let isResendRequest = (userSessionID == null);
+        let isResendRequest = !(userSessionID == null);
         let userData = await User.getUserDetails(userRequest.authManipalId, app.locals.campdb);
-        let userResponse = {};
+        let userResponse: object = {};
         if (userData !== null) {
-            const nextPossibleSessionTime: number = await CAMPOTP.isEligibleToCreateSession(userData.email, app);
-            if (nextPossibleSessionTime === 0) {
-                const sessionID = Common.getSessionID(userData.email);
-                const timeBeforeOTPCanBeSent = await CAMPOTP.isEligibleToReceiveOTP(userData.email, sessionID, app, isResendRequest);
-                if (timeBeforeOTPCanBeSent === 0) {
-                    // Send OTP.
-                    userResponse = {
-                        status: "s",
-                        authEmail: userData.email,
-                        authName: userData.name
-                    }
-                } else {
-                    if (isResendRequest) {
-                        userResponse = {
-                            status: "f",
-                            error: `OTP can be resent only after ${timeBeforeOTPCanBeSent} seconds. Please try again after ${timeBeforeOTPCanBeSent} seconds.`
-                        };
+            if (userData.bypassAuth === true) {
+                userResponse = {
+                    status: "s",
+                    authEmail: userData.email,
+                    authName: userData.name,
+                    sid: ""
+                };
+            } else {
+                if (isResendRequest) {
+                    const timeBeforeOTPCanBeResent = await CAMPOTP.isEligibleToReceiveOTP(userData.email, userSessionID, app);
+                    if (timeBeforeOTPCanBeResent === 0) {
+                        userResponse = await this.#sendOTP(userData.email, userData.name, userSessionID, true, app);
                     } else {
                         userResponse = {
                             status: "f",
-                            error: `%D% ${timeBeforeOTPCanBeSent}`
+                            error: `OTP can be resent only after ${timeBeforeOTPCanBeResent} seconds. Please try again after ${timeBeforeOTPCanBeResent} seconds.`
                         };
                     }
-                }
-            } else {
-                userResponse = {
-                    status: "f",
-                    error: `This is odd. Somehow you have tried too many times to continue. Now you have to wait till ${Common.timestampToHumanTime(nextPossibleSessionTime)} before trying to continue again. To continue again, reload the page and try again.`
+                } else {
+                    const timeBeforeNextPossibleSessionTime: number = await CAMPOTP.isEligibleToCreateSession(userData.email, app);
+                    if (timeBeforeNextPossibleSessionTime === 0) {
+                        const sessionID = Common.getSessionID(userData.email);
+                        userResponse = await this.#sendOTP(userData.email, userData.name, sessionID, false, app);
+                    } else {
+                        userResponse = {
+                            status: "f",
+                            error: `%D% ${timeBeforeNextPossibleSessionTime}`
+                        }
+                    }
                 }
             }
         } else {
