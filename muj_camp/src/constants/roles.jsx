@@ -1,10 +1,12 @@
 const AuthRoles = {
     MASTER_ADMIN: "Master Admin",
-    STUDENT: "Student"
+    STUDENT: "Student",
+    DOAR: "DoAR Admin"
 };
 
 const AuthPages = {
-    STUDENT: "Student"
+    STUDENT: AuthRoles.STUDENT,
+    DOAR: AuthRoles.DOAR
 };
 
 export { AuthRoles, AuthPages };

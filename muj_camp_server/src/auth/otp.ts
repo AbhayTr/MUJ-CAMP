@@ -176,7 +176,7 @@ class CAMPOTP {
             await this.#createSession(authEmail, sessionID, app);
         }
         await this.#storeOTP(authEmail, sessionID, otpToken, app, isResendRequest);
-        await app.locals.campMailer.sendOTP(authEmail, authName, otpToSend);
+        app.locals.campMailer.sendOTP(authEmail, authName, otpToSend);
     }
 
     static #generateOTP(): number {

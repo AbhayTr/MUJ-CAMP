@@ -13,9 +13,9 @@ class CAMPAuthManager {
 
     static async #sendOTP(authEmail: string, authName: string, sessionID: string, isResendRequest: boolean, app: Application): Promise<object> {
         try {
-            CAMPOTP.sendOTP(authEmail, authName, sessionID, isResendRequest, app);
+            await CAMPOTP.sendOTP(authEmail, authName, sessionID, isResendRequest, app);
         } catch (error) {
-            if (String(error) !== "SIDInjection") {
+            if (!String(error).includes("SIDInjection")) {
                 throw error;
             }
         }

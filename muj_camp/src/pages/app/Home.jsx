@@ -1,11 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Spinner from "react-bootstrap/Spinner";
 
 import { AuthStore } from "../../app_state/auth/auth";
 import { Home as StudentHome } from "../../pages/student/Home";
+import { Home as DoARHome } from "../../pages/doar/Home";
 import { AuthRoles } from "../../constants/roles";
 import { validateSession } from "../../tools/Auth";
 import { showAlert } from "../../tools/UI";
@@ -56,10 +57,10 @@ const Home = () => {
             </>
         ) : (
             (AuthStore.getState().authRole === AuthRoles.STUDENT) ? (
-                <StudentHome />
-            ) : (
-                <h1>{JSON.stringify(AuthStore.getState())}</h1>
-            )
+                (<StudentHome />)
+            ) : (AuthStore.getState().authRole === AuthRoles.DOAR) ? (
+                (<DoARHome />)
+            ) : (<Navigate to="/" />)
         )
     );
 }

@@ -35,7 +35,7 @@ const Home = () => {
                 setLoading(false);
             }
         });
-    }, [])
+    }, []);
 
     return (
         <div className="student-main">

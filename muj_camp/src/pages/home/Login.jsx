@@ -403,30 +403,50 @@ let Login = ({
 
     }, [authDetails]);
 
+    const hasAnyKindOfAccess = () => {
+        return !(AuthStore.getState().authRoles == null || AuthStore.getState().authRoles.length === 0);
+    }
+
     const getRoles = () => {
         return (
-            AuthStore.getState().authRoles.map((authRole, index) => {
-                return (
-                    <LoadButton
-                        key={authRole}
-                        lbId={`${authRole}-button`}
-                        clickHandler={() => {
-                            AuthStore.dispatch(setSessionRole(authRole));
-                            playSound("s");
-                        }}
-                        lbText={
-                            <>
-                                Use app as <b>{authRole}</b>
-                            </>
-                        }
-                        transitionTime="0"
-                        path="/home"
-                        style={(index > 0) ? {
-                            marginTop: "0.3em"
-                        } : {}}
-                    />
-                );
-            })
+            <>
+                {(!hasAnyKindOfAccess()) ? 
+                    (
+                        <Alert
+                            variant="info"
+                            style={{
+                                fontWeight: "bold",
+                                wordBreak: "break-word"
+                            }}
+                        >
+                            You currently don't have access to use this app. Please contact {process.env.REACT_APP_CONTACT_PERSON} for further help.
+                        </Alert>
+                    ) :
+                    (<></>)
+                }
+                {AuthStore.getState().authRoles.map((authRole, index) => {
+                    return (
+                        <LoadButton
+                            key={authRole}
+                            lbId={`${authRole}-button`}
+                            clickHandler={() => {
+                                AuthStore.dispatch(setSessionRole(authRole));
+                                playSound("s");
+                            }}
+                            lbText={
+                                <>
+                                    Use app as <b>{authRole}</b>
+                                </>
+                            }
+                            transitionTime="0"
+                            path="/home"
+                            style={(index > 0) ? {
+                                marginTop: "0.3em"
+                            } : {}}
+                        />
+                    );
+                })}
+            </>
         );
     };
 
@@ -568,13 +588,13 @@ let Login = ({
                             </>
                         ) : (
                             <>
-                                <p>
+                                <div>
                                     Hey <b>{authName}</b> 👋
                                     <br/><br/>
                                     Namaste 🙏! How would you like to use the app today?
                                     <br/><br/>
                                     {getRoles()}
-                                    <br/>
+                                    {(hasAnyKindOfAccess()) ? (<br/>) : (<></>)}
                                     <LoadButton
                                         lbLoading={logoutLoading}
                                         lbText="Logout"
@@ -591,7 +611,7 @@ let Login = ({
                                         }}
                                         type="danger"
                                     />
-                                </p>
+                                </div>
                             </>
                         )
                     )}

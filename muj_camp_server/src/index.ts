@@ -42,12 +42,6 @@ app.post("/auth/validate", (req: Request, res: Response) => {
     CAMPAuthManager.validateToken(req, res, app);
 });
 
-app.post("/d4", async (req: Request, res: Response) => {
-    res.send({
-        status: "s"
-    });
-});
-
 app.locals.campdb = new CAMPDB();
 app.locals.campMailer = new CAMPMailer();
 

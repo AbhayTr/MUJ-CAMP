@@ -7,6 +7,10 @@ rightsMap[AuthPages.STUDENT] = [
     AuthRoles.STUDENT
 ];
 
+rightsMap[AuthPages.DOAR] = [
+    AuthRoles.DOAR
+];
+
 const isAuthorized = (featureAccessed) => {
     const currentRole = AuthStore.getState().authRole;
     return rightsMap[featureAccessed].includes(currentRole);

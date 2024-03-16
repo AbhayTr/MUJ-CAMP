@@ -26,7 +26,7 @@ const Home = () => {
         },
         () => {
             setIsLoginLoading(false);
-        }, true);
+        }, true, false, true);
     }, []);
 
     return (
