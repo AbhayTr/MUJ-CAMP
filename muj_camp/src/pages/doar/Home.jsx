@@ -33,7 +33,9 @@ const Home = () => {
     }, []);
 
     return (
-        <h1>DoAR</h1>
+        <>
+            DoAR
+        </>
     )   
 }
 

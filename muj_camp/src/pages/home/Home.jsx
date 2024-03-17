@@ -12,12 +12,15 @@ import Login from "./Login";
 import { validateSession } from "../../tools/Auth";
 import { showAlert } from "../../tools/UI";
 import ManipalBar from "../../custom_components/ManipalBar";
+import { setSessionRole } from "../../app_state/auth/auth_actions";
+import { AuthStore } from "../../app_state/auth/auth";
 
 const Home = () => {
 
     const [isLoginLoading, setIsLoginLoading] = useState(true);
 
     useEffect(() => {
+        AuthStore.dispatch(setSessionRole(null));
         validateSession((sessionExisted) => {
             if (sessionExisted) {
                 showAlert("Session expired! Please login again.", toast.error, false);
@@ -26,7 +29,7 @@ const Home = () => {
         },
         () => {
             setIsLoginLoading(false);
-        }, true, false, true);
+        }, true);
     }, []);
 
     return (

@@ -33,7 +33,16 @@ let AdminLayout = ({
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
+    const adjustContentHeight = () => {
+        document.getElementById("main-content").style.height = `${document.getElementById("admin-page").offsetHeight - document.getElementById("menu-header").offsetHeight}px`;
+    }
+
     useEffect(() => {
+
+        window.addEventListener("resize", () => {
+            adjustContentHeight();
+        });
+
         validateSession((sessionExisted) => {
             if (!sessionExisted) {
                 showAlert("Please sign-in to continue.", toast.info, false);
@@ -44,6 +53,14 @@ let AdminLayout = ({
         }, null, false, true);
     }, []);
 
+    useEffect(() => {
+        
+        if (!loading) {
+            adjustContentHeight();
+        }
+
+    }, [loading]);
+
     const [menuOpen, setMenuOpen] = useState(false);
 
     const toggleMenu = () => {
@@ -52,16 +69,27 @@ let AdminLayout = ({
 
     return (
         (loading) ? (<></>) : (
-            <div style={{display: "flex"}}>
+            <div style={{
+                display: "flex",
+                position: "fixed",
+                height: "100%",
+                width: "100%"
+            }}>
                 <Sidebar />
-                <div style={{flex: "1 1 auto"}}>
+                <div
+                    id="admin-page"
+                    style={{
+                        flex: "1 1 auto",
+                        overflow: "hidden"
+                    }}
+                >
                     <div className={layoutStyles.root}>
                         <div className={layoutStyles.wrap}>
-                            <Navbar className={`${headerStyles.root} d-print-none`}>
-                                <div className={`d-md-none mr-3 ${headerStyles.navItem}`}>
-                                    <h1>{adminPage}</h1>
-                                </div>
-                                <div className="d-none d-sm-block" inline="true">
+                            <Navbar
+                                className={`${headerStyles.root} d-print-none`}
+                                id="menu-header"
+                            >
+                                <div className="d-sm-block" inline="true">
                                     <h1>{adminPage}</h1>
                                 </div>
                                 <Nav className="ml-auto">
@@ -113,7 +141,10 @@ let AdminLayout = ({
                                     </Dropdown>
                                 </Nav>
                             </Navbar>
-                            <main className={headerStyles.content}>
+                            <main
+                                className={layoutStyles.content}
+                                id="main-content"
+                            >
                                 <Routes>
                                     {AdminPages[AuthStore.getState().authRole].map((adminPage) => {
                                         return (

@@ -1,4 +1,6 @@
-import React from "react";
+import mujLogo from "../assets/images/manipal.png";
+import doarLogo from "../assets/images/doar.png";
+
 import {
     CDBSidebar,
     CDBSidebarContent,
@@ -14,18 +16,47 @@ import { AdminPages } from "../constants/roles";
 import { setPage } from "../app_state/admin/navigate/navigate_actions";
 
 const Sidebar = () => {
+
     return (
         <div style={{
             display: "flex",
-            height: "100vh",
+            height: "100%",
             overflow: "scroll initial"
         }}>
             <CDBSidebar
                 textColor="#fff"
-                backgroundColor="#333"
+                backgroundColor="darkorange"
+                toggled={true}
+                breakpoint={Infinity}
             >
+                <div style={{
+                    alignSelf: "center"
+                }}>
+                    <img
+                        className="home-logo"
+                        style={{
+                            width: "80px",
+                            height: "auto"
+                        }}
+                        src = {mujLogo}
+                        alt = "Manipal"
+                    />
+                    <img
+                        className="doar-logo"
+                        style={{
+                            width: "80px",
+                            height: "auto"
+                        }}
+                        src = {doarLogo}
+                        alt = "DoAR"
+                    />
+                </div>
                 <CDBSidebarHeader
-                    prefix={<i className="fa fa-bars fa-large"></i>}
+                    prefix={
+                        <i
+                            className="fa fa-bars fa-large"
+                        ></i>
+                    }
                 >
                     <a
                         href="/home"
@@ -34,7 +65,7 @@ const Sidebar = () => {
                             color: "inherit"
                         }}
                     >
-                        Sidebar
+                        MUJ CAMP
                     </a>
                 </CDBSidebarHeader>
 

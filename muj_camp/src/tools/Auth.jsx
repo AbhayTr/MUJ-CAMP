@@ -16,7 +16,7 @@ const appDown = () => {
     window.location = "/down";
 }
 
-const validateSession = (onLoggedOut, onLoggedIn = null, fetchRoles = false, validateTokenOnly = false, resetCurrentRole = false) => {
+const validateSession = (onLoggedOut, onLoggedIn = null, fetchRoles = false, validateTokenOnly = false) => {
     let authState = validateToken(onLoggedOut);
     if (authState == null) {
         return;
@@ -36,9 +36,6 @@ const validateSession = (onLoggedOut, onLoggedIn = null, fetchRoles = false, val
     .then((response) => {
         if (response.data.status === "s") {
             if (fetchRoles) {
-                if (resetCurrentRole) {
-                    AuthStore.dispatch(setSessionRole(null));
-                }
                 AuthStore.dispatch(setSessionRoles(response.data.authRoles));
             }
             if (onLoggedIn !== null) {
