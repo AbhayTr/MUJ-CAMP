@@ -10,6 +10,8 @@ import { ToastContainer } from "react-toastify";
 import { Home as RootHome } from "./pages/home/Home";
 import { Home as AppHome } from "./pages/app/Home";
 import { AuthStore, AuthPersistor } from "./app_state/auth/auth";
+import NavigateStore from "./app_state/admin/navigate/navigate";
+import AdminLayout from "./custom_components/Admin";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
@@ -25,6 +27,14 @@ root.render(
                     <Route
                         path="/home"
                         element={<AppHome/>}
+                    />
+                    <Route
+                        path="/admin/*"
+                        element={
+                            <Provider store={NavigateStore}>
+                                <AdminLayout />
+                            </Provider>
+                        }
                     />
                 </Routes>
             </BrowserRouter>

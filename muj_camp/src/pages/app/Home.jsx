@@ -6,11 +6,11 @@ import Spinner from "react-bootstrap/Spinner";
 
 import { AuthStore } from "../../app_state/auth/auth";
 import { Home as StudentHome } from "../../pages/student/Home";
-import { Home as DoARHome } from "../../pages/doar/Home";
 import { AuthRoles } from "../../constants/roles";
 import { validateSession } from "../../tools/Auth";
 import { showAlert } from "../../tools/UI";
 import { toast } from "react-toastify";
+import { isAdmin } from "../../tools/Rights";
 
 const Home = () => {
 
@@ -58,8 +58,8 @@ const Home = () => {
         ) : (
             (AuthStore.getState().authRole === AuthRoles.STUDENT) ? (
                 (<StudentHome />)
-            ) : (AuthStore.getState().authRole === AuthRoles.DOAR) ? (
-                (<DoARHome />)
+            ) : (isAdmin(AuthStore.getState().authRole)) ? (
+                (<Navigate to="/admin/home" />)
             ) : (<Navigate to="/" />)
         )
     );

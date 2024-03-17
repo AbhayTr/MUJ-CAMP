@@ -1,5 +1,5 @@
 import { AuthStore } from "../app_state/auth/auth";
-import { AuthRoles, AuthPages } from "../constants/roles";
+import { AuthRoles, AuthPages, AdminRoles } from "../constants/roles";
 
 const rightsMap = {};
 
@@ -14,6 +14,10 @@ rightsMap[AuthPages.DOAR] = [
 const isAuthorized = (featureAccessed) => {
     const currentRole = AuthStore.getState().authRole;
     return rightsMap[featureAccessed].includes(currentRole);
-}
+};
 
-export default isAuthorized;
+const isAdmin = (role) => {
+    return AdminRoles.includes(role);
+};
+
+export { isAuthorized, isAdmin };

@@ -14,7 +14,7 @@ import LoadButton from "../../custom_components/LoadButton";
 import VInput from "../../custom_components/VInput";
 import { InputConfigState } from "../../tools/Config";
 import { AuthStore } from "../../app_state/auth/auth";
-import { grantSessionAccess, revokeSessionAccess, setSessionRole } from "../../app_state/auth/auth_actions";
+import { grantSessionAccess, setSessionRole } from "../../app_state/auth/auth_actions";
 import { playSound, showAlert, confirmLogout } from "../../tools/UI";
 
 let Login = ({
@@ -601,13 +601,7 @@ let Login = ({
                                         lbId="logout-button"
                                         clickHandler={async () => {
                                             setLogoutLoading(true);
-                                            if (await confirmLogout()) {
-                                                setLogoutLoading(false);
-                                                showAlert(`Ok bye bye, ${AuthStore.getState().authName} 👋`)
-                                                AuthStore.dispatch(revokeSessionAccess());
-                                            } else {
-                                                setLogoutLoading(false);
-                                            }
+                                            await confirmLogout(navigate);
                                         }}
                                         type="danger"
                                     />

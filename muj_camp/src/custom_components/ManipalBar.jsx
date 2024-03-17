@@ -10,8 +10,7 @@ import Navbar from "react-bootstrap/Navbar";
 import { useNavigate } from "react-router-dom";
 
 import { AuthStore } from "../app_state/auth/auth";
-import { revokeSessionAccess } from "../app_state/auth/auth_actions";
-import { showAlert, confirmLogout } from "../tools/UI";
+import { confirmLogout } from "../tools/UI";
 import { useEffect } from "react";
 
 const ManipalBar = ({ type = 0 }) => {
@@ -140,11 +139,7 @@ const ManipalBar = ({ type = 0 }) => {
                                 </Nav.Link>
                                 <Nav.Link
                                     onClick={async () => {
-                                        if (await confirmLogout()) {
-                                            showAlert(`Ok bye bye, ${AuthStore.getState().authName} 👋`);
-                                            AuthStore.dispatch(revokeSessionAccess());
-                                            navigate("/");
-                                        }
+                                        await confirmLogout(navigate);
                                     }}
                                     target="_blank"
                                     style={{

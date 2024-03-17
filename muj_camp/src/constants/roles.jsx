@@ -1,3 +1,5 @@
+import { Home as DoARHome } from "../pages/doar/Home";
+
 const AuthRoles = {
     MASTER_ADMIN: "Master Admin",
     STUDENT: "Student",
@@ -9,4 +11,25 @@ const AuthPages = {
     DOAR: AuthRoles.DOAR
 };
 
-export { AuthRoles, AuthPages };
+const AdminRoles = [
+    AuthRoles.DOAR
+];
+
+const AdminPages = {};
+
+AdminPages[AuthRoles.DOAR] = [
+    {
+        name: "Home",
+        path: "home",
+        icon: "columns",
+        component: <DoARHome/>
+    },
+    {
+        name: "Dashboard",
+        path: "dashboard",
+        icon: "chart-line",
+        component: <></>
+    }
+]
+
+export { AuthRoles, AuthPages, AdminRoles, AdminPages };

@@ -5,6 +5,7 @@ import { confirm } from "react-bootstrap-confirmation";
 import { toast } from "react-toastify";
 
 import { AuthStore } from "../app_state/auth/auth";
+import { revokeSessionAccess } from "../app_state/auth/auth_actions";
 
 const playSound = (soundCode) => {
     let sound = null;
@@ -39,14 +40,19 @@ const showAlert = (message, messageTypeCallback = toast.success, sound = true) =
     });
 }
 
-const confirmLogout = async () => {
-    return await confirm(`Are you sure you want to leave, ${AuthStore.getState().authName} 🤨`, {
+const confirmLogout = async (navigate) => {
+
+    if (await confirm(`Are you sure you want to leave, ${AuthStore.getState().authName} 🤨`, {
         title: "Confrim Logout",
         okText: "Yes 😎",
         cancelText: "No pressed by mistake 😅",
         okButtonStyle: "danger",
         cancelButtonStyle: "warning"
-    });
+    })) {
+        showAlert(`Ok bye bye, ${AuthStore.getState().authName} 👋`);
+        AuthStore.dispatch(revokeSessionAccess());
+        navigate("/");
+    }
 }
 
 export { playSound, showAlert, confirmLogout };

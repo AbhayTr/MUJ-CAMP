@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { validateSession } from "../../tools/Auth";
 import { AuthPages } from "../../constants/roles";
 import { showAlert } from "../../tools/UI";
-import isAuthorized from "../../tools/Rights";
+import { isAuthorized } from "../../tools/Rights";
 
 const Home = () => {
 
@@ -33,9 +33,7 @@ const Home = () => {
     }, []);
 
     return (
-        <>
-            <h1>DoAR</h1>
-        </>
+        <h1>DoAR</h1>
     )   
 }
 

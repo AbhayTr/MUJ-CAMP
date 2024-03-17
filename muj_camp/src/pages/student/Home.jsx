@@ -10,7 +10,7 @@ import { AuthStore } from "../../app_state/auth/auth";
 import ManipalBar from "../../custom_components/ManipalBar";
 import { validateSession } from "../../tools/Auth";
 import { showAlert } from "../../tools/UI";
-import isAuthorized from "../../tools/Rights";
+import { isAuthorized } from "../../tools/Rights";
 import { useEffect, useState } from "react";
 import { AuthPages } from "../../constants/roles";
 
