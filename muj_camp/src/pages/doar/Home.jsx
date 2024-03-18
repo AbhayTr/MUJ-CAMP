@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { ensureAdminAccess } from "../../tools/Auth";
+import Tables from "../../custom_components/Table";
 
 const Home = () => {
 
@@ -16,7 +17,7 @@ const Home = () => {
 
     return (
         <>
-            DoAR
+            <Tables />
         </>
     )   
 }
