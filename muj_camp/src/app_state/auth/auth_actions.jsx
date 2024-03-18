@@ -1,9 +1,10 @@
-export const grantSessionAccess = (authToken, authEmail, authName, authRoles) => ({
+export const grantSessionAccess = (authToken, authEmail, authName, authRoles, photo) => ({
     type: "GRANT_ACCESS",
     authToken: authToken,
     authEmail: authEmail,
     authName: authName,
-    authRoles: authRoles
+    authRoles: authRoles,
+    photo: photo
 });
 
 export const setSessionRoles = (authRoles) => ({

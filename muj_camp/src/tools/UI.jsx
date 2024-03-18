@@ -1,7 +1,7 @@
 import successTune from "../assets/audio/success.mp3";
 import errorTune from "../assets/audio/error.mp3";
 
-import { confirm } from "react-bootstrap-confirmation";
+import { alert, confirm } from "react-bootstrap-confirmation";
 import { toast } from "react-toastify";
 
 import { AuthStore } from "../app_state/auth/auth";
@@ -40,10 +40,9 @@ const showAlert = (message, messageTypeCallback = toast.success, sound = true) =
     });
 }
 
-const confirmLogout = async (navigate) => {
-
+const confirmLogout = async (navigate, onCancel = null) => {
     if (await confirm(`Are you sure you want to leave, ${AuthStore.getState().authName} 🤨`, {
-        title: "Confrim Logout",
+        title: "Are you sure?",
         okText: "Yes 😎",
         cancelText: "No pressed by mistake 😅",
         okButtonStyle: "danger",
@@ -52,7 +51,27 @@ const confirmLogout = async (navigate) => {
         showAlert(`Ok bye bye, ${AuthStore.getState().authName} 👋`);
         AuthStore.dispatch(revokeSessionAccess());
         navigate("/");
+    } else {
+        if (onCancel != null) {
+            onCancel();
+        }
     }
 }
 
-export { playSound, showAlert, confirmLogout };
+const showCredits = async () => {
+    await alert((
+        <>
+            Designed and Developed solely by:<br/>
+            <b>Abhay Tripathi (B.Tech CSE 2021 to 2025)</b>
+            <br/><br/>
+            © {new Date().getUTCFullYear()} Manipal University Jaipur (MUJ)<br/>
+            © {new Date().getUTCFullYear()} Manipal University Jaipur Alumni Association (MUJAA)<br/>
+            © {new Date().getUTCFullYear()} Software Development Center (SDC), Department of Computer Science and Engineering, Manipal University Jaipur (MUJ)<br/>
+            © {new Date().getUTCFullYear()} Abhay Tripathi, B.Tech CSE (2021 to 2025), Manipal University Jaipur (MUJ)
+        </>), {
+        okText: "Got it 👍",
+        okButtonStyle: "success"
+    });
+}
+
+export { playSound, showAlert, confirmLogout, showCredits };

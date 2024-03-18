@@ -11,7 +11,7 @@ class CAMPAuthManager {
         return (/^[a-z0-9]+$/i.test(sessionID));
     }
 
-    static async #sendOTP(authEmail: string, authName: string, sessionID: string, isResendRequest: boolean, app: Application): Promise<object> {
+    static async #sendOTP(authEmail: string, authName: string, sessionID: string, isResendRequest: boolean, app: Application, photo: string | null): Promise<object> {
         try {
             await CAMPOTP.sendOTP(authEmail, authName, sessionID, isResendRequest, app);
         } catch (error) {
@@ -28,7 +28,8 @@ class CAMPAuthManager {
                 status: "s",
                 authEmail: authEmail,
                 authName: authName,
-                sid: sessionID
+                sid: sessionID,
+                photo: photo
             };
         }
     }
@@ -49,13 +50,14 @@ class CAMPAuthManager {
                     status: "s",
                     authEmail: userData.email,
                     authName: userData.name,
-                    sid: ""
+                    sid: "",
+                    photo: userData.photo
                 };
             } else {
                 if (isResendRequest) {
                     const timeBeforeOTPCanBeResent = await CAMPOTP.isEligibleToReceiveOTP(userData.email, userSessionID, app);
                     if (timeBeforeOTPCanBeResent === 0) {
-                        userResponse = await this.#sendOTP(userData.email, userData.name, userSessionID, true, app);
+                        userResponse = await this.#sendOTP(userData.email, userData.name, userSessionID, true, app, userData.photo);
                     } else {
                         userResponse = {
                             status: "f",
@@ -66,7 +68,7 @@ class CAMPAuthManager {
                     const timeBeforeNextPossibleSessionTime: number = await CAMPOTP.isEligibleToCreateSession(userData.email, app);
                     if (timeBeforeNextPossibleSessionTime === 0) {
                         const sessionID = Common.getSessionID(userData.email);
-                        userResponse = await this.#sendOTP(userData.email, userData.name, sessionID, false, app);
+                        userResponse = await this.#sendOTP(userData.email, userData.name, sessionID, false, app, userData.photo);
                     } else {
                         userResponse = {
                             status: "f",

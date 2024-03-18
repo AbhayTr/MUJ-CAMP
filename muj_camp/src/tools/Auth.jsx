@@ -1,7 +1,11 @@
 import axios from "axios";
+import { toast } from "react-toastify";
 
 import { AuthStore } from "../app_state/auth/auth";
-import { setSessionRoles, setSessionRole, revokeSessionAccess } from "../app_state/auth/auth_actions";
+import { setSessionRoles, revokeSessionAccess } from "../app_state/auth/auth_actions";
+import { showAlert } from "./UI";
+import { isAuthorized } from "./Rights";
+import { AuthPages } from "../constants/roles";
 
 const validateToken = (onLoggedOut) => {
     let authState = AuthStore.getState();
@@ -87,4 +91,27 @@ const makeSessionRequest = (requestPath, requestPayload, onSuccess, onLoggedOut,
     });
 }
 
-export { validateSession, makeSessionRequest };
+const ensureAdminAccess = (pageName, setLoading, navigate) => {
+    validateSession((sessionExisted) => {
+        if (sessionExisted) {
+            showAlert("Session expired! Please login again.", toast.error, false);
+        } else {
+            showAlert("Please sign-in to continue.", toast.info, false);
+        }
+        navigate("/");
+    }, () => {
+        if (AuthStore.getState().authRole == null) {
+            showAlert("Please select how you want to use the app first", toast.info, false);
+            navigate("/");
+            return;
+        }
+        if (!isAuthorized(AuthPages[pageName], true)) {
+            showAlert("You are not authorized to access this page.", toast.error, false);
+            navigate("/");
+        } else {
+            setLoading(false);
+        }
+    });
+}
+
+export { validateSession, makeSessionRequest, ensureAdminAccess };

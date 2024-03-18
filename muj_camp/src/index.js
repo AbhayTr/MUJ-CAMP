@@ -12,6 +12,7 @@ import { Home as AppHome } from "./pages/app/Home";
 import { AuthStore, AuthPersistor } from "./app_state/auth/auth";
 import NavigateStore from "./app_state/admin/navigate/navigate";
 import AdminLayout from "./custom_components/Admin";
+import Error404 from "./custom_components/404";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
@@ -35,6 +36,10 @@ root.render(
                                 <AdminLayout />
                             </Provider>
                         }
+                    />
+                    <Route
+                        path="*"
+                        element={<Error404 />}
                     />
                 </Routes>
             </BrowserRouter>

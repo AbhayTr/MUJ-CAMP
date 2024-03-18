@@ -2,6 +2,7 @@
 
 import headerStyles from "../assets/scss/Header.module.scss";
 import layoutStyles from "../assets/scss/Layout.module.scss";
+import userPhoto from "../assets/images/userPhoto.svg";
 
 import React, { useEffect, useState } from "react";
 import {
@@ -25,6 +26,8 @@ import { AdminPages } from "../constants/roles";
 import { AuthStore } from "../app_state/auth/auth";
 import { validateSession } from "../tools/Auth";
 import { confirmLogout, showAlert } from "../tools/UI";
+import Error404 from "../custom_components/404";
+import { Spinner } from "react-bootstrap";
 
 let AdminLayout = ({
     adminPage = "Home"
@@ -33,29 +36,43 @@ let AdminLayout = ({
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
+    const [isSmallScreen, setSmallScreen] = useState(false);
+
     const adjustContentHeight = () => {
         document.getElementById("main-content").style.height = `${document.getElementById("admin-page").offsetHeight - document.getElementById("menu-header").offsetHeight}px`;
     }
 
     useEffect(() => {
 
-        window.addEventListener("resize", () => {
+        window.onresize = () => {
+            setSmallScreen(window.getComputedStyle(document.getElementById("userName")).display === "none");
             adjustContentHeight();
-        });
+        };
 
         validateSession((sessionExisted) => {
             if (!sessionExisted) {
                 showAlert("Please sign-in to continue.", toast.info, false);
                 navigate("/");
+                return;
             } else {
+                if (AuthStore.getState().authRole == null) {
+                    showAlert("Please select how you want to use the app first", toast.info, false);
+                    navigate("/");
+                }
                 setLoading(false);
             }
         }, null, false, true);
+        
+        return (() => {
+            window.onresize = () => {};
+        });
+
     }, []);
 
     useEffect(() => {
         
         if (!loading) {
+            setSmallScreen(window.getComputedStyle(document.getElementById("userName")).display === "none");
             adjustContentHeight();
         }
 
@@ -68,7 +85,33 @@ let AdminLayout = ({
     }
 
     return (
-        (loading) ? (<></>) : (
+        (loading) ? (
+            <>
+                <div
+                    style={{
+                        position: "absolute",
+                        maxHeight: "100%",
+                        maxWidth: "100%",
+                        top: "0",
+                        bottom: "0",
+                        left: "0",
+                        right: "0",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                    }}
+                >
+                    <Spinner
+                        as="span"
+                        animation="border"
+                        size="sm"
+                        role="status"
+                        aria-hidden="true"
+                        className="component-loader"
+                    />
+                </div>
+            </>
+        ) : (
             <div style={{
                 display: "flex",
                 position: "fixed",
@@ -105,13 +148,40 @@ let AdminLayout = ({
                                             className="navbar-dropdown-toggle"
                                         >
                                             <span className={`${headerStyles.avatar} rounded-circle float-left mr-2`}>
+                                                {(AuthStore.getState().photo != null) ? (
+                                                    <img
+                                                        src={AuthStore.getState().photo}
+                                                        alt="User"
+                                                        onLoad={() => {
+                                                            try {
+                                                                const removeDefault = setInterval(() => {
+                                                                    try {
+                                                                        document.getElementById("userPhoto").remove();
+                                                                        clearInterval(removeDefault);
+                                                                    } catch (e) {}
+                                                                }, 1);
+                                                            } catch (e) {}
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <></>
+                                                )}
                                                 <img
-                                                    src="https://flatlogic.github.io/sofia-react-template/static/media/user.13df436f.svg"
+                                                    src={userPhoto}
                                                     alt="User"
+                                                    id="userPhoto"
                                                 />
                                             </span>
-                                            <span className="small d-none d-sm-block ml-1 mr-2 body-1">
-                                                Christina Carey
+                                            <span
+                                                id="userName"
+                                                className="small d-none d-sm-block ml-1 mr-2 body-1"
+                                                style={{
+                                                    marginLeft: "0.5rem",
+                                                    fontWeight: "bold",
+                                                    fontSize: "1.1em"
+                                                }}
+                                            >
+                                                {AuthStore.getState().authName}
                                             </span>
                                         </DropdownToggle>
                                         <DropdownMenu
@@ -119,9 +189,39 @@ let AdminLayout = ({
                                             style={{
                                                 width: "194px"
                                             }}>
-                                            <DropdownItem className={headerStyles.dropdownProfileItem}>
+                                            {(isSmallScreen) ? (
+                                                <DropdownItem
+                                                    disabled
+                                                    className={headerStyles.dropdownProfileItem}
+                                                    style={{
+                                                        justifyContent: "center"
+                                                    }}
+                                                >
+                                                    <span
+                                                        style={{
+                                                            color: "#0d6efd",
+                                                            fontSize: "1.1em",
+                                                            fontWeight: "bold",
+                                                            fontSynthesis: "initial"
+                                                        }}
+                                                    >
+                                                        {AuthStore.getState().authName}
+                                                    </span>
+                                                </DropdownItem>
+                                            ) : (
+                                                <></>
+                                            )}
+                                            <DropdownItem
+                                                className={headerStyles.dropdownProfileItem}
+                                                onClick={() => {
+                                                    showAlert("Please chose how do you want to use the app, from here.", toast.info);
+                                                    navigate("/");
+                                                }}
+                                            >
                                                 <ProfileIcon />
-                                                <span>Profile</span>
+                                                <span>
+                                                    Switch User Role
+                                                </span>
                                             </DropdownItem>
                                             <NavLink>
                                                 <button
@@ -155,6 +255,10 @@ let AdminLayout = ({
                                             />     
                                         );
                                     })}
+                                    <Route
+                                        path="*"
+                                        element={<Error404 />}
+                                    />
                                 </Routes>
                             </main>
                         </div>

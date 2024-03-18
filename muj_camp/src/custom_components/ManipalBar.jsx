@@ -10,7 +10,7 @@ import Navbar from "react-bootstrap/Navbar";
 import { useNavigate } from "react-router-dom";
 
 import { AuthStore } from "../app_state/auth/auth";
-import { confirmLogout } from "../tools/UI";
+import { confirmLogout, showCredits } from "../tools/UI";
 import { useEffect } from "react";
 
 const ManipalBar = ({ type = 0 }) => {
@@ -73,6 +73,16 @@ const ManipalBar = ({ type = 0 }) => {
                                     }}
                                 >
                                     MUJ Home
+                                </Nav.Link>
+                                <Nav.Link
+                                    onClick={async () => {
+                                        await showCredits();
+                                    }}
+                                    style={{
+                                        color: "white"
+                                    }}
+                                >
+                                    Credits
                                 </Nav.Link>
                             </Nav>
                         </Navbar.Collapse>

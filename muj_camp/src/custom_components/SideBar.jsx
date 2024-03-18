@@ -12,8 +12,8 @@ import {
 import { NavLink } from "react-router-dom";
 
 import { AuthStore } from "../app_state/auth/auth";
-import { AdminPages } from "../constants/roles";
-import { setPage } from "../app_state/admin/navigate/navigate_actions";
+import { AdminPages, AuthRoles } from "../constants/roles";
+import { showCredits } from "../tools/UI";
 
 const Sidebar = () => {
 
@@ -30,12 +30,14 @@ const Sidebar = () => {
                 breakpoint={Infinity}
             >
                 <div style={{
-                    alignSelf: "center"
+                    alignSelf: "center",
+                    textAlign: "center",
+                    marginTop: "0.7em"
                 }}>
                     <img
                         className="home-logo"
                         style={{
-                            width: "80px",
+                            width: "70px",
                             height: "auto"
                         }}
                         src = {mujLogo}
@@ -44,7 +46,7 @@ const Sidebar = () => {
                     <img
                         className="doar-logo"
                         style={{
-                            width: "80px",
+                            width: "70px",
                             height: "auto"
                         }}
                         src = {doarLogo}
@@ -58,15 +60,15 @@ const Sidebar = () => {
                         ></i>
                     }
                 >
-                    <a
-                        href="/home"
+                    <NavLink
+                        to="/admin/home"
                         className="text-decoration-none"
                         style={{
                             color: "inherit"
                         }}
                     >
-                        MUJ CAMP
-                    </a>
+                        MUJ CAMP 🎓
+                    </NavLink>
                 </CDBSidebarHeader>
 
                 <CDBSidebarContent className="sidebar-content">
@@ -77,7 +79,6 @@ const Sidebar = () => {
                                     key={adminPage.path}
                                     to={adminPage.path}
                                     activeclassname="activeClicked"
-                                    onClick={() => setPage(adminPage.name)}
                                 >
                                     <CDBSidebarMenuItem
                                         icon={adminPage.icon}
@@ -87,6 +88,17 @@ const Sidebar = () => {
                                 </NavLink>     
                             );
                         })}
+                        <span
+                            onClick={async () => {
+                                await showCredits();
+                            }}
+                        >
+                            <CDBSidebarMenuItem
+                                icon="exclamation-circle"
+                            >
+                                Credits
+                            </CDBSidebarMenuItem>
+                        </span>
                     </CDBSidebarMenu>
                 </CDBSidebarContent>
 
@@ -98,7 +110,9 @@ const Sidebar = () => {
                             padding: "20px 5px",
                         }}
                     >
-                        Sidebar Footer
+                        <b>
+                            {(AuthStore.getState().authRole === AuthRoles.DOAR) ? "DoAR Portal" : "Admin Portal"}
+                        </b>
                     </div>
                 </CDBSidebarFooter>
             </CDBSidebar>

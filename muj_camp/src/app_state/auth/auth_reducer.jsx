@@ -6,7 +6,8 @@ const AuthReducer = (authState = {}, authAction) => {
                 authToken: authAction.authToken,
                 authEmail: authAction.authEmail,
                 authName: authAction.authName,
-                authRoles: authAction.authRoles
+                authRoles: authAction.authRoles,
+                photo: authAction.photo
             };
         case "UPDATE_ROLES":
             return {

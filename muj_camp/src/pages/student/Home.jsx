@@ -20,6 +20,7 @@ const Home = () => {
     const navigate = useNavigate();
     
     useEffect(() => {
+
         validateSession((sessionExisted) => {
             if (sessionExisted) {
                 showAlert("Session expired! Please login again.", toast.error, false);
@@ -28,6 +29,11 @@ const Home = () => {
             }
             navigate("/");
         }, () => {
+            if (AuthStore.getState().authRole == null) {
+                showAlert("Please select how you want to use the app first", toast.info, false);
+                navigate("/");
+                return;
+            }
             if (!isAuthorized(AuthPages.STUDENT)) {
                 showAlert("You are not authorized to access this page.", toast.error, false);
                 navigate("/");

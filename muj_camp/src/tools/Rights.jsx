@@ -1,19 +1,15 @@
+import NavigateStore from "../app_state/admin/navigate/navigate";
+import { setPage } from "../app_state/admin/navigate/navigate_actions";
 import { AuthStore } from "../app_state/auth/auth";
-import { AuthRoles, AuthPages, AdminRoles } from "../constants/roles";
+import { rightsMap, AdminRoles } from "../constants/roles";
 
-const rightsMap = {};
-
-rightsMap[AuthPages.STUDENT] = [
-    AuthRoles.STUDENT
-];
-
-rightsMap[AuthPages.DOAR] = [
-    AuthRoles.DOAR
-];
-
-const isAuthorized = (featureAccessed) => {
+const isAuthorized = (featureAccessed, isAdmin = false) => {
     const currentRole = AuthStore.getState().authRole;
-    return rightsMap[featureAccessed].includes(currentRole);
+    const isAllowed = rightsMap[currentRole].includes(featureAccessed);
+    if (isAllowed && isAdmin) {
+        NavigateStore.dispatch(setPage(featureAccessed));
+    }
+    return isAllowed;
 };
 
 const isAdmin = (role) => {

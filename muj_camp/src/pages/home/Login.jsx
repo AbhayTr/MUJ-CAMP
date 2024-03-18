@@ -289,7 +289,8 @@ let Login = ({
                         authState: 2,
                         authName: response.data.authName,
                         authEmail: response.data.authEmail,
-                        sid: response.data.sid
+                        sid: response.data.sid,
+                        photo: response.data.photo
                     });
                 } else {
                     setAuthDetails({
@@ -354,7 +355,8 @@ let Login = ({
                         response.data.authToken,
                         authDetails.authEmail,
                         authDetails.authName,
-                        response.data.authRoles
+                        response.data.authRoles,
+                        authDetails.photo
                     ));
                 } else {
                     setAuthDetails({
@@ -601,7 +603,9 @@ let Login = ({
                                         lbId="logout-button"
                                         clickHandler={async () => {
                                             setLogoutLoading(true);
-                                            await confirmLogout(navigate);
+                                            await confirmLogout(navigate, () => {
+                                                setLogoutLoading(false);
+                                            });
                                         }}
                                         type="danger"
                                     />

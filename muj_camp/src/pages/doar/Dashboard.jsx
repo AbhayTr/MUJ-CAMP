@@ -1,24 +1,22 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 import { ensureAdminAccess } from "../../tools/Auth";
 
-const Home = () => {
+const Dashboard = () => {
 
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     
     useEffect(() => {
-        ensureAdminAccess("DOAR", setLoading, navigate);
+        ensureAdminAccess("DOAR_DASHBOARD", setLoading, navigate);
     }, []);
 
     return (
-        <>
-            DoAR
-        </>
-    )   
+        <>Dashboard</>
+    );
 }
 
-export { Home };
+export { Dashboard };

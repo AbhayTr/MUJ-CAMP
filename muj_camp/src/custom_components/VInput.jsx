@@ -29,6 +29,9 @@ const VInput = ({
             }
             document.getElementById(`${id}-alert`).style.width = `${document.getElementById(id).offsetWidth}px`;
         };
+        return (() => {
+            window.onresize = () => {};
+        });
 
     }, []);
 
