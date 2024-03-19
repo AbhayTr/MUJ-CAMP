@@ -27,7 +27,7 @@ import { AuthStore } from "../app_state/auth/auth";
 import { validateSession } from "../tools/Auth";
 import { confirmLogout, showAlert } from "../tools/UI";
 import Error404 from "../custom_components/404";
-import { Spinner } from "react-bootstrap";
+import LoadSpinner from "./LoadSpinner";
 
 let AdminLayout = ({
     adminPage = "Home"
@@ -86,31 +86,7 @@ let AdminLayout = ({
 
     return (
         (loading) ? (
-            <>
-                <div
-                    style={{
-                        position: "absolute",
-                        maxHeight: "100%",
-                        maxWidth: "100%",
-                        top: "0",
-                        bottom: "0",
-                        left: "0",
-                        right: "0",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center"
-                    }}
-                >
-                    <Spinner
-                        as="span"
-                        animation="border"
-                        size="sm"
-                        role="status"
-                        aria-hidden="true"
-                        className="component-loader"
-                    />
-                </div>
-            </>
+            <LoadSpinner />
         ) : (
             <div style={{
                 display: "flex",
