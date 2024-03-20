@@ -114,4 +114,14 @@ const ensureAdminAccess = (pageName, setLoading, navigate) => {
     });
 }
 
-export { validateSession, makeSessionRequest, ensureAdminAccess };
+const makeWebSocketRequest = (webSocket, data) => {
+    webSocket.send(JSON.stringify({
+        "auth": {
+            "authEmail": AuthStore.getState().authEmail,
+            "authToken": AuthStore.getState().authToken
+        },
+        "data": data
+    }));
+}
+
+export { validateSession, makeSessionRequest, ensureAdminAccess, makeWebSocketRequest };

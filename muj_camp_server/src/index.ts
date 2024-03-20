@@ -8,7 +8,7 @@ import express, { Application, Request, Response } from "express";
 import CAMPMailer from "./utils/mail";
 import { CAMPDB } from "./utils/campdb";
 import CAMPAuthManager from "./auth/auth";
-import setApp from "./CampWSServer";
+import { setApp } from "./CampWSServer";
 
 var app: Application = express();
 setApp(app);

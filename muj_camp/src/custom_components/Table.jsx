@@ -53,6 +53,7 @@ const DataTable = (props) => {
     const [sortInvalidated, setSortInvalidated] = useState(false);
 
     const [headerMap, setHeaderMap] = useState({});
+    const [initialRenderSkipped, setInitialRenderSkipped] = useState(false);
 
     useEffect(() => {
 
@@ -147,6 +148,10 @@ const DataTable = (props) => {
     }
 
     useEffect(() => {
+        if (!initialRenderSkipped) {
+            setInitialRenderSkipped(true);
+            return;
+        }
         updatePage();
     }, [tableCurrentPage, filtersApplied]);
 

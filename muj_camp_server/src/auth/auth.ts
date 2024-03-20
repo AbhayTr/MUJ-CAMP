@@ -1,5 +1,4 @@
 import { Application, Request, Response } from "express";
-import { WebSocket } from "ws";
 
 import User from "./user";
 import CAMPOTP from "./otp";
@@ -153,17 +152,15 @@ class CAMPAuthManager {
         }
     }
 
-    static async validateTokenWS(userToken: string, authEmail: string, app: Application, ws: WebSocket): Promise<boolean> {
+    static async validateTokenWS(userToken: string, authEmail: string, app: Application): Promise<boolean> {
         const userData = JWTManger.validateTokenAndReturnUser(userToken);
         if (typeof userData === "object") {
             if (authEmail === userData.email) {
                 return true;
             } else {
-                ws.close(403);
                 return false;
             }
         } else {
-            ws.close(403);
             return false;
         }
     }

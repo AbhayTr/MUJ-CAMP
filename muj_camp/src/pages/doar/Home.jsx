@@ -2,15 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Spinner } from "react-bootstrap";
 
-import { ensureAdminAccess } from "../../tools/Auth";
+import { ensureAdminAccess, makeWebSocketRequest } from "../../tools/Auth";
 import DataTable from "../../custom_components/Table";
 import LoadSpinner from "../../custom_components/LoadSpinner";
 import { AuthStore } from "../../app_state/auth/auth";
 import useTable from "../../hooks/TableHook";
-import { showAlert } from "../../tools/UI";
-import { toast } from "react-toastify";
-import { Spinner } from "react-bootstrap";
 
 let webSocket = null;
 
@@ -48,7 +46,9 @@ const Home = () => {
         ensureAdminAccess("DOAR", setLoading, navigate);
 
         return (() => {
-            webSocket.close();
+            try {
+                webSocket.close();
+            } catch (e) {}
         });
 
     }, []);
@@ -68,10 +68,9 @@ const Home = () => {
         webSocket = new WebSocket(process.env.REACT_APP_WS_URL);
 
         webSocket.onopen = () => {
-            webSocket.send(JSON.stringify({
-                "authToken": AuthStore.getState().authToken,
-                "authEmail": AuthStore.getState().authEmail
-            }));
+            makeWebSocketRequest(webSocket, {
+                type: "init"
+            });
         };
 
         webSocket.onmessage = (message) => {
@@ -80,7 +79,6 @@ const Home = () => {
             }
             const messageJSON = JSON.parse(message.data);
             if (String(messageJSON.type) === "data") {
-                showAlert("Successfully connected to Realtime Alumni Monitoring System", toast.success, false);
                 setTablePages(messageJSON.pages);
                 setTableHeaders(messageJSON.headers);
                 setFilters(messageJSON.filters);
@@ -132,7 +130,7 @@ const Home = () => {
                         }}
                         id="doarHeading"
                     >
-                        {(liveConnected !== 0) ? (
+                        {(liveConnected !== 0 && liveConnected !== -1) ? (
                             <div className="alert alert-danger">
                                 <Spinner
                                     as="span"
