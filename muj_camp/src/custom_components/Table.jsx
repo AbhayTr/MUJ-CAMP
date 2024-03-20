@@ -78,9 +78,13 @@ const DataTable = (props) => {
                     return null;
                 }
                 if (tempFilters[tableHeader] == null) {
-                    tempFilters[tableHeader] = new Set([]);
+                    tempFilters[tableHeader] = {};
+                    tempFilters[tableHeader][tableRow[headerMap[tableHeader]]] = 1;
+                } else if (tempFilters[tableHeader][tableRow[headerMap[tableHeader]]] == null) {
+                    tempFilters[tableHeader][tableRow[headerMap[tableHeader]]] = 1;
+                } else {
+                    tempFilters[tableHeader][tableRow[headerMap[tableHeader]]]++;
                 }
-                tempFilters[tableHeader].add(tableRow[headerMap[tableHeader]]);
                 return null;
             });
             return null;
@@ -90,17 +94,70 @@ const DataTable = (props) => {
 
     }, [tableData, headerMap]);
 
+    const scrollToTop = () => {
+        try {
+            document.getElementsByClassName("table-responsive")[0].scroll(0, 0);
+        } catch (e) {}
+    }
+
+    const setTableHeight = () => {
+        try {
+            const tableHeight = (document.getElementById("main-content").offsetHeight) - ((document.getElementById("doarHeading").offsetHeight) + (document.getElementById("alumnilistTitle").offsetHeight) + 90);
+            document.getElementsByClassName("table-responsive")[0].style.maxHeight = ((tableHeight > 100) ? `${tableHeight}px` : "unset");
+        } catch (e) {}
+    }
+
+    useEffect(() => {
+
+        window.addEventListener("resize", setTableHeight);
+
+        return (() => {
+            window.removeEventListener("resize", setTableHeight);
+        })
+    }, []);
+
+    useEffect(() => {
+
+        if (!tableLoading) {
+            setTableHeight();
+        }
+
+    }, [tableLoading]);
+
     const getFilters = async (filter) => {
         await alert((
-            <div key={filter}>
-                <h1>{filter}</h1>
+            <>
+                <h1 style={{
+                    color: "#0d6efd",
+                    fontWeight: "bold",
+                    fontSynthesis: "initial",
+                    textAlign: "center"
+                }}>
+                    {filter}
+                </h1>
                 <br/>
-                {Array.from(filters[filter]).map((filterOption) => {
+                {Object.keys(filters[filter]).map((filterOption) => {
                     return (
-                        <h4>{filterOption}</h4>
+                        <div
+                            key={filterOption}
+                            disabled
+                            className={headerStyles.dropdownProfileItem}
+                        >
+                            <span
+                                style={{
+                                    fontSize: "1.1em",
+                                    fontWeight: "bold",
+                                    fontSynthesis: "initial"
+                                }}
+                            >
+                                {filterOption}
+                                <br/>
+                                ({filters[filter][filterOption]})
+                            </span>
+                        </div>
                     )
                 })}
-            </div>
+            </>
         ));
     }
 
@@ -120,10 +177,11 @@ const DataTable = (props) => {
 
         for (let sortedField in sortedFields) {
             tempTableData.sort((dataRowX, dataRowY) => {
-                return (sortedFields[sortedField] === 0) ? (dataRowX[headerMap[sortedField]].localeCompare(dataRowY[headerMap[sortedField]])) : (dataRowY[headerMap[sortedField]].localeCompare(dataRowX[headerMap[sortedField]]));
+                return (sortedFields[sortedField] === 0) ? (String(dataRowX[headerMap[sortedField]]).localeCompare(String(dataRowY[headerMap[sortedField]]))) : (String(dataRowY[headerMap[sortedField]]).localeCompare(String(dataRowX[headerMap[sortedField]])));
             });
         }
 
+        scrollToTop();
         setSortInvalidated(false);
         setSortedTableData(tempTableData);
 
@@ -148,7 +206,10 @@ const DataTable = (props) => {
                         <Col>
                             <Widget>
                                 {props.children}
-                                <div className={tableStyles.tableTitle}>
+                                <div
+                                    className={tableStyles.tableTitle}
+                                    id={`${title.toLowerCase().replaceAll(" ", "")}Title`}
+                                >
                                     <div className="headline-2">{title}</div>
                                     <div className="d-flex">
                                     <Dropdown
@@ -212,7 +273,7 @@ const DataTable = (props) => {
                                 <div
                                     className="widget-table-overflow"
                                     style={(tableLoading) ? {
-                                            height: "61vh"
+                                            height: "51vh"
                                         } : {}
                                     }
                                 >

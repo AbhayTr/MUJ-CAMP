@@ -39,15 +39,20 @@ let AdminLayout = ({
     const [isSmallScreen, setSmallScreen] = useState(false);
 
     const adjustContentHeight = () => {
-        document.getElementById("main-content").style.height = `${document.getElementById("admin-page").offsetHeight - document.getElementById("menu-header").offsetHeight}px`;
+        const contentHeight = document.getElementById("admin-page").offsetHeight - document.getElementById("menu-header").offsetHeight;
+        document.getElementById("main-content").style.height = `${contentHeight}px`;
+    }
+
+    const adjust = () => {
+        try {
+            setSmallScreen(window.getComputedStyle(document.getElementById("userName")).display === "none");
+            adjustContentHeight();
+        } catch (e) {}
     }
 
     useEffect(() => {
 
-        window.onresize = () => {
-            setSmallScreen(window.getComputedStyle(document.getElementById("userName")).display === "none");
-            adjustContentHeight();
-        };
+        window.addEventListener("resize", adjust);
 
         validateSession((sessionExisted) => {
             if (!sessionExisted) {
@@ -64,7 +69,7 @@ let AdminLayout = ({
         }, null, false, true);
         
         return (() => {
-            window.onresize = () => {};
+            window.removeEventListener("resize", adjust);
         });
 
     }, []);
@@ -72,8 +77,7 @@ let AdminLayout = ({
     useEffect(() => {
         
         if (!loading) {
-            setSmallScreen(window.getComputedStyle(document.getElementById("userName")).display === "none");
-            adjustContentHeight();
+            adjust();
         }
 
     }, [loading]);
