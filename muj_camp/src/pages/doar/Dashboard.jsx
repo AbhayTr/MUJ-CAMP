@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { ensureAdminAccess } from "../../tools/Auth";
+import LoadSpinner from "../../custom_components/LoadSpinner";
 
 const Dashboard = () => {
 
@@ -15,7 +16,13 @@ const Dashboard = () => {
     }, []);
 
     return (
-        <>Dashboard</>
+        (loading) ? (
+            <LoadSpinner />
+        ) : (
+            <>
+                Dashboard
+            </>
+        )
     );
 }
 

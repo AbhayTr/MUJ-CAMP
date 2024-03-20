@@ -3,11 +3,7 @@
 import tableStyles from "../assets/scss/Tables.module.scss";
 import headerStyles from "../assets/scss/Header.module.scss";
 
-import cloudIcon from "../assets/images/tables/cloudIcon.svg";
-import funnelIcon from "../assets/images/tables/funnelIcon.svg";
 import optionsIcon from "../assets/images/tables/optionsIcon.svg";
-import printerIcon from "../assets/images/tables/printerIcon.svg";
-import searchIcon from "../assets/images/tables/searchIcon.svg";
 
 import React, { useEffect, useState } from "react";
 import {
@@ -23,6 +19,7 @@ import {
     DropdownItem,
 } from "reactstrap";
 import { Spinner } from "react-bootstrap";
+import { alert } from "react-bootstrap-confirmation";
 
 import Widget from "./Widget.jsx";
 
@@ -30,18 +27,22 @@ const DataTable = (props) => {
 
     const {
         title,
-        updatePageData
+        updatePageData,
+        setFiltersAutomatically = true,
+        ignoreFilters = []
     } = props;
 
     const [tableLoading, setTableLoading] = useState(true);
 
     const [tableHeaders, setTableHeaders] = useState([]);
     const [tableData, setTableData] = useState([]);
+    const [sortedTableData, setSortedTableData] = useState([]);
 
     const [tableCurrentPage, setTableCurrentPage] = useState(1);
     const [tablePages, setTablePages] = useState(1);
 
     const [sortedFields, setSortedFields] = useState({});
+    const [sortInvalidated, setSortInvalidated] = useState(false);
 
     const [headerMap, setHeaderMap] = useState({});
 
@@ -56,10 +57,58 @@ const DataTable = (props) => {
 
     }, [tableHeaders]);
 
+    const [filters, setFilters] = useState({});
+    const [filtersApplied, setFiltersApplied] = useState({});
+
+    useEffect(() => {
+
+        if (!setFiltersAutomatically) {
+            return;
+        }
+
+        if (tableData.length === 0 || Object.keys(headerMap).length === 0) {
+            return;
+        }
+
+        const tempFilters = {};
+
+        tableData.map((tableRow) => {
+            tableHeaders.map((tableHeader) => {
+                if (ignoreFilters.includes(tableHeader)) {
+                    return null;
+                }
+                if (tempFilters[tableHeader] == null) {
+                    tempFilters[tableHeader] = new Set([]);
+                }
+                tempFilters[tableHeader].add(tableRow[headerMap[tableHeader]]);
+                return null;
+            });
+            return null;
+        });
+
+        setFilters(tempFilters);
+
+    }, [tableData, headerMap]);
+
+    const getFilters = async (filter) => {
+        await alert((
+            <div key={filter}>
+                <h1>{filter}</h1>
+                <br/>
+                {Array.from(filters[filter]).map((filterOption) => {
+                    return (
+                        <h4>{filterOption}</h4>
+                    )
+                })}
+            </div>
+        ));
+    }
+
     useEffect(() => {
         setTableLoading(true);
-        updatePageData(tableCurrentPage, setTableLoading, setTableHeaders, setTableData, setTablePages, sortedFields);
-    }, [tableCurrentPage]);
+        updatePageData(tableCurrentPage, setTableLoading, setTableHeaders, setTableData, setTablePages, setFilters, filtersApplied);
+        setSortInvalidated(true);
+    }, [tableCurrentPage, filtersApplied]);
 
     useEffect(() => {
 
@@ -75,9 +124,10 @@ const DataTable = (props) => {
             });
         }
 
-        setTableData(tempTableData);
+        setSortInvalidated(false);
+        setSortedTableData(tempTableData);
 
-    }, [sortedFields]);
+    }, [sortedFields, sortInvalidated]);
 
     const sortStates = {};
     tableHeaders.map((tableHeader) => {
@@ -87,6 +137,9 @@ const DataTable = (props) => {
 
     const [headerSortStates, setHeaderSortStates] = useState(sortStates);
 
+    const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+
+    const tableDataToUse = ((Object.keys(sortedFields) === 0) ? tableData : sortedTableData);
     return (
         <div>
             <Row>
@@ -98,38 +151,62 @@ const DataTable = (props) => {
                                 <div className={tableStyles.tableTitle}>
                                     <div className="headline-2">{title}</div>
                                     <div className="d-flex">
-                                        <a href="/#">
+                                    <Dropdown
+                                        isOpen={filterMenuOpen}
+                                        toggle={() => {
+                                            setFilterMenuOpen(!filterMenuOpen);
+                                        }}
+                                        id="basic-nav-dropdown-filter"
+                                    >
+                                        <DropdownToggle
+                                            className="navbar-dropdown-toggle"
+                                            nav
+                                        >
                                             <img
-                                                src={searchIcon}
-                                                alt="Search"
-                                            />
-                                        </a>
-                                        <a href="/#">
-                                            <img
-                                                className="d-none d-sm-block"
-                                                src={cloudIcon}
-                                                alt="Cloud"
-                                            />
-                                        </a>
-                                        <a href="/#">
-                                            <img
-                                                src={printerIcon}
-                                                alt="Printer"
-                                            />
-                                        </a>
-                                        <a href="/#">
-                                            <img
-                                                className="d-none d-sm-block"
+                                                className="d-sm-block"
                                                 src={optionsIcon}
-                                                alt="Options"
+                                                alt="Filters"
+                                                title="Filters"
                                             />
-                                        </a>
-                                        <a href="/#" title="Filter">
-                                            <img
-                                                src={funnelIcon}
-                                                alt="Filter"
-                                            />
-                                        </a>
+                                        </DropdownToggle>
+                                        <DropdownMenu
+                                            className="navbar-dropdown profile-dropdown"
+                                            style={{
+                                                width: "194px"
+                                            }}>
+                                                <DropdownItem
+                                                    disabled
+                                                    className={headerStyles.dropdownProfileItem}
+                                                    style={{
+                                                        justifyContent: "center"
+                                                    }}
+                                                >
+                                                    <span
+                                                        style={{
+                                                            color: "#0d6efd",
+                                                            fontSize: "1.1em",
+                                                            fontWeight: "bold",
+                                                            fontSynthesis: "initial"
+                                                        }}
+                                                    >
+                                                        Apply Filters
+                                                    </span>
+                                                </DropdownItem>
+                                                {Object.keys(filters).map((filter) => {
+                                                    return (
+                                                        <DropdownItem
+                                                            key={filter}
+                                                            className={headerStyles.dropdownProfileItem}
+                                                            onClick={async () => {
+                                                                await getFilters(filter);
+                                                            }}
+                                                        >
+                                                            {filter}
+                                                        </DropdownItem>
+                                                    );
+                                                })}
+                                            </DropdownMenu>
+                                        </Dropdown>
                                     </div>
                                 </div>
                                 <div
@@ -189,7 +266,7 @@ const DataTable = (props) => {
                                                                             newData[item] = !headerSortStates[item];
                                                                             setHeaderSortStates(newData);
                                                                         }}
-                                                                        id="basic-nav-dropdown"
+                                                                        id="basic-nav-dropdown-sort"
                                                                     >
                                                                         <DropdownToggle
                                                                             nav
@@ -276,7 +353,7 @@ const DataTable = (props) => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {tableData.map((item, index) => (
+                                                    {tableDataToUse.map((item, index) => (
                                                         <tr key={index}>
                                                             {tableHeaders.map((itemKey, index) => {
                                                                 return (

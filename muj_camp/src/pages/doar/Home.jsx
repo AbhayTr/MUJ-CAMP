@@ -24,119 +24,66 @@ const Home = () => {
             <>
                 <DataTable
                     title="Alumni List"
-                    updatePageData={(tableCurrentPage, setTableLoading, setTableHeaders, setTableData, setTablePages, sortedFields) => {
+                    // setFiltersAutomatically={false}
+                    updatePageData={(tableCurrentPage, setTableLoading, setTableHeaders, setTableData, setTablePages, setFilters, filters) => {
                         setTableHeaders([
                             "Apple",
                             "Ball",
                             "Cat",
-                            "Dick"
+                            "Duck"
                         ]);
                         setTablePages(3);
-                        if (sortedFields["Apple"] == null) {
-                            setTableData((tableCurrentPage === 1) ? [
-                                [
-                                    "A",
-                                    "B",
-                                    "C",
-                                    "D"
-                                ],
-                                [
-                                    "A1",
-                                    "B1",
-                                    "C1",
-                                    "D1"
-                                ],
-                                [
-                                    "A3",
-                                    "B2",
-                                    "C2",
-                                    "D2"
-                                ],
-                                [
-                                    "A2",
-                                    "B3",
-                                    "C3",
-                                    "D3"
-                                ],
-                            ] : [
-                                [
-                                    "A7",
-                                    "B4",
-                                    "C4",
-                                    "D4"
-                                ],
-                                [
-                                    "A6",
-                                    "B5",
-                                    "C5",
-                                    "D5"
-                                ],
-                                [
-                                    "A5",
-                                    "B6",
-                                    "C6",
-                                    "D6"
-                                ],
-                                [
-                                    "A4",
-                                    "B7",
-                                    "C7",
-                                    "D7"
-                                ],
-                            ]);
-                        } else {
-                            setTableData((tableCurrentPage === 1) ? [
-                                [
-                                    "A",
-                                    "B",
-                                    "C",
-                                    "D"
-                                ],
-                                [
-                                    "A1",
-                                    "B1",
-                                    "C1",
-                                    "D1"
-                                ],
-                                [
-                                    "A2",
-                                    "B2",
-                                    "C2",
-                                    "D2"
-                                ],
-                                [
-                                    "A3",
-                                    "B3",
-                                    "C3",
-                                    "D3"
-                                ],
-                            ] : [
-                                [
-                                    "A4",
-                                    "B4",
-                                    "C4",
-                                    "D4"
-                                ],
-                                [
-                                    "A5",
-                                    "B5",
-                                    "C5",
-                                    "D5"
-                                ],
-                                [
-                                    "A6",
-                                    "B6",
-                                    "C6",
-                                    "D6"
-                                ],
-                                [
-                                    "A7",
-                                    "B7",
-                                    "C7",
-                                    "D7"
-                                ],
-                            ]);
-                        }
+                        setTableData((tableCurrentPage === 1) ? [
+                            [
+                                "A",
+                                "B",
+                                "C",
+                                "D"
+                            ],
+                            [
+                                "A1",
+                                "B1",
+                                "C1",
+                                "D1"
+                            ],
+                            [
+                                "A3",
+                                "B2",
+                                "C2",
+                                "D2"
+                            ],
+                            [
+                                "A2",
+                                "B3",
+                                "C3",
+                                "D3"
+                            ],
+                        ] : [
+                            [
+                                "A7",
+                                "B4",
+                                "C4",
+                                "D4"
+                            ],
+                            [
+                                "A6",
+                                "B5",
+                                "C5",
+                                "D5"
+                            ],
+                            [
+                                "A5",
+                                "B6",
+                                "C6",
+                                "D6"
+                            ],
+                            [
+                                "A4",
+                                "B7",
+                                "C7",
+                                "D7"
+                            ],
+                        ]);
                         setTableLoading(false);
                     }}
                 >
