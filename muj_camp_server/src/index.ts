@@ -1,14 +1,17 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import "./utils/init";
 
-import dotenv from "dotenv";
 import express, { Application, Request, Response } from "express";
 
 import CAMPMailer from "./utils/mail";
 import { CAMPDB } from "./utils/campdb";
 import CAMPAuthManager from "./auth/auth";
+import setApp from "./CampWSServer";
 
-dotenv.config();
 var app: Application = express();
+setApp(app);
 
 app.use((req: Request, res: Response, next: Function) => {
     res.header("Access-Control-Allow-Origin", "*");
@@ -48,6 +51,6 @@ app.locals.campMailer = new CAMPMailer();
 app.locals.campdb.connect().then(() => {
     app.listen(process.env.PORT, () => {
         console.clear();
-        console.log(`\x1b[32mMUJ CAMP Server is live on port ${process.env.PORT}!\x1b[0m`);
+        console.log(`\x1b[32mMUJ CAMP Server is live on:\n\nPort ${process.env.PORT} for HTTP Requests!\nPort ${process.env.WS_PORT} for WS Requests!\x1b[0m`);
     });
 });

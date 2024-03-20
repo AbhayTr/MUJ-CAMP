@@ -2,116 +2,64 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import useWebSocket from "react-use-websocket";
 
 import { ensureAdminAccess } from "../../tools/Auth";
 import DataTable from "../../custom_components/Table";
 import LoadSpinner from "../../custom_components/LoadSpinner";
 import { AuthStore } from "../../app_state/auth/auth";
+import useTable from "../../hooks/TableHook";
 
 const Home = () => {
 
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+
+    const [
+        tableLoading,
+        setTableLoading,
+        tableHeaders,
+        setTableHeaders,
+        tableData,
+        setTableData,
+        tablePages,
+        setTablePages,
+        filters,
+        setFilters,
+        filtersApplied,
+        setFiltersApplied
+    ] = useTable();
     
     useEffect(() => {
         ensureAdminAccess("DOAR", setLoading, navigate);
     }, []);
 
-    function generateFakeData(numRows, numCols) {
-        const fakeData = [];
-      
-        // Data pools for random selection
-        const firstNames = ["John", "Jane", "Emily", "Michael", "Sarah", "David"];
-        const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Miller", "Davis"];
-        const cities = ["New York", "Los Angeles", "Chicago", "Miami", "Houston", "Austin"];
-        const jobTitles = ["Developer", "Accountant", "Designer", "Manager", "Salesperson"];
-      
-        // Function for random selection from an array
-        const getRandomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
-      
-        // Generate the data
-        for (let i = 0; i < numRows; i++) {
-          const row = [];
-          for (let j = 0; j < numCols; j++) {
-            // Generate different types of data with some repetition
-            switch (j) {
-              case 0: // Full Name
-                row.push(`${getRandomItem(firstNames)} ${getRandomItem(lastNames)}`);
-                break;
-              case 1: // City
-                row.push(getRandomItem(cities));
-                break;
-              case 2: // Job Title
-                row.push(getRandomItem(jobTitles));
-                break;
-              case 3: // Age (between 20 and 60) 
-                row.push(Math.floor(Math.random() * 41) + 20);
-                break;
-              case 4: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 5: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 6: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 7: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 8: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 9: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 10: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 11: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 12: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 13: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 14: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 15: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 16: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 17: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 18: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 19: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 20: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-                case 21: // Salary (between 40000 and 150000)
-                row.push(Math.floor(Math.random() * 110001) + 40000);
-                break;
-              default:
-                break;
-            }
-          }
-          fakeData.push(row);
-        }
-      
-        return fakeData;
-      }
+    const onPageUpdate = (tableCurrentPage) => {
+        
+    };
 
-      const fakeDataOnce = generateFakeData(100, 7);
+    const { sendMessage } = useWebSocket(process.env.REACT_APP_WS_URL, {
+        onOpen: () => {
+            sendMessage(JSON.stringify({
+                "authToken": AuthStore.getState().authToken,
+                "authEmail": AuthStore.getState().authEmail
+            }));
+        },
+        onMessage: (message) => {
+            if (message == null) {
+                return;
+            }
+            const messageJSON = JSON.parse(message.data);
+            if (String(messageJSON.type) === "data") {
+                setTablePages(messageJSON.pages);
+                setTableHeaders(messageJSON.headers);
+                setFilters(messageJSON.filters);
+                setTableData(messageJSON.data);
+                setTableLoading(false);
+            }
+        },
+        shouldReconnect: (closeEvent) => true,
+    });
 
     return (
         (loading) ? (
@@ -120,13 +68,19 @@ const Home = () => {
             <>
                 <DataTable
                     title="Alumni List"
-                    // setFiltersAutomatically={false}
-                    updatePageData={(tableCurrentPage, setTableLoading, setTableHeaders, setTableData, setTablePages, setFilters, filters) => {
-                        setTableHeaders(["Name", "Country", "City", "Area", "Village", "College", "Office"]);
-                        setTablePages(3);
-                        setTableData(fakeDataOnce);
-                        setTimeout(() => setTableLoading(false), 1000);
-                    }}
+                    setFiltersAutomatically={false}
+                    tableHook={[
+                        tableLoading,
+                        setTableLoading,
+                        tableHeaders,
+                        tableData,
+                        tablePages,
+                        filters,
+                        setFilters,
+                        filtersApplied,
+                        setFiltersApplied
+                    ]}
+                    updatePageData={onPageUpdate}
                 >
                     <div
                         style={{

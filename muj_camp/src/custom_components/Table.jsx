@@ -3,7 +3,7 @@
 import tableStyles from "../assets/scss/Tables.module.scss";
 import headerStyles from "../assets/scss/Header.module.scss";
 
-import optionsIcon from "../assets/images/tables/optionsIcon.svg";
+import optionsIcon from "../assets/images/optionsIcon.svg";
 
 import React, { useEffect, useState } from "react";
 import {
@@ -28,18 +28,26 @@ const DataTable = (props) => {
         title,
         updatePageData,
         setFiltersAutomatically = true,
+        tableHook,
         ignoreFilters = []
     } = props;
 
-    const [tableLoading, setTableLoading] = useState(true);
+    const [
+        tableLoading,
+        setTableLoading,
+        tableHeaders,
+        tableData,
+        tablePages,
+        filters,
+        setFilters,
+        filtersApplied,
+        setFiltersApplied
+     ] = tableHook;
 
-    const [tableHeaders, setTableHeaders] = useState([]);
-    const [tableData, setTableData] = useState([]);
     const [sortedTableData, setSortedTableData] = useState([]);
 
     const [tableCurrentPage, setTableCurrentPage] = useState(1);
-    const [tablePages, setTablePages] = useState(1);
-
+    
     const [sortedFields, setSortedFields] = useState({});
     const [sortInvalidated, setSortInvalidated] = useState(false);
 
@@ -56,9 +64,7 @@ const DataTable = (props) => {
 
     }, [tableHeaders]);
 
-    const [filters, setFilters] = useState({});
     const [tempFiltersApplied, setTempFiltersApplied] = useState({});
-    const [filtersApplied, setFiltersApplied] = useState({});
 
     useEffect(() => {
 
@@ -116,7 +122,7 @@ const DataTable = (props) => {
 
     const setTableHeight = () => {
         try {
-            const tableHeight = (document.getElementById("main-content").offsetHeight) - ((document.getElementById("doarHeading").offsetHeight) + (document.getElementById("alumnilistTitle").offsetHeight) + 90);
+            const tableHeight = (document.getElementById("main-content").offsetHeight) - ((document.getElementById("doarHeading").offsetHeight) + (document.getElementById("alumnilistTitle").offsetHeight) + 103);
             document.getElementsByClassName("table-responsive")[0].style.maxHeight = ((tableHeight > 100) ? `${tableHeight}px` : "unset");
         } catch (e) {}
     }
@@ -142,7 +148,7 @@ const DataTable = (props) => {
 
     const updatePage = () => {
         setTableLoading(true);
-        updatePageData(tableCurrentPage, setTableLoading, setTableHeaders, setTableData, setTablePages, setFilters, filtersApplied);
+        updatePageData(tableCurrentPage);
         setSortInvalidated(true);
     }
 
@@ -180,7 +186,8 @@ const DataTable = (props) => {
 
     const [filterMenuOpen, setFilterMenuOpen] = useState(false);
 
-    const tableDataToUse = ((Object.keys(sortedFields) === 0) ? tableData : sortedTableData);
+    const tableDataToUse = ((Object.keys(sortedFields).length === 0) ? tableData : sortedTableData);
+    
     return (
         <div>
             <Row>
@@ -246,6 +253,7 @@ const DataTable = (props) => {
                                                         return (
                                                             <DropdownItem
                                                                 key={filter}
+                                                                active={filtersApplied[filter] != null && filtersApplied[filter].length !== 0}
                                                                 className={headerStyles.dropdownProfileItem}
                                                                 onClick={() => {
                                                                     setTempFiltersApplied(filtersApplied);
@@ -436,7 +444,8 @@ const DataTable = (props) => {
                                                 className="pagination-borderless"
                                                 style={{
                                                     display: "flex",
-                                                    justifyContent: "center"
+                                                    justifyContent: "center",
+                                                    marginTop: "1rem"
                                                 }}
                                             >
                                                 <PaginationItem disabled={tableCurrentPage <= 1}>
