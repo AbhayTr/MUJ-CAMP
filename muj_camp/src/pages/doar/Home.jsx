@@ -2,18 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useWebSocket from "react-use-websocket";
 
 import { ensureAdminAccess } from "../../tools/Auth";
 import DataTable from "../../custom_components/Table";
 import LoadSpinner from "../../custom_components/LoadSpinner";
 import { AuthStore } from "../../app_state/auth/auth";
 import useTable from "../../hooks/TableHook";
+import { showAlert } from "../../tools/UI";
+import { toast } from "react-toastify";
+import { Spinner } from "react-bootstrap";
+
+let webSocket = null;
 
 const Home = () => {
 
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+
+    const [liveConnected, setLiveConnected] = useState(-1);
 
     const [
         tableLoading,
@@ -29,37 +35,74 @@ const Home = () => {
         filtersApplied,
         setFiltersApplied
     ] = useTable();
+
+    const setTableHeight = () => {
+        try {
+            const tableHeight = (document.getElementById("main-content").offsetHeight) - ((document.getElementById("doarHeading").offsetHeight) + (document.getElementById("alumnilistTitle").offsetHeight) + 103);
+            document.getElementsByClassName("table-responsive")[0].style.maxHeight = ((tableHeight > 100) ? `${tableHeight}px` : "unset");
+        } catch (e) {}
+    }
     
     useEffect(() => {
+
         ensureAdminAccess("DOAR", setLoading, navigate);
+
+        return (() => {
+            webSocket.close();
+        });
+
     }, []);
 
-    const onPageUpdate = (tableCurrentPage) => {
-        
+    const handleWebSocketDown = async () => {
+        setTableLoading(true);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setLiveConnected(liveConnected + 2);
     };
 
-    const { sendMessage } = useWebSocket(process.env.REACT_APP_WS_URL, {
-        onOpen: () => {
-            sendMessage(JSON.stringify({
+    useEffect(() => {
+
+        if (liveConnected === 0) {
+            return;
+        }
+
+        webSocket = new WebSocket(process.env.REACT_APP_WS_URL);
+
+        webSocket.onopen = () => {
+            webSocket.send(JSON.stringify({
                 "authToken": AuthStore.getState().authToken,
                 "authEmail": AuthStore.getState().authEmail
             }));
-        },
-        onMessage: (message) => {
+        };
+
+        webSocket.onmessage = (message) => {
             if (message == null) {
                 return;
             }
             const messageJSON = JSON.parse(message.data);
             if (String(messageJSON.type) === "data") {
+                showAlert("Successfully connected to Realtime Alumni Monitoring System", toast.success, false);
                 setTablePages(messageJSON.pages);
                 setTableHeaders(messageJSON.headers);
                 setFilters(messageJSON.filters);
                 setTableData(messageJSON.data);
                 setTableLoading(false);
+                setLiveConnected(0);
             }
-        },
-        shouldReconnect: (closeEvent) => true,
-    });
+        };
+
+        webSocket.onerror = async (error) => {
+            await handleWebSocketDown();
+        };
+
+        webSocket.onclose = async (reason) => {
+            await handleWebSocketDown();
+        };
+
+    }, [liveConnected]);
+
+    const onPageUpdate = (tableCurrentPage) => {
+        
+    };
 
     return (
         (loading) ? (
@@ -81,6 +124,7 @@ const Home = () => {
                         setFiltersApplied
                     ]}
                     updatePageData={onPageUpdate}
+                    setTableHeight={setTableHeight}
                 >
                     <div
                         style={{
@@ -88,6 +132,19 @@ const Home = () => {
                         }}
                         id="doarHeading"
                     >
+                        {(liveConnected !== 0) ? (
+                            <div className="alert alert-danger">
+                                <Spinner
+                                    as="span"
+                                    animation="border"
+                                    size="sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                                &nbsp;&nbsp;
+                                Connection is lost. We are trying to re-connect. Please wait or reload the page.
+                            </div>
+                        ): (<></>)}
                         <h4 style={{
                             marginBottom: "0.7rem",
                             fontWeight: "bold"

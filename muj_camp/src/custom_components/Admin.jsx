@@ -132,6 +132,9 @@ let AdminLayout = ({
                                                     <img
                                                         src={AuthStore.getState().photo}
                                                         alt="User"
+                                                        style={{
+                                                            borderRadius: "50%"
+                                                        }}
                                                         onLoad={() => {
                                                             try {
                                                                 const removeDefault = setInterval(() => {
@@ -150,6 +153,9 @@ let AdminLayout = ({
                                                     src={userPhoto}
                                                     alt="User"
                                                     id="userPhoto"
+                                                    style={{
+                                                        borderRadius: "50%"
+                                                    }}
                                                 />
                                             </span>
                                             <span

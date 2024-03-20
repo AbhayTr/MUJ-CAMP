@@ -38,6 +38,12 @@ root.render(
                         }
                     />
                     <Route
+                        path="/down"
+                        element={
+                            <>Down!</>
+                        }
+                    />
+                    <Route
                         path="*"
                         element={<Error404 />}
                     />

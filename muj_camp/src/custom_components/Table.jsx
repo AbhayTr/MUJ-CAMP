@@ -29,7 +29,8 @@ const DataTable = (props) => {
         updatePageData,
         setFiltersAutomatically = true,
         tableHook,
-        ignoreFilters = []
+        ignoreFilters = [],
+        setTableHeight
     } = props;
 
     const [
@@ -120,13 +121,6 @@ const DataTable = (props) => {
         } catch (e) {}
     }
 
-    const setTableHeight = () => {
-        try {
-            const tableHeight = (document.getElementById("main-content").offsetHeight) - ((document.getElementById("doarHeading").offsetHeight) + (document.getElementById("alumnilistTitle").offsetHeight) + 103);
-            document.getElementsByClassName("table-responsive")[0].style.maxHeight = ((tableHeight > 100) ? `${tableHeight}px` : "unset");
-        } catch (e) {}
-    }
-
     useEffect(() => {
 
         window.addEventListener("resize", setTableHeight);
@@ -200,12 +194,14 @@ const DataTable = (props) => {
                                     className={tableStyles.tableTitle}
                                     id={`${title.toLowerCase().replaceAll(" ", "")}Title`}
                                 >
-                                    <h3 style={{
-                                        fontWeight: "bold",
-                                        fontSynthesis: "initial"
-                                    }}>
-                                        {title}
-                                    </h3>
+                                    {(!tableLoading) ? (
+                                        <h3 style={{
+                                            fontWeight: "bold",
+                                            fontSynthesis: "initial"
+                                        }}>
+                                            {title}
+                                        </h3>
+                                    ) : (<></>)}
                                     {(!tableLoading) ? (
                                         <div className="d-flex">
                                             <Dropdown
@@ -494,17 +490,29 @@ const DataTable = (props) => {
                         setChoseFiltersModalShowing(null);
                     }}
                 >
-                    <Modal.Header closeButton />
-                    <Modal.Body>
-                        <>
-                            <h1 style={{
+                    <Modal.Header
+                        closeButton
+                        style={{
+                            paddingBottom: "0px"
+                        }}
+                    >
+                        <h3
+                            className="modal-title"
+                            style={{
                                 color: "#0d6efd",
                                 fontWeight: "bold",
                                 fontSynthesis: "initial",
                                 textAlign: "center"
-                            }}>
-                                {choseFiltersModalShowing}
-                            </h1>
+                            }}
+                        >
+                            {choseFiltersModalShowing}
+                        </h3>   
+                    </Modal.Header>
+                    <Modal.Body>
+                        <>
+                            <p
+                                >Click on the values from below 👇, for which you want to see the {title} Records 📊 
+                            </p>
                             <br/>
                             <div style={{
                                 display: "flex",
@@ -524,7 +532,7 @@ const DataTable = (props) => {
                                             }}
                                         >
                                             <span
-                                                className={`alert alert-${(tempFiltersApplied[choseFiltersModalShowing] != null && tempFiltersApplied[choseFiltersModalShowing].includes(filterOptionData[0])) ? "primary" : "secondary"}`}
+                                                className={`btn btn-${(tempFiltersApplied[choseFiltersModalShowing] != null && tempFiltersApplied[choseFiltersModalShowing].includes(filterOptionData[0])) ? "success" : "danger"}`}
                                                 style={{
                                                     cursor: "pointer",
                                                     userSelect: "none"
@@ -546,7 +554,7 @@ const DataTable = (props) => {
                                                     setTempFiltersApplied(newData);
                                                 }}
                                             >
-                                                {filterOptionData[0]} ({filterOptionData[1]})
+                                                <i className={`fa fa-${(tempFiltersApplied[choseFiltersModalShowing] != null && tempFiltersApplied[choseFiltersModalShowing].includes(filterOptionData[0])) ? "check" : "times"}`}/>&nbsp;&nbsp;&nbsp;{filterOptionData[0]} (<b>x{filterOptionData[1]}</b>)
                                             </span>
                                         </div>
                                     )

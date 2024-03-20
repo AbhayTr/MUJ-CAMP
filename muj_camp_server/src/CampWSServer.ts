@@ -42,6 +42,21 @@ wss.on("connection", (ws: WebSocket) => {
                             "ValueC1",
                             "ValueC2",
                             "ValueC3",
+                        ],
+                        [
+                            "ValueD1",
+                            "ValueD2",
+                            "ValueD3",
+                        ],
+                        [
+                            "ValueE1",
+                            "ValueE2",
+                            "ValueE3",
+                        ],
+                        [
+                            "ValueF1",
+                            "ValueF2",
+                            "ValueF3",
                         ]
                     ],
                     filters: {
