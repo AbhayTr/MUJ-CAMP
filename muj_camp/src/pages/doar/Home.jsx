@@ -50,6 +50,57 @@ const Home = () => {
               case 4: // Salary (between 40000 and 150000)
                 row.push(Math.floor(Math.random() * 110001) + 40000);
                 break;
+                case 5: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 6: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 7: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 8: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 9: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 10: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 11: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 12: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 13: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 14: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 15: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 16: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 17: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 18: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 19: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 20: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
+                case 21: // Salary (between 40000 and 150000)
+                row.push(Math.floor(Math.random() * 110001) + 40000);
+                break;
               default:
                 break;
             }
@@ -60,6 +111,8 @@ const Home = () => {
         return fakeData;
       }
 
+      const fakeDataOnce = generateFakeData(100, 7);
+
     return (
         (loading) ? (
             <LoadSpinner />
@@ -69,10 +122,10 @@ const Home = () => {
                     title="Alumni List"
                     // setFiltersAutomatically={false}
                     updatePageData={(tableCurrentPage, setTableLoading, setTableHeaders, setTableData, setTablePages, setFilters, filters) => {
-                        setTableHeaders(["Name", "Country", "City", "Area", "Village"]);
+                        setTableHeaders(["Name", "Country", "City", "Area", "Village", "College", "Office"]);
                         setTablePages(3);
-                        setTableData(generateFakeData(100, 5));
-                        setTableLoading(false);
+                        setTableData(fakeDataOnce);
+                        setTimeout(() => setTableLoading(false), 1000);
                     }}
                 >
                     <div

@@ -18,8 +18,7 @@ import {
     DropdownMenu,
     DropdownItem,
 } from "reactstrap";
-import { Spinner } from "react-bootstrap";
-import { alert } from "react-bootstrap-confirmation";
+import { Button, Modal, Spinner } from "react-bootstrap";
 
 import Widget from "./Widget.jsx";
 
@@ -58,6 +57,7 @@ const DataTable = (props) => {
     }, [tableHeaders]);
 
     const [filters, setFilters] = useState({});
+    const [tempFiltersApplied, setTempFiltersApplied] = useState({});
     const [filtersApplied, setFiltersApplied] = useState({});
 
     useEffect(() => {
@@ -90,7 +90,21 @@ const DataTable = (props) => {
             return null;
         });
 
-        setFilters(tempFilters);
+        const finalTempFilter = {};
+        for (let tempFilter in tempFilters) {
+            const tempFilterName = tempFilter;
+            tempFilter = tempFilters[tempFilter];
+            const tempFilterOptions = [];
+            for (let tempFilterOption in tempFilter) {
+                tempFilterOptions.push([tempFilterOption, tempFilter[tempFilterOption]]);
+            }
+            tempFilterOptions.sort((filterOption1, filterOption2) => {
+                return filterOption2[1] - filterOption1[1];
+            });
+            finalTempFilter[tempFilterName] = tempFilterOptions;
+        }
+
+        setFilters(finalTempFilter);
 
     }, [tableData, headerMap]);
 
@@ -124,47 +138,16 @@ const DataTable = (props) => {
 
     }, [tableLoading]);
 
-    const getFilters = async (filter) => {
-        await alert((
-            <>
-                <h1 style={{
-                    color: "#0d6efd",
-                    fontWeight: "bold",
-                    fontSynthesis: "initial",
-                    textAlign: "center"
-                }}>
-                    {filter}
-                </h1>
-                <br/>
-                {Object.keys(filters[filter]).map((filterOption) => {
-                    return (
-                        <div
-                            key={filterOption}
-                            disabled
-                            className={headerStyles.dropdownProfileItem}
-                        >
-                            <span
-                                style={{
-                                    fontSize: "1.1em",
-                                    fontWeight: "bold",
-                                    fontSynthesis: "initial"
-                                }}
-                            >
-                                {filterOption}
-                                <br/>
-                                ({filters[filter][filterOption]})
-                            </span>
-                        </div>
-                    )
-                })}
-            </>
-        ));
-    }
+    const [choseFiltersModalShowing, setChoseFiltersModalShowing] = useState(null);
 
-    useEffect(() => {
+    const updatePage = () => {
         setTableLoading(true);
         updatePageData(tableCurrentPage, setTableLoading, setTableHeaders, setTableData, setTablePages, setFilters, filtersApplied);
         setSortInvalidated(true);
+    }
+
+    useEffect(() => {
+        updatePage();
     }, [tableCurrentPage, filtersApplied]);
 
     useEffect(() => {
@@ -210,65 +193,75 @@ const DataTable = (props) => {
                                     className={tableStyles.tableTitle}
                                     id={`${title.toLowerCase().replaceAll(" ", "")}Title`}
                                 >
-                                    <div className="headline-2">{title}</div>
-                                    <div className="d-flex">
-                                    <Dropdown
-                                        isOpen={filterMenuOpen}
-                                        toggle={() => {
-                                            setFilterMenuOpen(!filterMenuOpen);
-                                        }}
-                                        id="basic-nav-dropdown-filter"
-                                    >
-                                        <DropdownToggle
-                                            className="navbar-dropdown-toggle"
-                                            nav
-                                        >
-                                            <img
-                                                className="d-sm-block"
-                                                src={optionsIcon}
-                                                alt="Filters"
-                                                title="Filters"
-                                            />
-                                        </DropdownToggle>
-                                        <DropdownMenu
-                                            className="navbar-dropdown profile-dropdown"
-                                            style={{
-                                                width: "194px"
-                                            }}>
-                                                <DropdownItem
-                                                    disabled
-                                                    className={headerStyles.dropdownProfileItem}
-                                                    style={{
-                                                        justifyContent: "center"
-                                                    }}
+                                    <h3 style={{
+                                        fontWeight: "bold",
+                                        fontSynthesis: "initial"
+                                    }}>
+                                        {title}
+                                    </h3>
+                                    {(!tableLoading) ? (
+                                        <div className="d-flex">
+                                            <Dropdown
+                                                isOpen={filterMenuOpen}
+                                                toggle={() => {
+                                                    setFilterMenuOpen(!filterMenuOpen);
+                                                }}
+                                                id="basic-nav-dropdown-filter"
+                                            >
+                                                <DropdownToggle
+                                                    className="navbar-dropdown-toggle"
+                                                    nav
                                                 >
-                                                    <span
-                                                        style={{
-                                                            color: "#0d6efd",
-                                                            fontSize: "1.1em",
-                                                            fontWeight: "bold",
-                                                            fontSynthesis: "initial"
-                                                        }}
-                                                    >
-                                                        Apply Filters
-                                                    </span>
-                                                </DropdownItem>
-                                                {Object.keys(filters).map((filter) => {
-                                                    return (
+                                                    <img
+                                                        className="d-sm-block"
+                                                        src={optionsIcon}
+                                                        alt="Filters"
+                                                        title="Filters"
+                                                    />
+                                                </DropdownToggle>
+                                                <DropdownMenu
+                                                    className="navbar-dropdown profile-dropdown"
+                                                    style={{
+                                                        width: "194px"
+                                                    }}>
                                                         <DropdownItem
-                                                            key={filter}
+                                                            disabled
                                                             className={headerStyles.dropdownProfileItem}
-                                                            onClick={async () => {
-                                                                await getFilters(filter);
+                                                            style={{
+                                                                justifyContent: "center"
                                                             }}
                                                         >
-                                                            {filter}
-                                                        </DropdownItem>
-                                                    );
-                                                })}
-                                            </DropdownMenu>
-                                        </Dropdown>
-                                    </div>
+                                                            <span
+                                                                style={{
+                                                                color: "#0d6efd",
+                                                                fontSize: "1.1em",
+                                                                fontWeight: "bold",
+                                                                fontSynthesis: "initial"
+                                                            }}
+                                                        >
+                                                            Apply Filters
+                                                        </span>
+                                                    </DropdownItem>
+                                                    {Object.keys(filters).map((filter) => {
+                                                        return (
+                                                            <DropdownItem
+                                                                key={filter}
+                                                                className={headerStyles.dropdownProfileItem}
+                                                                onClick={() => {
+                                                                    setTempFiltersApplied(filtersApplied);
+                                                                    setChoseFiltersModalShowing(filter);
+                                                                }}
+                                                            >
+                                                                {filter}
+                                                            </DropdownItem>
+                                                        );
+                                                    })}
+                                                </DropdownMenu>
+                                            </Dropdown>
+                                        </div>
+                                    ) : (
+                                        <></>
+                                    )}
                                 </div>
                                 <div
                                     className="widget-table-overflow"
@@ -305,7 +298,10 @@ const DataTable = (props) => {
                                         </>
                                     ) : (
                                         <>
-                                            <Table className={`table-striped table-borderless table-hover ${tableStyles.statesTable}`} responsive>
+                                            <Table
+                                                className={`table-striped table-borderless table-hover ${tableStyles.statesTable}`}
+                                                responsive
+                                            >
                                                 <thead>
                                                     <tr>
                                                         {tableHeaders.map((item) => {
@@ -413,7 +409,11 @@ const DataTable = (props) => {
                                                         })}
                                                     </tr>
                                                 </thead>
-                                                <tbody>
+                                                <tbody 
+                                                    style={{
+                                                        userSelect: "text"
+                                                    }}
+                                                >
                                                     {tableDataToUse.map((item, index) => (
                                                         <tr key={index}>
                                                             {tableHeaders.map((itemKey, index) => {
@@ -477,6 +477,89 @@ const DataTable = (props) => {
                     </Row>
                 </Col>
             </Row>
+            {(choseFiltersModalShowing != null) ? (
+                <Modal
+                    show={(choseFiltersModalShowing != null)}
+                    onHide={() => {
+                        setTempFiltersApplied({});
+                        setChoseFiltersModalShowing(null);
+                    }}
+                >
+                    <Modal.Header closeButton />
+                    <Modal.Body>
+                        <>
+                            <h1 style={{
+                                color: "#0d6efd",
+                                fontWeight: "bold",
+                                fontSynthesis: "initial",
+                                textAlign: "center"
+                            }}>
+                                {choseFiltersModalShowing}
+                            </h1>
+                            <br/>
+                            <div style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: "0.5em",
+                                overflow: "auto",
+                                maxHeight: "50vh"
+                            }}>
+                                {filters[choseFiltersModalShowing].map((filterOptionData) => {
+                                    return (
+                                        <div
+                                            key={filterOptionData[0]}
+                                            disabled
+                                            className={headerStyles.dropdownProfileItem}
+                                            style={{
+                                                wordBreak: "break-word"
+                                            }}
+                                        >
+                                            <span
+                                                className={`alert alert-${(tempFiltersApplied[choseFiltersModalShowing] != null && tempFiltersApplied[choseFiltersModalShowing].includes(filterOptionData[0])) ? "primary" : "secondary"}`}
+                                                style={{
+                                                    cursor: "pointer",
+                                                    userSelect: "none"
+                                                }}
+                                                onClick={() => {
+                                                    const newData = {
+                                                        ...tempFiltersApplied
+                                                    };
+                                                    if (tempFiltersApplied[choseFiltersModalShowing] == null) {
+                                                        newData[choseFiltersModalShowing] = [filterOptionData[0]];
+                                                    } else {
+                                                        if (tempFiltersApplied[choseFiltersModalShowing].includes(filterOptionData[0])) {
+                                                            const indexToRemove = newData[choseFiltersModalShowing].indexOf(filterOptionData[0]);
+                                                            newData[choseFiltersModalShowing] = newData[choseFiltersModalShowing].slice(0, indexToRemove).concat(newData[choseFiltersModalShowing].slice(indexToRemove + 1));
+                                                        } else {
+                                                            newData[choseFiltersModalShowing].push(filterOptionData[0]);
+                                                        }
+                                                    }
+                                                    setTempFiltersApplied(newData);
+                                                }}
+                                            >
+                                                {filterOptionData[0]} ({filterOptionData[1]})
+                                            </span>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button
+                            variant="primary"
+                            onClick={() => {
+                                setChoseFiltersModalShowing(null);
+                                setFiltersApplied(tempFiltersApplied);
+                            }}
+                        >
+                                Set Filters
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+            ) : (
+                <></>
+            )}
         </div>
     )
 }

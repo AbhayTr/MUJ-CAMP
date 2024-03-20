@@ -9,6 +9,7 @@
 html, body {
     scroll-behavior: smooth;
     font-family: "Montserrat";
+    user-select: none;
 }
 
 ::-webkit-scrollbar {
