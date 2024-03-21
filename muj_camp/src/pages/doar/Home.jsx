@@ -99,7 +99,7 @@ const Home = () => {
     }, [liveConnected]);
 
     const onPageUpdate = (tableCurrentPage) => {
-        
+        setTableLoading(false);
     };
 
     return (

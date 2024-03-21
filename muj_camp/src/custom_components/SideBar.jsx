@@ -15,15 +15,21 @@ import { AuthStore } from "../app_state/auth/auth";
 import { AdminPages, AuthRoles } from "../constants/roles";
 import { showCredits } from "../tools/UI";
 
-const Sidebar = () => {
-
+const Sidebar = ({
+    sidebarMenuClass
+}) => {
     return (
-        <div style={{
-            display: "flex",
-            height: "100%",
-            overflow: "scroll initial"
-        }}>
+        <div
+            id="scrollBarDiv"
+            style={{
+                display: "flex",
+                height: "100%",
+                width: "80px",
+                overflow: "scroll initial"
+            }}
+        >
             <CDBSidebar
+                className={sidebarMenuClass}
                 textColor="#fff"
                 backgroundColor="darkorange"
                 toggled={true}
@@ -57,18 +63,10 @@ const Sidebar = () => {
                     prefix={
                         <i
                             className="fa fa-bars fa-large"
-                        ></i>
+                        />
                     }
                 >
-                    <NavLink
-                        to="/admin/home"
-                        className="text-decoration-none"
-                        style={{
-                            color: "inherit"
-                        }}
-                    >
-                        MUJ CAMP 🎓
-                    </NavLink>
+                    MUJ CAMP 🎓
                 </CDBSidebarHeader>
 
                 <CDBSidebarContent className="sidebar-content">

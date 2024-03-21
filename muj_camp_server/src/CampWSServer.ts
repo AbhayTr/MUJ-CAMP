@@ -31,7 +31,7 @@ wss.on("connection", (ws: WebSocket) => {
                 if (jsonData.type === "init") {
                     ws.send(JSON.stringify({
                         type: "data",
-                        pages: 4,
+                        pages: 104,
                         headers: [
                             "Test1",
                             "Test2",

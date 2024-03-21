@@ -47,6 +47,19 @@ let AdminLayout = ({
         try {
             setSmallScreen(window.getComputedStyle(document.getElementById("userName")).display === "none");
             adjustContentHeight();
+            if (document.getElementsByClassName("pro-sidebar").length === 0) {
+                return;
+            }
+    
+            if (window.getComputedStyle(document.getElementById("userName")).display === "none") {
+                setSidebarMenuClass("complete-collapse");
+                document.getElementById("scrollBarDiv").style.width = "0px";
+            } else {
+                setSidebarMenuClass("");
+                document.getElementsByClassName("pro-sidebar")[0].style.removeProperty("min-width");
+                document.getElementsByClassName("pro-sidebar")[0].style.removeProperty("width");
+                document.getElementById("scrollBarDiv").style.width = "80px";
+            }
         } catch (e) {}
     }
 
@@ -74,11 +87,29 @@ let AdminLayout = ({
 
     }, []);
 
+    const [sidebarMenuClass, setSidebarMenuClass] = useState("");
+
     useEffect(() => {
         
         if (!loading) {
             adjust();
         }
+
+        if (document.getElementsByClassName("icon-suffix").length === 0) {
+            return;
+        }
+
+        document.getElementsByClassName("icon-suffix")[0].addEventListener("click", (e) => {
+            if (window.getComputedStyle(document.getElementById("userName")).display === "none") {
+                if (document.getElementsByClassName("toggled").length === 0) {
+                    document.getElementsByClassName("pro-sidebar")[0].style.setProperty("min-width", "0px", "important");
+                    document.getElementsByClassName("pro-sidebar")[0].style.setProperty("width", "0px", "important");
+                } else {
+                    document.getElementsByClassName("pro-sidebar")[0].style.setProperty("min-width", "270px", "important");
+                    document.getElementsByClassName("pro-sidebar")[0].style.setProperty("width", "270px", "important");
+                }
+            }
+        });
 
     }, [loading]);
 
@@ -98,7 +129,9 @@ let AdminLayout = ({
                 height: "100%",
                 width: "100%"
             }}>
-                <Sidebar />
+                <Sidebar
+                    sidebarMenuClass={sidebarMenuClass}
+                />
                 <div
                     id="admin-page"
                     style={{
@@ -113,7 +146,26 @@ let AdminLayout = ({
                                 id="menu-header"
                             >
                                 <div className="d-sm-block" inline="true">
-                                    <h1>{adminPage}</h1>
+                                    <div style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "0.4em"
+                                    }}>
+                                        {(isSmallScreen) ? (
+                                            <button
+                                                className="navbar-toggler"
+                                                type="button"
+                                                onClick={(e) => {
+                                                    document.getElementsByClassName("icon-suffix")[0].click();
+                                                }}
+                                            >
+                                                <span className="navbar-toggler-icon" />
+                                            </button>
+                                        ) : (<></>)}
+                                        <h1>
+                                            {adminPage}
+                                        </h1>
+                                    </div>
                                 </div>
                                 <Nav className="ml-auto">
                                     <Dropdown

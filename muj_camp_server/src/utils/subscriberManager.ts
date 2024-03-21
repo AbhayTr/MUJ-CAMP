@@ -26,7 +26,7 @@ class SubscriberManager {
             this.#operationStack.push([this.removeSubscriber, subscriberConnection]);
             return;
         }
-        delete this.#subsribersList[this.#subsribersList.indexOf(subscriberConnection)];
+        this.#subsribersList.splice(this.#subsribersList.indexOf(subscriberConnection), 1);
     }
 
     pushData(data: object) {
