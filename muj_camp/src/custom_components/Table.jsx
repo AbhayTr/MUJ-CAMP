@@ -22,16 +22,20 @@ import {
 import { Button, Modal, Spinner } from "react-bootstrap";
 
 import Widget from "./Widget.jsx";
+import LoadButton from "./LoadButton.jsx";
 
 const DataTable = (props) => {
 
     const {
-        title,
+        title = "",
         updatePageData,
         setFiltersAutomatically = true,
         tableHook,
         ignoreFilters = [],
-        setTableHeight
+        setTableHeight,
+        searchPlaceholder,
+        resultsPlaceholder,
+        searchDisabled = false
     } = props;
 
     const [
@@ -43,7 +47,8 @@ const DataTable = (props) => {
         filters,
         setFilters,
         filtersApplied,
-        setFiltersApplied
+        setFiltersApplied,
+        recordsNumber
      ] = tableHook;
 
     const [sortedTableData, setSortedTableData] = useState([]);
@@ -54,7 +59,8 @@ const DataTable = (props) => {
     const [sortInvalidated, setSortInvalidated] = useState(false);
 
     const [headerMap, setHeaderMap] = useState({});
-    const [initialRenderSkipped, setInitialRenderSkipped] = useState(false);
+
+    const [searchText, setSearchText] = useState("");
 
     useEffect(() => {
 
@@ -144,17 +150,30 @@ const DataTable = (props) => {
 
     const updatePage = () => {
         setTableLoading(true);
-        updatePageData(tableCurrentPage);
+        updatePageData(tableCurrentPage, filtersApplied, searchText);
         setSortInvalidated(true);
     }
 
     useEffect(() => {
-        if (!initialRenderSkipped) {
-            setInitialRenderSkipped(true);
+
+        if (searchDisabled) {
             return;
         }
+
+        setTableCurrentPage(1);
         updatePage();
-    }, [tableCurrentPage, filtersApplied]);
+
+    }, [filtersApplied, searchText]);
+
+    useEffect(() => {
+
+        if (searchDisabled) {
+            return;
+        }
+
+        updatePage();
+
+    }, [tableCurrentPage]);
 
     useEffect(() => {
 
@@ -187,6 +206,12 @@ const DataTable = (props) => {
     const [filterMenuOpen, setFilterMenuOpen] = useState(false);
 
     const tableDataToUse = ((Object.keys(sortedFields).length === 0) ? tableData : sortedTableData);
+
+    const filtersOrSortApplied = () => {
+        return !(Object.keys(filtersApplied).length === 0 && Object.keys(sortedFields).length === 0)
+    }
+
+    const [filterResetButtonLoading, setResetButtonFiltersLoading] = useState(false);
     
     return (
         <div>
@@ -196,7 +221,7 @@ const DataTable = (props) => {
                         <Col>
                             <Widget>
                                 {props.children}
-                                {(!tableLoading) ? (
+                                {(title !== "") ? (
                                     <h3 style={{
                                         fontWeight: "bold",
                                         fontSynthesis: "initial",
@@ -209,10 +234,11 @@ const DataTable = (props) => {
                                     className={tableStyles.tableTitle}
                                     id={`${title.toLowerCase().replaceAll(" ", "")}Title`}
                                     style={{
-                                        alignItems: "center"
+                                        alignItems: "center",
+                                        paddingBottom: "21px"
                                     }}
                                 >
-                                    {(!tableLoading) ? (
+                                    {(true) ? (
                                         <>
                                             <label htmlFor="search">
                                                 <img
@@ -226,10 +252,14 @@ const DataTable = (props) => {
                                                 />
                                             </label>
                                             <input
+                                                disabled={searchDisabled}
                                                 type="search"
                                                 className="form-control mr-sm-2"
-                                                placeholder="Search Alumni."
+                                                placeholder={searchPlaceholder}
                                                 id="search"
+                                                onInput={(e) => {
+                                                    setSearchText(e.target.value);
+                                                }}
                                                 style={{
                                                     width: "100%",
                                                     borderStyle: "solid",
@@ -306,7 +336,8 @@ const DataTable = (props) => {
                                 <div
                                     className="widget-table-overflow"
                                     style={(tableLoading) ? {
-                                            height: "51vh"
+                                            height: "51vh",
+                                            position: "relative"
                                         } : {}
                                     }
                                 >
@@ -338,6 +369,58 @@ const DataTable = (props) => {
                                         </>
                                     ) : (
                                         <>
+                                            <div
+                                                className={tableStyles.tableTitle}
+                                                id={`${title.toLowerCase().replaceAll(" ", "")}Title`}
+                                                style={{
+                                                    alignItems: "center",
+                                                    paddingBottom: "12px",
+                                                    paddingTop: "0px"
+                                                }}
+                                            >
+                                                <h5
+                                                    style={{
+                                                        fontSynthesis: "initial",
+                                                        wordWrap: "break-word",
+                                                        textWrap: "wrap"
+                                                    }}
+                                                >
+                                                    {resultsPlaceholder.split(" ").map((word, index) => {
+                                                        return (
+                                                            <span key={index}>
+                                                                {(word === "%r%" || word === "%t%") ? (
+                                                                    <b style={{
+                                                                        color: "#3fb950"
+                                                                    }}>
+                                                                        {word.replace("%t%", String(recordsNumber)).replace("%r%", `${
+                                                                            ((tableData.length) * (tableCurrentPage - 1)) + 1
+                                                                        } to ${
+                                                                            (((tableData.length) * (tableCurrentPage - 1))) + (tableData.length)
+                                                                        }`)}
+                                                                    </b>
+                                                                ) : (word.replace("%e%", (((filtersOrSortApplied())) ? " who match your selected criteria" : (searchText !== "") ? " who match your search criteria" : "")))}
+                                                                {(index !== resultsPlaceholder.split(" ").length - 1) ? (<>&nbsp;</>) : (<></>)}
+                                                            </span>
+                                                        )
+                                                    })}
+                                                </h5>
+                                                {(filtersOrSortApplied()) ? (
+                                                    <LoadButton
+                                                        lbLoading={filterResetButtonLoading}
+                                                        lbText="Reset Filters and Sorting"
+                                                        type="danger"
+                                                        style={{
+                                                            width: "fit-content"
+                                                        }}
+                                                        clickHandler={() => {
+                                                            setResetButtonFiltersLoading(true);
+                                                            setFiltersApplied({});
+                                                            setSortedFields({});
+                                                            setResetButtonFiltersLoading(false);
+                                                        }}
+                                                    />
+                                                ) : (<></>)}
+                                            </div>
                                             <Table
                                                 className={`table-striped table-borderless table-hover ${tableStyles.statesTable}`}
                                                 responsive
@@ -373,7 +456,11 @@ const DataTable = (props) => {
                                                                             <span style={(sortedFields[item] != null) ? {
                                                                                 color: "darkorange"
                                                                             } : {}}>
-                                                                                {item}
+                                                                                <span style={(true) ? ({
+                                                                                    marginLeft: "17px"
+                                                                                }) : ({})}>
+                                                                                    {item}
+                                                                                </span>
                                                                             </span>
                                                                         </DropdownToggle>
                                                                         <DropdownMenu
@@ -463,7 +550,19 @@ const DataTable = (props) => {
                                                                         className="align-items-center"
                                                                     >
                                                                         <span className="ml-3">
-                                                                            {item[index]}
+                                                                            {(typeof item[index] === "string") ? item[index].split("\n").map((dataLine, indexInternal) => {
+                                                                                return (
+                                                                                    <span
+                                                                                        key={indexInternal}
+                                                                                        style={(true) ? ({
+                                                                                            paddingLeft: "17px"
+                                                                                        }) : ({})}
+                                                                                    >
+                                                                                        {dataLine}
+                                                                                        {(indexInternal !== item[index].split("\n").length - 1) ? (<br/>) : (<></>)}
+                                                                                    </span>
+                                                                                );
+                                                                            }) : (item[index])}
                                                                         </span>
                                                                     </td>
                                                                 )

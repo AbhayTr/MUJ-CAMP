@@ -33,6 +33,35 @@ const LoadButton = ({
         }
     }
 
+    const updateButtonWidth = () => {
+        if (lbLoading) {
+            return;
+        }
+        if (style.width === "fit-content") {
+            if (document.getElementById(lbId) != null) {
+                document.getElementById(lbId).style.width = `${document.getElementById(lbId).offsetWidth}px`;
+            }
+        }
+    };
+
+    useEffect(() => {
+
+        const adjustButtonWidth = setInterval(() => {
+
+            if (document.getElementById(lbId) != null) {
+                updateButtonWidth();
+                clearInterval(adjustButtonWidth);
+            }
+
+        }, 1);
+        window.addEventListener("resize", updateButtonWidth);
+
+        return (() => {
+            window.removeEventListener("resize", updateButtonWidth);
+        })
+
+    }, []);
+
     useEffect(() => {
 
         if (lbLoading) {

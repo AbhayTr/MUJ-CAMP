@@ -12,6 +12,8 @@ const useTable = () => {
     const [filters, setFilters] = useState({});
     const [filtersApplied, setFiltersApplied] = useState({});
 
+    const [recordsNumber, setRecordsNumber] = useState(0);
+
     return [
         tableLoading,
         setTableLoading,
@@ -24,7 +26,9 @@ const useTable = () => {
         filters,
         setFilters,
         filtersApplied,
-        setFiltersApplied
+        setFiltersApplied,
+        recordsNumber,
+        setRecordsNumber
     ];
 
 }

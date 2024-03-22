@@ -2,9 +2,13 @@ import { Application } from "express";
 import WebSocket, { WebSocketServer } from "ws";
 import CAMPAuthManager from "./auth/auth";
 import SubscriberManager from "./utils/subscriberManager";
+import AlmaShineManager from "./utils/almashineManager";
 
 let app: Application;
 let subscriberManager: SubscriberManager = new SubscriberManager();
+let almashineManager: AlmaShineManager = new AlmaShineManager();
+
+//almashineManager.startSession();
 
 const setApp = (expressApp: Application) => {
     app = expressApp;
@@ -28,54 +32,50 @@ wss.on("connection", (ws: WebSocket) => {
             jsonData = jsonData.data;
             if (await CAMPAuthManager.validateTokenWS(authData.authToken, authData.authEmail, app)) {
                 subscriberManager.addSubscriber(ws);
-                if (jsonData.type === "init") {
+                if (jsonData.type === "init" || jsonData.type === "data") {
                     ws.send(JSON.stringify({
                         type: "data",
                         pages: 104,
                         headers: [
-                            "Test1",
-                            "Test2",
-                            "Test3",
+                            "Name",
+                            "Current Company",
+                            "Current Higher Education",
+                            "Profile Status"
                         ],
                         data: [
                             [
-                                "ValueA1",
-                                "ValueA2",
-                                "ValueA3",
+                                "Akshet Patel",
+                                "Smart Power Systems Ltd.",
+                                "UCL London",
+                                `{"lu": ${1}, "ls": "${"s"}", "cs": "${"l"}"}`,
                             ],
                             [
-                                "ValueB1",
-                                "ValueB2",
-                                "ValueB3",
+                                "Akash Bhalotia",
+                                "Google",
+                                "-",
+                                `{"lu": ${1}, "ls": "${"f"}", "cs": "${"nl"}"}`,
                             ],
                             [
-                                "ValueC1",
-                                "ValueC2",
-                                "ValueC3",
+                                "Vanshaj Arora",
+                                "Smollan x Google",
+                                "-",
+                                `{"lu": ${1}, "ls": "${"f"}", "cs": "${"nl"}"}`,
                             ],
                             [
-                                "ValueD1",
-                                "ValueD2",
-                                "ValueD3",
-                            ],
-                            [
-                                "ValueE1",
-                                "ValueE2",
-                                "ValueE3",
-                            ],
-                            [
-                                "ValueF1",
-                                "ValueF2",
-                                "ValueF3",
+                                "Rishi Goyal",
+                                "Celebel Technologies",
+                                "-",
+                                `{"lu": ${1}, "ls": "${"f"}", "cs": "${"nl"}"}`,
                             ]
                         ],
                         filters: {
-                            "Test1": [
-                                ["Value1", 2],
-                                ["Value2", 3],
-                                ["Value3", 4]
-                            ]
-                        }
+                            // "Test1": [
+                            //     ["Value1", 2],
+                            //     ["Value2", 3],
+                            //     ["Value3", 4]
+                            // ]
+                        },
+                        records: 100
                     }));
                 }
             } else {

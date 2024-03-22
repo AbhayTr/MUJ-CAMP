@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Spinner } from "react-bootstrap";
+import { Button, Spinner } from "react-bootstrap";
+import { toast } from "react-toastify";
 
 import { ensureAdminAccess, makeWebSocketRequest } from "../../tools/Auth";
 import DataTable from "../../custom_components/Table";
 import LoadSpinner from "../../custom_components/LoadSpinner";
 import { AuthStore } from "../../app_state/auth/auth";
 import useTable from "../../hooks/TableHook";
+import LoadButton from "../../custom_components/LoadButton";
+import { showAlert, timestampToHumanTime } from "../../tools/UI";
 
 let webSocket = null;
 
@@ -18,6 +21,8 @@ const Home = () => {
     const navigate = useNavigate();
 
     const [liveConnected, setLiveConnected] = useState(-1);
+
+    const [updateDataLoading, setUpdateDataLoading] = useState(false);
 
     const [
         tableLoading,
@@ -31,7 +36,9 @@ const Home = () => {
         filters,
         setFilters,
         filtersApplied,
-        setFiltersApplied
+        setFiltersApplied,
+        recordsNumber,
+        setRecordsNumber
     ] = useTable();
 
     const setTableHeight = () => {
@@ -56,8 +63,66 @@ const Home = () => {
     const handleWebSocketDown = async () => {
         setTableLoading(true);
         await new Promise(resolve => setTimeout(resolve, 1000));
+        try {
+            document.getElementById("main-content").scroll(0, 0);
+        } catch (e) {}
+        setFilters({});
         setLiveConnected(liveConnected + 2);
     };
+
+    const processTableData = (serverTableData) => {
+        const newTableData = [];
+        for (let i = 0; i < serverTableData.length; i++) {
+            let newTableRow = [...serverTableData[i]];
+            let tableDataStats = JSON.parse(newTableRow[newTableRow.length - 1]);
+            newTableRow[newTableRow.length - 1] = (
+                <div style={{
+                    padding: "17px"
+                }}>
+                    Last updated at:&nbsp;
+                    <span style={{
+                        color: "#3fb950",
+                        fontSynthesis: "initial",
+                        fontWeight: "bold"
+                    }}>
+                        {timestampToHumanTime(tableDataStats["lu"])}
+                    </span>
+                    <br/>
+                    Last update status:&nbsp;
+                    <span style={{
+                        color: (tableDataStats["ls"] === "s") ? "#3fb950" : "tomato",
+                        fontSynthesis: "initial",
+                        fontWeight: "bold"
+                    }}>
+                        {(tableDataStats["ls"] === "s") ? "Successfully Synced" : "Sync Failed"}
+                    </span>
+                    <br/><br/>
+                    Current status:&nbsp;
+                    <span style={(tableDataStats["cs"] !== "nl") ? {
+                        fontWeight: "bold",
+                        color: "goldenrod"
+                    } : {}}>
+                        {(tableDataStats["cs"] === "nl") ? (
+                            <Button>Sync</Button>
+                        ) : (
+                            <>
+                                Syncing&nbsp;
+                                <Spinner
+                                    as="span"
+                                    animation="border"
+                                    size="sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                            </>
+                        )}
+                    </span>
+                </div>
+            );
+            newTableData.push(newTableRow);
+        }
+        return newTableData;
+    }
 
     useEffect(() => {
 
@@ -67,11 +132,11 @@ const Home = () => {
 
         webSocket = new WebSocket(process.env.REACT_APP_WS_URL);
 
-        webSocket.onopen = () => {
+        webSocket.onopen = (message) => {
             makeWebSocketRequest(webSocket, {
                 type: "init"
             });
-        };
+        }
 
         webSocket.onmessage = (message) => {
             if (message == null) {
@@ -82,7 +147,9 @@ const Home = () => {
                 setTablePages(messageJSON.pages);
                 setTableHeaders(messageJSON.headers);
                 setFilters(messageJSON.filters);
+                messageJSON.data = processTableData(messageJSON.data);
                 setTableData(messageJSON.data);
+                setRecordsNumber(messageJSON.records);
                 setTableLoading(false);
                 setLiveConnected(0);
             }
@@ -98,8 +165,13 @@ const Home = () => {
 
     }, [liveConnected]);
 
-    const onPageUpdate = (tableCurrentPage) => {
-        setTableLoading(false);
+    const onPageUpdate = (tableCurrentPage, appliedFilters, searchText) => {
+        makeWebSocketRequest(webSocket, {
+            type: "data",
+            filters: appliedFilters,
+            search: searchText,
+            page: tableCurrentPage
+        });
     };
 
     return (
@@ -108,7 +180,6 @@ const Home = () => {
         ) : (
             <>
                 <DataTable
-                    title="Alumni List"
                     setFiltersAutomatically={false}
                     tableHook={[
                         tableLoading,
@@ -119,14 +190,19 @@ const Home = () => {
                         filters,
                         setFilters,
                         filtersApplied,
-                        setFiltersApplied
+                        setFiltersApplied,
+                        recordsNumber
                     ]}
                     updatePageData={onPageUpdate}
                     setTableHeight={setTableHeight}
+                    searchPlaceholder="Search Alumni."
+                    resultsPlaceholder="Showing %r% results out of %t% Alumni%e%"
+                    searchDisabled={!(liveConnected === 0)}
                 >
                     <div
                         style={{
-                            padding: "1rem"
+                            padding: "1rem",
+                            paddingBottom: "0rem",
                         }}
                         id="doarHeading"
                     >
@@ -154,6 +230,48 @@ const Home = () => {
                         }}>
                             Welcome to the <b>Alumni Data Management Portal</b>. Alumni Data is listed below, and can be managed from there.
                         </p>
+                        <h2 style={{
+                            fontWeight: "bold",
+                            fontSynthesis: "initial",
+                            paddingTop: "1rem"
+                        }}>
+                            Alumni List
+                        </h2>
+                        {(true) ? (
+                            <div style={{
+                                display: "flex",
+                                gap: "0.5em",
+                                marginTop: "0.5em"
+                            }}>
+                                <LoadButton
+                                    style={{
+                                        marginBottom: "0.8em",
+                                        width: "fit-content"
+                                    }}
+                                    lbText="Update Alumni Data"
+                                    type="success"
+                                    lbId="updateData"
+                                    lbDisabled={tableLoading}
+                                    lbLoading={updateDataLoading}
+                                    clickHandler={() => {
+                                        setUpdateDataLoading(true);
+                                    }}
+                                />
+                                <LoadButton
+                                    style={{
+                                        width: "fit-content",
+                                        marginBottom: "0.8em"
+                                    }}
+                                    lbText="Sync All Alumni Data"
+                                    type="primary"
+                                    lbId="syncData"
+                                    lbDisabled={tableLoading || updateDataLoading}
+                                    clickHandler={() => {
+                                        showAlert("Coming Soon...", toast.info)
+                                    }}
+                                />
+                            </div>
+                        ) : (<></>)}
                     </div>
                 </DataTable>
             </>
