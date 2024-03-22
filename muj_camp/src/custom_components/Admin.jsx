@@ -53,12 +53,12 @@ let AdminLayout = ({
     
             if (window.getComputedStyle(document.getElementById("userName")).display === "none") {
                 setSidebarMenuClass("complete-collapse");
-                document.getElementById("scrollBarDiv").style.width = "0px";
+                document.getElementById("sideBarDiv").style.width = "0px";
             } else {
                 setSidebarMenuClass("");
                 document.getElementsByClassName("pro-sidebar")[0].style.removeProperty("min-width");
                 document.getElementsByClassName("pro-sidebar")[0].style.removeProperty("width");
-                document.getElementById("scrollBarDiv").style.width = "80px";
+                document.getElementById("sideBarDiv").style.width = "80px";
             }
         } catch (e) {}
     }
@@ -98,6 +98,12 @@ let AdminLayout = ({
         if (document.getElementsByClassName("icon-suffix").length === 0) {
             return;
         }
+
+        document.getElementById("mainLayout").addEventListener("click", (e) => {
+            if (document.getElementsByClassName("toggled").length === 0) {
+                document.getElementsByClassName("icon-suffix")[0].click();
+            }
+        });
 
         document.getElementsByClassName("icon-suffix")[0].addEventListener("click", (e) => {
             if (window.getComputedStyle(document.getElementById("userName")).display === "none") {
@@ -139,7 +145,10 @@ let AdminLayout = ({
                         overflow: "hidden"
                     }}
                 >
-                    <div className={layoutStyles.root}>
+                    <div
+                        className={layoutStyles.root}
+                        id="mainLayout"
+                    >
                         <div className={layoutStyles.wrap}>
                             <Navbar
                                 className={`${headerStyles.root} d-print-none`}

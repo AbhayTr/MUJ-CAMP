@@ -20,7 +20,7 @@ const Sidebar = ({
 }) => {
     return (
         <div
-            id="scrollBarDiv"
+            id="sideBarDiv"
             style={{
                 display: "flex",
                 height: "100%",
