@@ -66,14 +66,20 @@ wss.on("connection", (ws: WebSocket) => {
                                 "Celebel Technologies",
                                 "-",
                                 `{"lu": ${1}, "ls": "${"f"}", "cs": "${"nl"}"}`,
+                            ],
+                            [
+                                "XYZ",
+                                "ABC",
+                                "-",
+                                `{"lu": ${2}, "ls": "${"f"}", "cs": "${"nl"}"}`,
                             ]
                         ],
                         filters: {
-                            // "Test1": [
-                            //     ["Value1", 2],
-                            //     ["Value2", 3],
-                            //     ["Value3", 4]
-                            // ]
+                            "Test1": [
+                                ["Value1", 2],
+                                ["Value2", 3],
+                                ["Value3", 4]
+                            ]
                         },
                         records: 100
                     }));

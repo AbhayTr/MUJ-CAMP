@@ -240,11 +240,11 @@ const Home = () => {
                                 gap: "0.5em",
                                 marginTop: "0.5em",
                                 flexWrap: "wrap",
-                                marginLeft: "calc(-0.5rem + 17px)"
+                                marginLeft: "calc(-0.5rem + 17px)",
+                                marginBottom: "0.8em"
                             }}>
                                 <LoadButton
                                     style={{
-                                        marginBottom: "0.8em",
                                         width: "fit-content"
                                     }}
                                     lbText="Update Alumni Data"
@@ -258,8 +258,7 @@ const Home = () => {
                                 />
                                 <LoadButton
                                     style={{
-                                        width: "fit-content",
-                                        marginBottom: "0.8em"
+                                        width: "fit-content"
                                     }}
                                     lbText="Sync All Alumni Data"
                                     type="primary"

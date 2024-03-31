@@ -76,6 +76,11 @@ const Sidebar = ({
                                 <NavLink
                                     key={adminPage.path}
                                     to={adminPage.path}
+                                    onClick={() => {
+                                        if (document.getElementsByClassName("toggled").length === 0) {
+                                            document.getElementsByClassName("icon-suffix")[0].click();
+                                        }
+                                    }}
                                     activeclassname="activeClicked"
                                 >
                                     <CDBSidebarMenuItem
