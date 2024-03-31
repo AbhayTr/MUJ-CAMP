@@ -32,7 +32,7 @@ const DataTable = (props) => {
         setFiltersAutomatically = true,
         tableHook,
         ignoreFilters = [],
-        setTableHeight,
+        setTableHeight = null,
         searchPlaceholder,
         resultsPlaceholder,
         searchDisabled = false
@@ -131,6 +131,10 @@ const DataTable = (props) => {
 
     useEffect(() => {
 
+        if (setTableHeight == null) {
+            return;
+        }
+
         window.addEventListener("resize", setTableHeight);
 
         return (() => {
@@ -141,6 +145,9 @@ const DataTable = (props) => {
     useEffect(() => {
 
         if (!tableLoading) {
+            if (setTableHeight == null) {
+                return;
+            }
             setTableHeight();
         }
 
@@ -231,345 +238,375 @@ const DataTable = (props) => {
                                     </h3>
                                 ) : (<></>)}
                                 <div
-                                    className={tableStyles.tableTitle}
-                                    id={`${title.toLowerCase().replaceAll(" ", "")}Title`}
-                                    style={{
-                                        alignItems: "center",
-                                        paddingBottom: "21px"
-                                    }}
-                                >
-                                    {(true) ? (
-                                        <>
-                                            <label htmlFor="search">
-                                                <img
-                                                    className="d-sm-block"
-                                                    src={searchIcon}
-                                                    alt="Search"
-                                                    style={{
-                                                        marginLeft: "0px",
-                                                        marginRight: "10px"
-                                                    }}
-                                                />
-                                            </label>
-                                            <input
-                                                disabled={searchDisabled}
-                                                type="search"
-                                                className="form-control mr-sm-2"
-                                                placeholder={searchPlaceholder}
-                                                id="search"
-                                                onInput={(e) => {
-                                                    setSearchText(e.target.value);
-                                                }}
-                                                style={{
-                                                    width: "100%",
-                                                    borderStyle: "solid",
-                                                    borderWidth: "2px",
-                                                    borderRadius: "10px",
-                                                    borderColor: "black"
-                                                }}
-                                            />
-                                            <div className="d-flex">
-                                                <Dropdown
-                                                    isOpen={filterMenuOpen}
-                                                    toggle={() => {
-                                                        setFilterMenuOpen(!filterMenuOpen);
-                                                    }}
-                                                    id="basic-nav-dropdown-filter"
-                                                >
-                                                    <DropdownToggle
-                                                        className="navbar-dropdown-toggle"
-                                                        nav
-                                                    >
-                                                        <img
-                                                            className="d-sm-block"
-                                                            src={optionsIcon}
-                                                            alt="Filters"
-                                                            title="Filters"
-                                                        />
-                                                    </DropdownToggle>
-                                                    <DropdownMenu
-                                                        className="navbar-dropdown profile-dropdown"
-                                                        style={{
-                                                            width: "194px"
-                                                        }}>
-                                                            <DropdownItem
-                                                                disabled
-                                                                className={headerStyles.dropdownProfileItem}
-                                                                style={{
-                                                                    justifyContent: "center"
-                                                                }}
-                                                            >
-                                                                <span
-                                                                    style={{
-                                                                    color: "#0d6efd",
-                                                                    fontSize: "1.1em",
-                                                                    fontWeight: "bold",
-                                                                    fontSynthesis: "initial"
-                                                                }}
-                                                            >
-                                                                Apply Filters
-                                                            </span>
-                                                        </DropdownItem>
-                                                        {Object.keys(filters).map((filter) => {
-                                                            return (
-                                                                <DropdownItem
-                                                                    key={filter}
-                                                                    active={filtersApplied[filter] != null && filtersApplied[filter].length !== 0}
-                                                                    className={headerStyles.dropdownProfileItem}
-                                                                    onClick={() => {
-                                                                        setTempFiltersApplied(filtersApplied);
-                                                                        setChoseFiltersModalShowing(filter);
-                                                                    }}
-                                                                >
-                                                                    {filter}
-                                                                </DropdownItem>
-                                                            );
-                                                        })}
-                                                    </DropdownMenu>
-                                                </Dropdown>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <></>
-                                    )}
-                                </div>
-                                <div
                                     className="widget-table-overflow"
                                     style={(tableLoading) ? {
                                             height: "51vh",
                                             position: "relative"
-                                        } : {}
+                                        } : {
+                                            position: "relative"
+                                        }
                                     }
                                 >
-                                    {(tableLoading) ? (
-                                        <>
-                                            <div
-                                                style={{
-                                                    position: "absolute",
-                                                    maxHeight: "100%",
-                                                    maxWidth: "100%",
-                                                    top: "0",
-                                                    bottom: "0",
-                                                    left: "0",
-                                                    right: "0",
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center"
-                                                }}
-                                            >
-                                                <Spinner
-                                                    as="span"
-                                                    animation="border"
-                                                    size="sm"
-                                                    role="status"
-                                                    aria-hidden="true"
-                                                    className="component-loader"
-                                                />
-                                            </div>
-                                        </>
+                                    {(false) ? (
+                                        <></>
                                     ) : (
                                         <>
-                                            <div
-                                                className={tableStyles.tableTitle}
-                                                id={`${title.toLowerCase().replaceAll(" ", "")}Title`}
-                                                style={{
-                                                    alignItems: "center",
-                                                    paddingBottom: "12px",
-                                                    paddingTop: "0px"
-                                                }}
-                                            >
-                                                <h5
-                                                    style={{
-                                                        fontSynthesis: "initial",
-                                                        wordWrap: "break-word",
-                                                        textWrap: "wrap"
-                                                    }}
-                                                >
-                                                    {resultsPlaceholder.split(" ").map((word, index) => {
-                                                        return (
-                                                            <span key={index}>
-                                                                {(word === "%r%" || word === "%t%") ? (
-                                                                    <b style={{
-                                                                        color: "#3fb950"
-                                                                    }}>
-                                                                        {word.replace("%t%", String(recordsNumber)).replace("%r%", `${
-                                                                            ((tableData.length) * (tableCurrentPage - 1)) + 1
-                                                                        } to ${
-                                                                            (((tableData.length) * (tableCurrentPage - 1))) + (tableData.length)
-                                                                        }`)}
-                                                                    </b>
-                                                                ) : (word.replace("%e%", (((filtersOrSortApplied())) ? " who match your selected criteria" : (searchText !== "") ? " who match your search criteria" : "")))}
-                                                                {(index !== resultsPlaceholder.split(" ").length - 1) ? (<>&nbsp;</>) : (<></>)}
-                                                            </span>
-                                                        )
-                                                    })}
-                                                </h5>
-                                                {(filtersOrSortApplied()) ? (
-                                                    <LoadButton
-                                                        lbLoading={filterResetButtonLoading}
-                                                        lbText="Reset Filters and Sorting"
-                                                        type="danger"
-                                                        style={{
-                                                            width: "fit-content"
-                                                        }}
-                                                        clickHandler={() => {
-                                                            setResetButtonFiltersLoading(true);
-                                                            setFiltersApplied({});
-                                                            setSortedFields({});
-                                                            setResetButtonFiltersLoading(false);
-                                                        }}
-                                                    />
-                                                ) : (<></>)}
-                                            </div>
                                             <Table
                                                 className={`table-striped table-borderless table-hover ${tableStyles.statesTable}`}
                                                 responsive
                                             >
-                                                <thead>
-                                                    <tr>
-                                                        {tableHeaders.map((item) => {
-                                                            return (
-                                                                <th
-                                                                    key={item}
-                                                                    className="w-25"
-                                                                    style={{
-                                                                        position: "sticky",
-                                                                        top: 0
-                                                                    }}
-                                                                >
-                                                                    <Dropdown
-                                                                        isOpen={headerSortStates[item]}
-                                                                        toggle={() => {
-                                                                            const newData = {
-                                                                                ...headerSortStates
-                                                                            };
-                                                                            newData[item] = !headerSortStates[item];
-                                                                            setHeaderSortStates(newData);
-                                                                        }}
-                                                                        id="basic-nav-dropdown-sort"
-                                                                    >
-                                                                        <DropdownToggle
-                                                                            nav
-                                                                            caret
-                                                                            className="navbar-dropdown-toggle"
-                                                                        >
-                                                                            <span style={(sortedFields[item] != null) ? {
-                                                                                color: "darkorange"
-                                                                            } : {}}>
-                                                                                <span style={(true) ? ({
-                                                                                    marginLeft: "17px"
-                                                                                }) : ({})}>
-                                                                                    {item}
-                                                                                </span>
-                                                                            </span>
-                                                                        </DropdownToggle>
-                                                                        <DropdownMenu
-                                                                            className="navbar-dropdown profile-dropdown"
-                                                                            style={{
-                                                                                width: "194px"
-                                                                            }}>
-                                                                            <DropdownItem
-                                                                                disabled
-                                                                                className={headerStyles.dropdownProfileItem}
-                                                                                style={{
-                                                                                    justifyContent: "center"
-                                                                                }}
-                                                                            >
-                                                                                <span
-                                                                                    style={{
-                                                                                        color: "#0d6efd",
-                                                                                        fontSize: "1.1em",
-                                                                                        fontWeight: "bold",
-                                                                                        fontSynthesis: "initial"
-                                                                                    }}
-                                                                                >
-                                                                                    Sort {item}
-                                                                                </span>
-                                                                            </DropdownItem>
-                                                                            <DropdownItem
-                                                                                active={sortedFields[item] === 0}
-                                                                                className={headerStyles.dropdownProfileItem}
-                                                                                onClick={() => {
-                                                                                    const newData = {
-                                                                                        ...sortedFields
-                                                                                    };
-                                                                                    newData[item] = 0;
-                                                                                    setSortedFields(newData);
-                                                                                }}
-                                                                            >
-                                                                                Ascending
-                                                                            </DropdownItem>
-                                                                            <DropdownItem
-                                                                                active={sortedFields[item] === 1}
-                                                                                className={headerStyles.dropdownProfileItem}
-                                                                                onClick={() => {
-                                                                                    const newData = {
-                                                                                        ...sortedFields
-                                                                                    };
-                                                                                    newData[item] = 1;
-                                                                                    setSortedFields(newData);
-                                                                                }}
-                                                                            >
-                                                                                Descending
-                                                                            </DropdownItem>
-                                                                            <DropdownItem
-                                                                                className={headerStyles.dropdownProfileItem}
-                                                                                style={{
-                                                                                    color: "tomato",
-                                                                                    fontWeight: "bold",
-                                                                                    fontSynthesis: "initial"
-                                                                                }}
-                                                                                onClick={() => {
-                                                                                    const newData = {
-                                                                                        ...sortedFields
-                                                                                    };
-                                                                                    delete newData[item];
-                                                                                    setSortedFields(newData);
-                                                                                }}
-                                                                            >
-                                                                                Reset Sort
-                                                                            </DropdownItem>
-                                                                        </DropdownMenu>
-                                                                    </Dropdown>
-                                                                </th>
-                                                            );
-                                                        })}
-                                                    </tr>
-                                                </thead>
-                                                <tbody 
+                                                <thead
+                                                    id={`${title.toLowerCase().replaceAll(" ", "")}THead`}
                                                     style={{
-                                                        userSelect: "text"
+                                                        position: "sticky",
+                                                        top: "-24px",
+                                                        background: "white",
+                                                        zIndex: 1
                                                     }}
                                                 >
-                                                    {tableDataToUse.map((item, index) => (
-                                                        <tr key={index}>
-                                                            {tableHeaders.map((itemKey, index) => {
-                                                                return (
-                                                                    <td
-                                                                        key={itemKey}
-                                                                        className="align-items-center"
+                                                    <tr>
+                                                        <td
+                                                            style={{
+                                                                padding: "0"
+                                                            }}
+                                                        >
+                                                            <div
+                                                                className={`${tableStyles.tableTitle} ${tableStyles.search}`}
+                                                                id={`${title.toLowerCase().replaceAll(" ", "")}Title`}
+                                                            >
+                                                                {(true) ? (
+                                                                    <>
+                                                                        <label htmlFor="search">
+                                                                            <img
+                                                                                className="d-sm-block"
+                                                                                src={searchIcon}
+                                                                                alt="Search"
+                                                                                style={{
+                                                                                    marginLeft: "0px",
+                                                                                    marginRight: "10px"
+                                                                                }}
+                                                                            />
+                                                                        </label>
+                                                                        <input
+                                                                            disabled={searchDisabled}
+                                                                            type="search"
+                                                                            className="form-control mr-sm-2"
+                                                                            placeholder={searchPlaceholder}
+                                                                            id="search"
+                                                                            onInput={(e) => {
+                                                                                setSearchText(e.target.value);
+                                                                            }}
+                                                                            style={{
+                                                                                width: "100%",
+                                                                                borderStyle: "solid",
+                                                                                borderWidth: "2px",
+                                                                                borderRadius: "10px",
+                                                                                borderColor: "black"
+                                                                            }}
+                                                                        />
+                                                                        <div className="d-flex">
+                                                                            <Dropdown
+                                                                                isOpen={filterMenuOpen}
+                                                                                toggle={() => {
+                                                                                    setFilterMenuOpen(!filterMenuOpen);
+                                                                                }}
+                                                                                id="basic-nav-dropdown-filter"
+                                                                            >
+                                                                                <DropdownToggle
+                                                                                    className="navbar-dropdown-toggle"
+                                                                                    nav
+                                                                                >
+                                                                                    <img
+                                                                                        className="d-sm-block"
+                                                                                        src={optionsIcon}
+                                                                                        alt="Filters"
+                                                                                        title="Filters"
+                                                                                    />
+                                                                                </DropdownToggle>
+                                                                                <DropdownMenu
+                                                                                    className="navbar-dropdown profile-dropdown"
+                                                                                    style={{
+                                                                                        width: "194px"
+                                                                                    }}>
+                                                                                        <DropdownItem
+                                                                                            disabled
+                                                                                            className={headerStyles.dropdownProfileItem}
+                                                                                            style={{
+                                                                                                justifyContent: "center"
+                                                                                            }}
+                                                                                        >
+                                                                                            <span
+                                                                                                style={{
+                                                                                                color: "#0d6efd",
+                                                                                                fontSize: "1.1em",
+                                                                                                fontWeight: "bold",
+                                                                                                fontSynthesis: "initial"
+                                                                                            }}
+                                                                                        >
+                                                                                            Apply Filters
+                                                                                        </span>
+                                                                                    </DropdownItem>
+                                                                                    {Object.keys(filters).map((filter) => {
+                                                                                        return (
+                                                                                            <DropdownItem
+                                                                                                key={filter}
+                                                                                                active={filtersApplied[filter] != null && filtersApplied[filter].length !== 0}
+                                                                                                className={headerStyles.dropdownProfileItem}
+                                                                                                onClick={() => {
+                                                                                                    setTempFiltersApplied(filtersApplied);
+                                                                                                    setChoseFiltersModalShowing(filter);
+                                                                                                }}
+                                                                                            >
+                                                                                                {filter}
+                                                                                            </DropdownItem>
+                                                                                        );
+                                                                                    })}
+                                                                                </DropdownMenu>
+                                                                            </Dropdown>
+                                                                        </div>
+                                                                    </>
+                                                                ) : (
+                                                                    <></>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    {(tableLoading) ? (
+                                                        <></>
+                                                    ) : (
+                                                        <>
+                                                            <tr>
+                                                                <td
+                                                                    style={{
+                                                                        padding: "0"
+                                                                    }}
+                                                                >
+                                                                    <div
+                                                                        className={`${tableStyles.tableTitle} ${tableStyles.results}`}
+                                                                        id={`${title.toLowerCase().replaceAll(" ", "")}Results`}
                                                                     >
-                                                                        <span className="ml-3">
-                                                                            {(typeof item[index] === "string") ? item[index].split("\n").map((dataLine, indexInternal) => {
+                                                                        <h5
+                                                                            style={{
+                                                                                fontSynthesis: "initial",
+                                                                                wordWrap: "break-word",
+                                                                                textWrap: "wrap",
+                                                                                display: "flex",
+                                                                                flexWrap: "wrap"
+                                                                            }}
+                                                                        >
+                                                                            {resultsPlaceholder.split(" ").map((word, index) => {
                                                                                 return (
-                                                                                    <span
-                                                                                        key={indexInternal}
-                                                                                        style={(true) ? ({
-                                                                                            paddingLeft: "17px"
-                                                                                        }) : ({})}
-                                                                                    >
-                                                                                        {dataLine}
-                                                                                        {(indexInternal !== item[index].split("\n").length - 1) ? (<br/>) : (<></>)}
+                                                                                    <span key={index}>
+                                                                                        {(word === "%r%" || word === "%t%") ? (
+                                                                                            <b style={{
+                                                                                                color: "#3fb950"
+                                                                                            }}>
+                                                                                                {word.replace("%t%", String(recordsNumber)).replace("%r%", `${
+                                                                                                    ((tableData.length) * (tableCurrentPage - 1)) + 1
+                                                                                                } to ${
+                                                                                                    (((tableData.length) * (tableCurrentPage - 1))) + (tableData.length)
+                                                                                                }`)}
+                                                                                            </b>
+                                                                                        ) : (word.replace("%e%", (((filtersOrSortApplied())) ? " who match your selected criteria" : (searchText !== "") ? " who match your search criteria" : "")))}
+                                                                                        {(index !== resultsPlaceholder.split(" ").length - 1) ? (<>&nbsp;</>) : (<></>)}
                                                                                     </span>
-                                                                                );
-                                                                            }) : (item[index])}
-                                                                        </span>
-                                                                    </td>
-                                                                )
-                                                            })}
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
+                                                                                )
+                                                                            })}
+                                                                        </h5>
+                                                                        {(filtersOrSortApplied()) ? (
+                                                                            <LoadButton
+                                                                                lbLoading={filterResetButtonLoading}
+                                                                                lbText="Reset Filters and Sorting"
+                                                                                type="danger"
+                                                                                style={{
+                                                                                    width: "fit-content"
+                                                                                }}
+                                                                                clickHandler={() => {
+                                                                                    setResetButtonFiltersLoading(true);
+                                                                                    setFiltersApplied({});
+                                                                                    setSortedFields({});
+                                                                                    setResetButtonFiltersLoading(false);
+                                                                                }}
+                                                                            />
+                                                                        ) : (<></>)}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                {tableHeaders.map((item) => {
+                                                                    return (
+                                                                        <th
+                                                                            key={item}
+                                                                            className="w-25"
+                                                                        >
+                                                                            <Dropdown
+                                                                                isOpen={headerSortStates[item]}
+                                                                                toggle={() => {
+                                                                                    const newData = {
+                                                                                        ...headerSortStates
+                                                                                    };
+                                                                                    newData[item] = !headerSortStates[item];
+                                                                                    setHeaderSortStates(newData);
+                                                                                }}
+                                                                                id="basic-nav-dropdown-sort"
+                                                                            >
+                                                                                <DropdownToggle
+                                                                                    nav
+                                                                                    caret
+                                                                                    className="navbar-dropdown-toggle"
+                                                                                >
+                                                                                    <span style={(sortedFields[item] != null) ? {
+                                                                                        color: "darkorange"
+                                                                                    } : {}}>
+                                                                                        <span style={(true) ? ({
+                                                                                            marginLeft: "17px"
+                                                                                        }) : ({})}>
+                                                                                            {item}
+                                                                                        </span>
+                                                                                    </span>
+                                                                                </DropdownToggle>
+                                                                                <DropdownMenu
+                                                                                    className="navbar-dropdown profile-dropdown"
+                                                                                    style={{
+                                                                                        width: "194px"
+                                                                                    }}>
+                                                                                    <DropdownItem
+                                                                                        disabled
+                                                                                        className={headerStyles.dropdownProfileItem}
+                                                                                        style={{
+                                                                                            justifyContent: "center"
+                                                                                        }}
+                                                                                    >
+                                                                                        <span
+                                                                                            style={{
+                                                                                                color: "#0d6efd",
+                                                                                                fontSize: "1.1em",
+                                                                                                fontWeight: "bold",
+                                                                                                fontSynthesis: "initial",
+                                                                                                textWrap: "pretty",
+                                                                                                overflowWrap: "break-word",
+                                                                                                wordBreak: "break-word",
+                                                                                                whiteSpace: "normal"
+                                                                                            }}
+                                                                                        >
+                                                                                            Sort {item}
+                                                                                        </span>
+                                                                                    </DropdownItem>
+                                                                                    <DropdownItem
+                                                                                        active={sortedFields[item] === 0}
+                                                                                        className={headerStyles.dropdownProfileItem}
+                                                                                        onClick={() => {
+                                                                                            const newData = {
+                                                                                                ...sortedFields
+                                                                                            };
+                                                                                            newData[item] = 0;
+                                                                                            setSortedFields(newData);
+                                                                                        }}
+                                                                                    >
+                                                                                        Ascending
+                                                                                    </DropdownItem>
+                                                                                    <DropdownItem
+                                                                                        active={sortedFields[item] === 1}
+                                                                                        className={headerStyles.dropdownProfileItem}
+                                                                                        onClick={() => {
+                                                                                            const newData = {
+                                                                                                ...sortedFields
+                                                                                            };
+                                                                                            newData[item] = 1;
+                                                                                            setSortedFields(newData);
+                                                                                        }}
+                                                                                    >
+                                                                                        Descending
+                                                                                    </DropdownItem>
+                                                                                    <DropdownItem
+                                                                                        className={headerStyles.dropdownProfileItem}
+                                                                                        style={{
+                                                                                            color: "tomato",
+                                                                                            fontWeight: "bold",
+                                                                                            fontSynthesis: "initial"
+                                                                                        }}
+                                                                                        onClick={() => {
+                                                                                            const newData = {
+                                                                                                ...sortedFields
+                                                                                            };
+                                                                                            delete newData[item];
+                                                                                            setSortedFields(newData);
+                                                                                        }}
+                                                                                    >
+                                                                                        Reset Sort
+                                                                                    </DropdownItem>
+                                                                                </DropdownMenu>
+                                                                            </Dropdown>
+                                                                        </th>
+                                                                    );
+                                                                })}
+                                                            </tr>
+                                                        </>
+                                                    )}
+                                                </thead>
+                                                {(false) ? (
+                                                    <></>
+                                                ) : (
+                                                    <tbody 
+                                                        style={(tableLoading) ? {
+                                                            height: "24dvh",
+                                                            position: "relative"
+                                                        } : {
+                                                            userSelect: "text"
+                                                        }}
+                                                    >
+                                                        {(tableLoading) ? (
+                                                            <tr>
+                                                                <td>
+                                                                    <div
+                                                                        className={tableStyles.loader}
+                                                                    >
+                                                                        <Spinner
+                                                                            as="span"
+                                                                            animation="border"
+                                                                            size="sm"
+                                                                            role="status"
+                                                                            aria-hidden="true"
+                                                                            className="component-loader"
+                                                                        />
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ) : (
+                                                            <>
+                                                                {tableDataToUse.map((item, index) => (
+                                                                    <tr key={index}>
+                                                                        {tableHeaders.map((itemKey, index) => {
+                                                                            return (
+                                                                                <td
+                                                                                    key={itemKey}
+                                                                                    className="align-items-center"
+                                                                                >
+                                                                                    <span className="ml-3">
+                                                                                        {(typeof item[index] === "string") ? item[index].split("\n").map((dataLine, indexInternal) => {
+                                                                                            return (
+                                                                                                <span
+                                                                                                    key={indexInternal}
+                                                                                                    style={(true) ? ({
+                                                                                                        paddingLeft: "17px",
+                                                                                                        display: "inline-block"
+                                                                                                    }) : ({})}
+                                                                                                >
+                                                                                                    {dataLine}
+                                                                                                    {(indexInternal !== item[index].split("\n").length - 1) ? (<br/>) : (<></>)}
+                                                                                                </span>
+                                                                                            );
+                                                                                        }) : (item[index])}
+                                                                                    </span>
+                                                                                </td>
+                                                                            )
+                                                                        })}
+                                                                    </tr>
+                                                                ))}
+                                                            </>
+                                                        )}
+                                                    </tbody>
+                                                )}
                                             </Table>
                                             <Pagination
                                                 className="pagination-borderless"

@@ -6,11 +6,33 @@
 .tableTitle {
     display: flex;
     justify-content: space-between;
-    padding: 24px 24px;
+    padding: calc(0.5rem + 17px) calc(0.5rem + 17px) !important;
 
     img {
         margin-left: 16px;
     }
+}
+
+.search {
+    align-items: center;
+    padding-bottom: 21px !important;
+}
+
+.results {
+    align-items: center;
+    padding-top: 0px !important;
+    padding-bottom: 12px !important;
+}
+
+.loader {
+    position: absolute !important;
+    display: flex !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .transactionTitleBlock {

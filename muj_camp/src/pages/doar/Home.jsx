@@ -40,13 +40,6 @@ const Home = () => {
         recordsNumber,
         setRecordsNumber
     ] = useTable();
-
-    const setTableHeight = () => {
-        try {
-            const tableHeight = (document.getElementById("main-content").offsetHeight) - ((document.getElementById("doarHeading").offsetHeight) + (document.getElementById("alumnilistTitle").offsetHeight) + 103);
-            document.getElementsByClassName("table-responsive")[0].style.maxHeight = ((tableHeight > 100) ? `${tableHeight}px` : "unset");
-        } catch (e) {}
-    }
     
     useEffect(() => {
 
@@ -194,7 +187,6 @@ const Home = () => {
                         recordsNumber
                     ]}
                     updatePageData={onPageUpdate}
-                    setTableHeight={setTableHeight}
                     searchPlaceholder="Search Alumni."
                     resultsPlaceholder="Showing %r% results out of %t% Alumni%e%"
                     searchDisabled={!(liveConnected === 0)}
@@ -221,27 +213,34 @@ const Home = () => {
                         ): (<></>)}
                         <h4 style={{
                             marginBottom: "0.7rem",
-                            fontWeight: "bold"
+                            fontWeight: "bold",
+                            marginLeft: "calc(-0.5rem + 17px)"
                         }}>
                             Hello {AuthStore.getState().authName} 👋
                         </h4>
                         <p style={{
-                            textAlign: "justify"
+                            textAlign: "justify",
+                            marginLeft: "calc(-0.5rem + 17px)"
                         }}>
                             Welcome to the <b>Alumni Data Management Portal</b>. Alumni Data is listed below, and can be managed from there.
                         </p>
-                        <h2 style={{
-                            fontWeight: "bold",
-                            fontSynthesis: "initial",
-                            paddingTop: "1rem"
-                        }}>
+                        <h2
+                            style={{
+                                fontWeight: "bold",
+                                fontSynthesis: "initial",
+                                paddingTop: "1rem",
+                                marginLeft: "calc(-0.5rem + 17px)"
+                            }}
+                        >
                             Alumni List
                         </h2>
                         {(true) ? (
                             <div style={{
                                 display: "flex",
                                 gap: "0.5em",
-                                marginTop: "0.5em"
+                                marginTop: "0.5em",
+                                flexWrap: "wrap",
+                                marginLeft: "calc(-0.5rem + 17px)"
                             }}>
                                 <LoadButton
                                     style={{
