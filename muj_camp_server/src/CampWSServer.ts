@@ -1,17 +1,23 @@
 import { Application } from "express";
 import WebSocket, { WebSocketServer } from "ws";
+
 import CAMPAuthManager from "./auth/auth";
 import SubscriberManager from "./utils/subscriberManager";
 import AlmaShineManager from "./utils/almashineManager";
 
 let app: Application;
 let subscriberManager: SubscriberManager = new SubscriberManager();
-let almashineManager: AlmaShineManager = new AlmaShineManager();
+let almashineManager: AlmaShineManager;
 
-//almashineManager.startSession();
+async function startAlmashinesSession() {
+    await almashineManager.startSession();
+    await almashineManager.getAlumniData();
+}
 
-const setApp = (expressApp: Application) => {
+const setApp = async (expressApp: Application) => {
     app = expressApp;
+    almashineManager = new AlmaShineManager(app.locals.campdb);
+    await startAlmashinesSession();
 }
 
 const publishMessage = (data: object) => {
