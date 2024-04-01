@@ -133,7 +133,7 @@ class CookieManager {
         for (var i = 0; i < speceficKeys.length; i++) {
             cookieString += `${speceficKeys[i]}=${this.#cookieData[speceficKeys[i]]}`
             if (i !== speceficKeys.length - 1) {
-                cookieString += ", ";
+                cookieString += "; ";
             }
         }
         return cookieString;

@@ -91,9 +91,8 @@ class AlmaShineManager {
         });
     }
 
-    async getAlumniData() {
-        console.log("C: " + this.#cookieManager.getCookies(["tz", "lgdomain", "u_i", "c_i", "l_c", "r_v", "mul", "ast_login_id", "encToken", "PHPSESSID"])!);
-        console.log("CSRF: " + this.#cookieManager.getCSRFToken());
+    async getAlumniData(): Promise<boolean> {
+        var dataFetchToken: string = "";
         await fetch("https://mujalumni.in/api/search/checkPasswordOnDownload", {
             "headers": {
                 "cookie": this.#cookieManager.getCookies(["tz", "lgdomain", "u_i", "c_i", "l_c", "r_v", "mul", "ast_login_id", "encToken", "PHPSESSID"])!,
@@ -102,10 +101,23 @@ class AlmaShineManager {
             "body": `{\"enteredPass\":\"${process.env.MAS_PASS}\"}`,
             "method": "POST"
         }).then(response => {
-            response.text().then(text => {
-                console.log(text);
+            response.json().then(status => {
+                if (!this.#wasSuccessful(status)) {
+                    console.error("DoAR Almashines Alumni Data Fetch Failed.");
+                    return false;
+                } else {
+                    dataFetchToken = status.token;
+                }
             });
+        }).catch(error => {
+            console.error("DoAR Almashines Error: " + error);
+            return false;
         });
+        if (dataFetchToken === "") {
+            return false;
+        }
+        console.log(dataFetchToken);
+        return true;
     }
 
 }
