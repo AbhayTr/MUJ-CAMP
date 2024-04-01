@@ -1,6 +1,6 @@
 import { Document } from "mongodb";
 
-import { CAMPCollection, CAMPDB } from "./campdb";
+import { CAMPCollection, CAMPDB } from "../utils/campdb";
 
 class CookieManager {
     

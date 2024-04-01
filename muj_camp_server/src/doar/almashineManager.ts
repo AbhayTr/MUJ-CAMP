@@ -1,4 +1,4 @@
-import { CAMPDB } from "./campdb";
+import { CAMPDB } from "../utils/campdb";
 import CookieManager from "./cookieManager";
 
 class AlmaShineManager {
@@ -91,9 +91,9 @@ class AlmaShineManager {
         });
     }
 
-    async getAlumniData(): Promise<boolean> {
-        var dataFetchToken: string = "";
-        await fetch("https://mujalumni.in/api/search/checkPasswordOnDownload", {
+    async getAlumniData(): Promise<boolean | void> {
+        let dataFetchToken: string = "";
+        return await fetch("https://mujalumni.in/api/search/checkPasswordOnDownload", {
             "headers": {
                 "cookie": this.#cookieManager.getCookies(["tz", "lgdomain", "u_i", "c_i", "l_c", "r_v", "mul", "ast_login_id", "encToken", "PHPSESSID"])!,
                 "csrf": this.#cookieManager.getCSRFToken()
@@ -107,17 +107,14 @@ class AlmaShineManager {
                     return false;
                 } else {
                     dataFetchToken = status.token;
+                    console.log(dataFetchToken);
+                    return true;
                 }
             });
         }).catch(error => {
             console.error("DoAR Almashines Error: " + error);
             return false;
         });
-        if (dataFetchToken === "") {
-            return false;
-        }
-        console.log(dataFetchToken);
-        return true;
     }
 
 }

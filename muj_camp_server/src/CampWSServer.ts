@@ -2,8 +2,8 @@ import { Application } from "express";
 import WebSocket, { WebSocketServer } from "ws";
 
 import CAMPAuthManager from "./auth/auth";
-import SubscriberManager from "./utils/subscriberManager";
-import AlmaShineManager from "./utils/almashineManager";
+import SubscriberManager from "./doar/subscriberManager";
+import AlmaShineManager from "./doar/almashineManager";
 
 let app: Application;
 let subscriberManager: SubscriberManager = new SubscriberManager();
