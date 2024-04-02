@@ -11,7 +11,6 @@ let almashineManager: AlmaShineManager;
 
 async function startAlmashinesSession() {
     await almashineManager.startSession();
-    await almashineManager.getAlumniData();
 }
 
 const setApp = async (expressApp: Application) => {
