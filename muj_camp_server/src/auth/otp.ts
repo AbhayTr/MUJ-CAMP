@@ -126,7 +126,7 @@ class CAMPOTP {
         }
     }
 
-    static async #createSession(authEmail: string, sessionID: string, app: Application) {
+    private static async _createSession(authEmail: string, sessionID: string, app: Application) {
         const userCollection: CAMPCollection = app.locals.campdb.collection("users");
         
         const result = await userCollection.updateOne(
@@ -147,7 +147,7 @@ class CAMPOTP {
         }
     }
 
-    static async #storeOTP(authEmail: string, sessionID: string, otp: string, app: Application, isResendRequest: boolean) {
+    private static async _storeOTP(authEmail: string, sessionID: string, otp: string, app: Application, isResendRequest: boolean) {
         const otpCollection: CAMPCollection = app.locals.campdb.collection("otp")
 
         if (isResendRequest) {
@@ -170,24 +170,24 @@ class CAMPOTP {
     }
 
     static async sendOTP(authEmail: string, authName: string, sessionID: string, isResendRequest: boolean, app: Application) {
-        const otpToSend: string = String(this.#generateOTP());
+        const otpToSend: string = String(this._generateOTP());
         const otpToken: string = JWTManger.generateOTPToken(authEmail, otpToSend, sessionID, true);
         if (!isResendRequest) {
-            await this.#createSession(authEmail, sessionID, app);
+            await this._createSession(authEmail, sessionID, app);
         }
-        await this.#storeOTP(authEmail, sessionID, otpToken, app, isResendRequest);
+        await this._storeOTP(authEmail, sessionID, otpToken, app, isResendRequest);
         app.locals.campMailer.sendOTP(authEmail, authName, otpToSend);
     }
 
-    static #generateOTP(): number {
+    private static _generateOTP(): number {
         return Math.floor(100000 + Math.random() * 900000);
     }
 
-    static #isValidOTP(otp: string): boolean {
+    private static _isValidOTP(otp: string): boolean {
         return (otp.length === 6 && !Number.isNaN(otp));
     }
 
-    static async #isEligibleToValidateOTP(authEmail: string, sessionID: string, app: Application): Promise<number> {
+    private static async _isEligibleToValidateOTP(authEmail: string, sessionID: string, app: Application): Promise<number> {
         const otpCollection: CAMPCollection = app.locals.campdb.collection("otp");
 
         // Check for previous otp validation attempt time.
@@ -210,7 +210,7 @@ class CAMPOTP {
         }
     }
 
-    static async #isCorrectOTP(authEmail: string, sessionID: string, otp: string, app: Application): Promise<boolean> {
+    private static async _isCorrectOTP(authEmail: string, sessionID: string, otp: string, app: Application): Promise<boolean> {
         const otpCollection: CAMPCollection = app.locals.campdb.collection("otp");
         const userCollection: CAMPCollection = app.locals.campdb.collection("users");
         
@@ -249,15 +249,15 @@ class CAMPOTP {
 
     static async validateOTP(userData: any, sessionID: string, otp: string, app: Application): Promise<object> {
         let userResponse = {};
-        if (!this.#isValidOTP(otp)) {
+        if (!this._isValidOTP(otp)) {
             userResponse = {
                 status: "f",
                 error: ""
             };
         } else {
-            const timeBeforeOTPCanBeValidated: number = await this.#isEligibleToValidateOTP(userData.email, sessionID, app);
+            const timeBeforeOTPCanBeValidated: number = await this._isEligibleToValidateOTP(userData.email, sessionID, app);
             if (timeBeforeOTPCanBeValidated === 0) {
-                if (await this.#isCorrectOTP(userData.email, sessionID, otp, app)) {
+                if (await this._isCorrectOTP(userData.email, sessionID, otp, app)) {
                     userResponse = {
                         status: "s",
                         authRoles: userData.roles,

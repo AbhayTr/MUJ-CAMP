@@ -2,8 +2,8 @@ import nodemailer, { SentMessageInfo, Transporter } from "nodemailer";
 
 class CAMPMailer {
 
-    #transporter: Transporter<SentMessageInfo>;
-    #creds: Object = {
+    private _transporter: Transporter<SentMessageInfo>;
+    private _creds: Object = {
         host: process.env.M_HOST,
         port: process.env.M_PORT,
         secureConnection: true,
@@ -17,7 +17,7 @@ class CAMPMailer {
     };
 
     constructor() {
-        this.#transporter = nodemailer.createTransport(this.#creds);
+        this._transporter = nodemailer.createTransport(this._creds);
     }
 
     async sendOTP(authEmail: string, authName: string, otp: string) {
@@ -90,7 +90,7 @@ class CAMPMailer {
             </html>
             `
         };
-        this.#transporter.sendMail(mailOptions, function(mailError, mailInfo) {
+        this._transporter.sendMail(mailOptions, function(mailError, mailInfo) {
             if (mailError) {
                 console.log("E: " + mailError);
             }

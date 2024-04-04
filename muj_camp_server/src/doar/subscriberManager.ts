@@ -2,56 +2,56 @@ import { WebSocket } from "ws";
 
 class SubscriberManager {
 
-    #subsribersList: WebSocket[];
-    #operationStack: Array<Array<any>>;
-    #pushStack: Array<object>;
-    #pushingInProcess = false;
+    private _subsribersList: WebSocket[];
+    private _operationStack: Array<Array<any>>;
+    private _pushStack: Array<object>;
+    private _pushingInProcess = false;
 
     constructor() {
-        this.#subsribersList = [];
-        this.#operationStack = [];
-        this.#pushStack = [];
+        this._subsribersList = [];
+        this._operationStack = [];
+        this._pushStack = [];
     }
 
     addSubscriber(subscriberConnection: WebSocket) {
-        if (this.#pushingInProcess) {
-            this.#operationStack.push([this.addSubscriber, subscriberConnection]);
+        if (this._pushingInProcess) {
+            this._operationStack.push([this.addSubscriber, subscriberConnection]);
             return;
         }
-        this.#subsribersList.push(subscriberConnection);
+        this._subsribersList.push(subscriberConnection);
     }
 
     removeSubscriber(subscriberConnection: WebSocket) {
-        if (this.#pushingInProcess) {
-            this.#operationStack.push([this.removeSubscriber, subscriberConnection]);
+        if (this._pushingInProcess) {
+            this._operationStack.push([this.removeSubscriber, subscriberConnection]);
             return;
         }
-        this.#subsribersList.splice(this.#subsribersList.indexOf(subscriberConnection), 1);
+        this._subsribersList.splice(this._subsribersList.indexOf(subscriberConnection), 1);
     }
 
     pushData(data: object) {
-        if (this.#pushingInProcess) {
-            this.#pushStack.push(data);
+        if (this._pushingInProcess) {
+            this._pushStack.push(data);
             return;
         }
-        this.#pushingInProcess = true;
-        for (var i = 0; i < this.#subsribersList.length; i++) {
-            if (this.#subsribersList[i] != null) {
+        this._pushingInProcess = true;
+        for (var i = 0; i < this._subsribersList.length; i++) {
+            if (this._subsribersList[i] != null) {
                 try {
-                    this.#subsribersList[i].send(JSON.stringify(data));
+                    this._subsribersList[i].send(JSON.stringify(data));
                 } catch (e) {
-                    this.#subsribersList[i].close();
-                    this.#operationStack.push([this.removeSubscriber, this.#subsribersList[i]]);
+                    this._subsribersList[i].close();
+                    this._operationStack.push([this.removeSubscriber, this._subsribersList[i]]);
                 }
             }
         }
-        this.#pushingInProcess = false;
-        while (this.#operationStack.length !== 0) {
-            const operationToPerform: any[] | undefined = this.#operationStack.pop();
+        this._pushingInProcess = false;
+        while (this._operationStack.length !== 0) {
+            const operationToPerform: any[] | undefined = this._operationStack.pop();
             (operationToPerform![0])(operationToPerform![1]);
         }
-        while (this.#pushStack.length !== 0) {
-            const dataToPush: object | undefined = this.#pushStack.pop();
+        while (this._pushStack.length !== 0) {
+            const dataToPush: object | undefined = this._pushStack.pop();
             this.pushData(dataToPush!);
         }
     }

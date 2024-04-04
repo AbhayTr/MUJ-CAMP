@@ -4,18 +4,18 @@ import { CAMPCollection, CAMPDB } from "../utils/campdb";
 
 class CookieManager {
     
-    #cookieString: string = "";
-    #cookieData: any = {};
-    #csrfToken: string | null = "";
+    private _cookieString: string = "";
+    private _cookieData: any = {};
+    private _csrfToken: string | null = "";
 
-    #campdb!: CAMPDB;
+    private _campdb!: CAMPDB;
 
     constructor(campdb: CAMPDB) {
-        this.#campdb = campdb;
+        this._campdb = campdb;
     }
 
     async startSession() {
-        const doarCollection: CAMPCollection = this.#campdb.collection("doar");
+        const doarCollection: CAMPCollection = this._campdb.collection("doar");
         const almaShineCookies: Document[] = await (await doarCollection.find({
             desc: "AlmaShine Cookies"
         })).project({
@@ -28,14 +28,14 @@ class CookieManager {
             if (almaShineCookies[0] == null || almaShineCookies[0].length === 0 || almaShineCookies[0]["cookies"] == null || almaShineCookies[0]["csrf"] == null) {
                 return;
             } else {
-                this.#cookieData = almaShineCookies[0]["cookies"];
-                this.#csrfToken = almaShineCookies[0]["csrf"];
+                this._cookieData = almaShineCookies[0]["cookies"];
+                this._csrfToken = almaShineCookies[0]["csrf"];
                 console.log("DoAR Almashines Login Successful (Cached Cookies).");
             }
         }
     }
 
-    #parseCookiesFromString(cookieString: string): any {
+    private _parseCookiesFromString(cookieString: string): any {
         let expiryStringFound: boolean = false;
         let expiryStringTrackingString: string = "";
         let cookieDataString: string = "";
@@ -82,15 +82,15 @@ class CookieManager {
         return cookiesList;
     }
 
-    async #updateCookiesInDB() {
-        const doarCollection: CAMPCollection = this.#campdb.collection("doar");
+    private async _updateCookiesInDB() {
+        const doarCollection: CAMPCollection = this._campdb.collection("doar");
         const result = await doarCollection.updateOne({
             desc: "AlmaShine Cookies"
         }, {
             $set: {
                 desc: "AlmaShine Cookies",
-                cookies: this.#cookieData,
-                csrf: this.#csrfToken
+                cookies: this._cookieData,
+                csrf: this._csrfToken
             }
         }, {
             upsert: true
@@ -104,23 +104,23 @@ class CookieManager {
         if (cookieString == null) {
             return;
         }
-        if (this.#cookieString === "") {
-            this.#cookieString += cookieString;
+        if (this._cookieString === "") {
+            this._cookieString += cookieString;
         } else {
-            this.#cookieString += (", " + cookieString);
+            this._cookieString += (", " + cookieString);
         }
-        this.#cookieData = this.#parseCookiesFromString(this.#cookieString);
+        this._cookieData = this._parseCookiesFromString(this._cookieString);
         if (csrfToken != null) {
-            this.#csrfToken = csrfToken;
+            this._csrfToken = csrfToken;
         }
-        this.#updateCookiesInDB();
+        this._updateCookiesInDB();
     }
 
-    #getAllCookies(): string {
-        const cookieKeys: string[] = Object.keys(this.#cookieData);
+    private _getAllCookies(): string {
+        const cookieKeys: string[] = Object.keys(this._cookieData);
         var cookieString: string = "";
         for (var i = 0; i < cookieKeys.length; i++) {
-            cookieString += `${cookieKeys[i]}=${this.#cookieData[cookieKeys[i]]}`
+            cookieString += `${cookieKeys[i]}=${this._cookieData[cookieKeys[i]]}`
             if (i !== cookieKeys.length - 1) {
                 cookieString += ", ";
             }
@@ -128,10 +128,10 @@ class CookieManager {
         return cookieString;
     }
 
-    #getSpeceficCookies(speceficKeys: string[]): string {
+    private _getSpeceficCookies(speceficKeys: string[]): string {
         var cookieString: string = "";
         for (var i = 0; i < speceficKeys.length; i++) {
-            cookieString += `${speceficKeys[i]}=${this.#cookieData[speceficKeys[i]]}`
+            cookieString += `${speceficKeys[i]}=${this._cookieData[speceficKeys[i]]}`
             if (i !== speceficKeys.length - 1) {
                 cookieString += "; ";
             }
@@ -141,14 +141,14 @@ class CookieManager {
 
     getCookies(speceficKeys: string[] = []): string {
         if (speceficKeys.length === 0) {
-            return this.#getAllCookies();
+            return this._getAllCookies();
         } else {
-            return this.#getSpeceficCookies(speceficKeys);
+            return this._getSpeceficCookies(speceficKeys);
         }
     }
 
     getCSRFToken(): string {
-        return this.#csrfToken!;
+        return this._csrfToken!;
     }
     
 }

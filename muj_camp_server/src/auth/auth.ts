@@ -7,11 +7,11 @@ import JWTManger from "./jwtmanager";
 
 class CAMPAuthManager {
 
-    static #validateSID(sessionID: string): boolean {
+    private static _validateSID(sessionID: string): boolean {
         return (/^[a-z0-9]+$/i.test(sessionID));
     }
 
-    static async #sendOTP(authEmail: string, authName: string, sessionID: string, isResendRequest: boolean, app: Application, photo: string | null): Promise<object> {
+    private static async _sendOTP(authEmail: string, authName: string, sessionID: string, isResendRequest: boolean, app: Application, photo: string | null): Promise<object> {
         try {
             await CAMPOTP.sendOTP(authEmail, authName, sessionID, isResendRequest, app);
         } catch (error) {
@@ -37,7 +37,7 @@ class CAMPAuthManager {
     static async handleSignIn(req: Request, res: Response, app: Application) {
         let userRequest: any = req.body;
         let userSessionID: string = userRequest.sid;
-        if (userSessionID != null && !this.#validateSID(userSessionID)) {
+        if (userSessionID != null && !this._validateSID(userSessionID)) {
             res.status(403).send({});
             return;
         }
@@ -57,7 +57,7 @@ class CAMPAuthManager {
                 if (isResendRequest) {
                     const timeBeforeOTPCanBeResent = await CAMPOTP.isEligibleToReceiveOTP(userData.email, userSessionID, app);
                     if (timeBeforeOTPCanBeResent === 0) {
-                        userResponse = await this.#sendOTP(userData.email, userData.name, userSessionID, true, app, userData.photo);
+                        userResponse = await this._sendOTP(userData.email, userData.name, userSessionID, true, app, userData.photo);
                     } else {
                         userResponse = {
                             status: "f",
@@ -68,7 +68,7 @@ class CAMPAuthManager {
                     const timeBeforeNextPossibleSessionTime: number = await CAMPOTP.isEligibleToCreateSession(userData.email, app);
                     if (timeBeforeNextPossibleSessionTime === 0) {
                         const sessionID = Common.getSessionID(userData.email);
-                        userResponse = await this.#sendOTP(userData.email, userData.name, sessionID, false, app, userData.photo);
+                        userResponse = await this._sendOTP(userData.email, userData.name, sessionID, false, app, userData.photo);
                     } else {
                         userResponse = {
                             status: "f",
@@ -92,7 +92,7 @@ class CAMPAuthManager {
         let userResponse: object = {};
         let userData = await User.getUserDetails(userRequest.authEmail, app.locals.campdb);
         let userSessionID: string = userRequest.sid;
-        if ((userData.bypassAuth !== true) && (userSessionID == null || !this.#validateSID(userSessionID))) {
+        if ((userData.bypassAuth !== true) && (userSessionID == null || !this._validateSID(userSessionID))) {
             res.status(403).send({});
             return;
         }
@@ -115,7 +115,7 @@ class CAMPAuthManager {
         res.send(userResponse);
     }
 
-    static async #getRoles(authEmail: string, app: Application): Promise<string[]> {
+    private static async _getRoles(authEmail: string, app: Application): Promise<string[]> {
         let userCollection = app.locals.campdb.collection("users");
 
         const userRolesData: Document[] = await (await userCollection.find({
@@ -133,7 +133,7 @@ class CAMPAuthManager {
         const userData = JWTManger.validateTokenAndReturnUser(userToken);
         if (typeof userData === "object") {
             if (userRequest.authEmail === userData.email) {
-                const userRoles = await this.#getRoles(userRequest.authEmail, app);
+                const userRoles = await this._getRoles(userRequest.authEmail, app);
                 if (fetchRoles) {
                     res.send({
                         status: "s",
