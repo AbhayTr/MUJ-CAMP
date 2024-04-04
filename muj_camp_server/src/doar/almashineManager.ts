@@ -125,7 +125,7 @@ class AlmaShineManager {
             this.#cookieManager.updateCookies(response.headers.get("set-cookie")!);
             response.json().then(status => {
                 if (!this.#wasSuccessful(status, false)) {
-                    console.error("DoAR Almashines Login Failed.");
+                    console.error("DoAR Almashines Login Failed. Status Response:\n\n" + JSON.stringify(status));
                 } else {
                     console.log("DoAR Almashines Login Successful (New Cookies).");
                 }
@@ -135,18 +135,24 @@ class AlmaShineManager {
 
     async #fetchAlumniData(token: string): Promise<void> {
         return new Promise((resolve, reject) => {
+            const alumniDataFile = fs.createWriteStream("./data/alumni_data.csv", {
+                flags: "w"
+            });
             https.get(`https://mujalumni.in/api/search/download_new/Search%20by%20Role%20%3A%20Alumni?role%5B0%5D=2&other_params[fetch_lost]=true&other_params[viewName]=directory&token=${token}`, {
                 headers: {
                     cookie: this.#cookieManager.getCookies(["tz", "lgdomain", "u_i", "c_i", "l_c", "r_v", "mul", "ast_login_id", "encToken", "PHPSESSID"])!
-                }
+                },
+                timeout: 600000
             }, fileData => {
-                const alumniDataFile = fs.createWriteStream("./data/alumni_data.csv", {
-                    flags: "w"
-                });
                 fileData
                 .pipe(new FileCleaner())
                 .pipe(alumniDataFile);
-                resolve();
+                
+                alumniDataFile.on("finish", () => {
+                    alumniDataFile.close();
+                    resolve();
+                })
+
             });
         });
     }
@@ -162,8 +168,8 @@ class AlmaShineManager {
                 "method": "POST"
             }).then(response => {
                 response.json().then(async status => {
-                    if (!await this.#wasSuccessful(status, false)) {
-                        console.error("DoAR Almashines Alumni Data Fetch Failed.");
+                    if (!await this.#wasSuccessful(status)) {
+                        console.error("DoAR Almashines Alumni Data Fetch Failed. Status Response:\n\n" + JSON.stringify(status));
                         resolve(false);
                     } else {
                         await this.#fetchAlumniData(status.token);
@@ -172,6 +178,56 @@ class AlmaShineManager {
                 });
             }).catch(error => {
                 console.error("DoAR Almashines Error: " + error);
+                resolve(false);
+            });
+        });
+    }
+
+    async addAlumniWorkExperience(alumniID: string, alumniWorkExperience: any): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            fetch("https://mujalumni.in/api/work/save_work", {
+                "headers": {
+                    "cookie": this.#cookieManager.getCookies(["tz", "lgdomain", "u_i", "c_i", "l_c", "r_v", "mul", "ast_login_id", "encToken", "PHPSESSID"])!,
+                    "csrf": this.#cookieManager.getCSRFToken()
+                },
+                "body": `{\"company_name\":\"${alumniWorkExperience.company}\",\"designation_name\":\"${alumniWorkExperience.designation}\",\"industry_name\":\"Academics\",${(alumniWorkExperience.fromMonth != null && alumniWorkExperience.fromYear != null) ? `\"form_work_from_month\":${parseInt(alumniWorkExperience.fromMonth)},` : ``}${(alumniWorkExperience.toMonth != null && alumniWorkExperience.toYear != null) ? `\"form_work_to_month\":${(alumniWorkExperience.toMonth === "c") ? 0 : parseInt(alumniWorkExperience.toMonth)},` : ``}${(alumniWorkExperience.fromMonth != null && alumniWorkExperience.fromYear != null) ? `\"form_work_from\":\"${alumniWorkExperience.fromYear}\",` : ``}${(alumniWorkExperience.toMonth != null && alumniWorkExperience.toYear != null) ? `\"form_work_to\":\"${(alumniWorkExperience.toYear === "c") ? "1901" : alumniWorkExperience.toYear}\",` : ``}\"uid\":\"${alumniID}\"}`,
+                "method": "POST"
+            }).then(response => {
+                response.json().then(async status => {
+                    if (!await this.#wasSuccessful(status)) {
+                        console.error("DoAR Almashines Alumni Work Update Failed. Status Response:\n\n" + JSON.stringify(status));
+                        resolve(false);
+                    } else {
+                        resolve(true);
+                    }
+                });
+            }).catch(error => {
+                console.error("DoAR Almashines Work Update Error: " + error);
+                resolve(false);
+            });
+        });
+    }
+
+    async addAlumniEducation(alumniID: string, alumniEducation: any): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            fetch("https://mujalumni.in/api/education/save_education", {
+                "headers": {
+                    "cookie": this.#cookieManager.getCookies(["tz", "lgdomain", "u_i", "c_i", "l_c", "r_v", "mul", "ast_login_id", "encToken", "PHPSESSID"])!,
+                    "csrf": this.#cookieManager.getCSRFToken()
+                },
+                "body": `{\"newEdit\":true,\"institute\":\"${alumniEducation.institute}\",\"institute_id\":-1,${(alumniEducation.from != null) ? `\"start\":\"${alumniEducation.from}\",` : ``}${(alumniEducation.from != null && alumniEducation.to != null) ? `\"end\":\"${alumniEducation.to}\",` : ``}${(alumniEducation.degree != null) ? `\"degree\":\"${alumniEducation.degree}\",` : ``}\"submitting\":true,\"iserror\":false,\"error_message\":\"\",${(alumniEducation.from != null) ? `\"yoj\":\"${alumniEducation.from}\",` : ``}${(alumniEducation.from != null && alumniEducation.to != null) ? `\"yop\":\"${alumniEducation.to}\",` : ``}\"insti_name\":\"${alumniEducation.institute}\",\"uid\":\"${alumniID}\"}`,
+                "method": "POST"
+            }).then(response => {
+                response.json().then(async status => {
+                    if (!await this.#wasSuccessful(status)) {
+                        console.error("DoAR Almashines Alumni Education Update Failed. Status Response:\n\n" + JSON.stringify(status));
+                        resolve(false);
+                    } else {
+                        resolve(true);
+                    }
+                });
+            }).catch(error => {
+                console.error("DoAR Almashines Education Update Error: " + error);
                 resolve(false);
             });
         });

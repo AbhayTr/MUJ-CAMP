@@ -1,0 +1,82 @@
+function parseExperienceDataWithTimeline(dataString) {
+    const regex = /([^,-]+)-([^,]+)-till\s(\d{4}),?/g;
+    let match;
+    let parsedData = [];
+    while ((match = regex.exec(dataString)) !== null) {
+        let [_, designation, companyName, untilWhen] = match;
+        parsedData.push({
+            designation: designation.trim(),
+            company: companyName.trim(),
+            untilWhen: untilWhen.trim()
+        });
+    }
+    return parsedData;
+}
+
+function parseExperienceDataWithoutTimeline(dataString) {
+    const regex = /([^,-]+)-([^,]+)-duration not mentioned/g;
+    let match;
+    let parsedData = [];
+    while ((match = regex.exec(dataString)) !== null) {
+        let [_, designation, companyName] = match;
+        parsedData.push({
+            designation: designation.trim(),
+            company: companyName.trim(),
+            untilWhen: "N.A."
+        });
+    }
+    return parsedData;
+}
+
+function parseExperienceData(dataString) {
+    return parseExperienceDataWithTimeline(dataString).concat(parseExperienceDataWithoutTimeline(dataString));
+}
+
+/*------------------------------------------------------------------------------------------------------------------------*/
+
+function parseEducationData(inputString) {
+    const entries = inputString.split(',');
+    entries.splice(entries.length - 1, 1);
+    const result = [];
+
+    entries.forEach(entry => {
+        const entryInfo = {};
+        const trimmedEntry = entry.trim();
+        var noDegree = false;
+        
+        const institutionMatch = trimmedEntry.match(/^(.*?) \[/);
+        if (institutionMatch) {
+            entryInfo['institution'] = institutionMatch[1];
+        }
+
+        const degreeMatch = trimmedEntry.match(/\[(.*?)\]/);
+        if (degreeMatch) {
+            const degreeInfo = degreeMatch[1];
+            entryInfo['degree'] = degreeInfo.trim();
+        } else {
+            noDegree = true;
+        }
+
+        const durationMatch = trimmedEntry.match(/\d{4}/g);
+        if (durationMatch) {
+            entryInfo['start_year'] = durationMatch[0];
+            if (durationMatch.length > 1) {
+                entryInfo['end_year'] = durationMatch[durationMatch.length - 1];
+            }
+        }
+
+        if (noDegree) {
+            if (entryInfo["start_year"]) {
+                trimmedEntry = trimmedEntry.replace(entryInfo["start_year"], "");
+            }
+            if (entryInfo["end_year"]) {
+                trimmedEntry = trimmedEntry.replace(entryInfo["end_year"], "");
+            }
+            entryInfo["institution"] = trimmedEntry.trim();
+        }
+
+        result.push(entryInfo);
+    });
+
+    return result;
+}
