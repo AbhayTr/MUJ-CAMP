@@ -35,7 +35,8 @@ const DataTable = (props) => {
         setTableHeight = null,
         searchPlaceholder,
         resultsPlaceholder,
-        searchDisabled = false
+        searchDisabled = false,
+        recordsPerPage = 50
     } = props;
 
     const [
@@ -424,9 +425,9 @@ const DataTable = (props) => {
                                                                                                 color: "#3fb950"
                                                                                             }}>
                                                                                                 {word.replace("%t%", String(recordsNumber)).replace("%r%", `${
-                                                                                                    ((tableData.length) * (tableCurrentPage - 1)) + 1
+                                                                                                    ((recordsPerPage) * (tableCurrentPage - 1)) + 1
                                                                                                 } to ${
-                                                                                                    (((tableData.length) * (tableCurrentPage - 1))) + (tableData.length)
+                                                                                                    (((recordsPerPage) * (tableCurrentPage - 1))) + (tableData.length)
                                                                                                 }`)}
                                                                                             </b>
                                                                                         ) : (word.replace("%e%", (((filtersOrSortApplied())) ? " who match your selected criteria" : (searchText !== "") ? " who match your search criteria" : "")))}

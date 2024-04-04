@@ -47,9 +47,9 @@ class AlmaShineManager {
     private _cookieManager: CookieManager;
     private _dataManager: DoARDataManager;
  
-    constructor(campdb: CAMPDB) {
+    constructor(campdb: CAMPDB, dataManager: DoARDataManager) {
         this._cookieManager = new CookieManager(campdb);
-        this._dataManager = new DoARDataManager(campdb);
+        this._dataManager = dataManager;
     }
 
     private _extractCSRFToken(text: string): string {

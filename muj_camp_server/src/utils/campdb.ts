@@ -77,6 +77,10 @@ class CAMPCollection {
         return this._mongoCollection.drop(...params);
     }
 
+    async countDocuments(...params: Parameters<Collection["countDocuments"]>) {
+        return this._mongoCollection.countDocuments(...params);
+    }
+
 }
 
 export { CAMPDB, CAMPCollection };

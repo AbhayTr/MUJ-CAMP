@@ -63,11 +63,42 @@ const Home = () => {
         setLiveConnected(liveConnected + 2);
     };
 
-    const processTableData = (serverTableData) => {
+    const processTableDataName = (serverTableData) => {
         const newTableData = [];
         for (let i = 0; i < serverTableData.length; i++) {
             let newTableRow = [...serverTableData[i]];
-            let tableDataStats = JSON.parse(newTableRow[newTableRow.length - 1]);
+            let tableDataStats = newTableRow[0];
+            newTableRow[0] = (
+                <span
+                    style={{
+                        paddingLeft: "17px",
+                        display: "inline-block",
+                        cursor: "pointer"
+                    }}
+                    onClick={() => {
+                        window.open(`https://mujalumni.in/profile/${tableDataStats["alumniId"]}`);
+                    }}
+                >
+                    <span style={{
+                        color: "#0d6efd",
+                        fontWeight: "bold"
+                    }}>
+                        {tableDataStats["name"]}
+                    </span>
+                    <br/>
+                    ({tableDataStats["muj_from"]} - {tableDataStats["muj_to"]})
+                </span>
+            );
+            newTableData.push(newTableRow);
+        }
+        return newTableData;
+    }
+
+    const processTableDataStatus = (serverTableData) => {
+        const newTableData = [];
+        for (let i = 0; i < serverTableData.length; i++) {
+            let newTableRow = [...serverTableData[i]];
+            let tableDataStats = newTableRow[newTableRow.length - 1];
             newTableRow[newTableRow.length - 1] = (
                 <div style={{
                     padding: "17px"
@@ -78,7 +109,7 @@ const Home = () => {
                         fontSynthesis: "initial",
                         fontWeight: "bold"
                     }}>
-                        {(tableDataStats["lu"] !== "-") ? timestampToHumanTime(tableDataStats["lu"]) : "-"}
+                        {(tableDataStats["lu"] !== "-") ? timestampToHumanTime(tableDataStats["lu"]) : "N.A."}
                     </span>
                     <br/>
                     Last update status:&nbsp;
@@ -148,7 +179,8 @@ const Home = () => {
                 setTablePages(messageJSON.pages);
                 setTableHeaders(messageJSON.headers);
                 setFilters(messageJSON.filters);
-                messageJSON.data = processTableData(messageJSON.data);
+                messageJSON.data = processTableDataName(messageJSON.data);
+                messageJSON.data = processTableDataStatus(messageJSON.data);
                 setTableData(messageJSON.data);
                 setRecordsNumber(messageJSON.records);
                 setTableLoading(false);

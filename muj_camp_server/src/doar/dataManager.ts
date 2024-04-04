@@ -58,7 +58,7 @@ class DoARDataManager {
             
             const institutionMatch: RegExpMatchArray | null = trimmedEntry.match(/^(.*?) \[/);
             if (institutionMatch) {
-                entryInfo["institution"] = institutionMatch[1];
+                entryInfo["institution"] = institutionMatch[1].trim();
             }
     
             const degreeMatch = trimmedEntry.match(/\[(.*?)\]/);
@@ -71,9 +71,9 @@ class DoARDataManager {
     
             const durationMatch = trimmedEntry.match(/\d{4}/g);
             if (durationMatch) {
-                entryInfo["from"] = durationMatch[0];
+                entryInfo["from"] = durationMatch[0].trim();
                 if (durationMatch.length > 1) {
-                    entryInfo["to"] = durationMatch[durationMatch.length - 1];
+                    entryInfo["to"] = durationMatch[durationMatch.length - 1].trim();
                 }
             }
     
@@ -101,24 +101,27 @@ class DoARDataManager {
         }
     }
 
-    private _getAlumniFormattedData(alumniCSVDataRow: any): object {
+    private _getAlumniFormattedData(alumniCSVDataRow: any): object | null {
+        if ((alumniCSVDataRow["Year of Joining"] == null || alumniCSVDataRow["Year of Joining"].trim() === "0") || (alumniCSVDataRow["Year of Graduation"] == null || alumniCSVDataRow["Year of Graduation"].trim() === "0")) {
+            return null;
+        }
         return {
-            "name": alumniCSVDataRow["First_Name"] + " " + alumniCSVDataRow["Last_Name"],
-            "gender": alumniCSVDataRow["Gender"],
-            "muj_from": alumniCSVDataRow["Year of Joining"],
-            "muj_to": alumniCSVDataRow["Year of Graduation"],
-            "degree": alumniCSVDataRow["Course/ Degree"],
-            "school": alumniCSVDataRow["Division/Department"],
-            "faculty": alumniCSVDataRow["Institute"],
-            "designation": alumniCSVDataRow["Current Designation"],
-            "company": alumniCSVDataRow["Current Company"],
+            "name": (alumniCSVDataRow["First_Name"] + " " + alumniCSVDataRow["Last_Name"]).trim(),
+            "gender": alumniCSVDataRow["Gender"].trim(),
+            "muj_from": alumniCSVDataRow["Year of Joining"].trim(),
+            "muj_to": alumniCSVDataRow["Year of Graduation"].trim(),
+            "degree": alumniCSVDataRow["Course/ Degree"].trim(),
+            "school": alumniCSVDataRow["Division/Department"].trim(),
+            "faculty": alumniCSVDataRow["Institute"].trim(),
+            "designation": alumniCSVDataRow["Current Designation"].trim(),
+            "company": alumniCSVDataRow["Current Company"].trim(),
             "prev_work": this._parseExperienceData(alumniCSVDataRow["Other Work"]),
             "education": this._parseEducationData(alumniCSVDataRow["Other Education"]),
-            "phone": alumniCSVDataRow["Phone"],
-            "email": alumniCSVDataRow["secondary_email"],
-            "location": alumniCSVDataRow["Current Location"],
-            "country": alumniCSVDataRow["Current Country"],
-            "alumniId": alumniCSVDataRow["Unique Profile ID"],
+            "phone": alumniCSVDataRow["Phone"].trim(),
+            "email": alumniCSVDataRow["secondary_email"].trim(),
+            "location": alumniCSVDataRow["Current Location"].trim(),
+            "country": alumniCSVDataRow["Current Country"].trim(),
+            "alumniId": alumniCSVDataRow["Unique Profile ID"].trim(),
             "linkedin": this._returnProperLinkedInURLOrEmpty(alumniCSVDataRow["Public Profile Urls"])
         };
     }
@@ -140,7 +143,10 @@ class DoARDataManager {
             await this._clearDB();
             fs.createReadStream("./data/alumni_data.csv").pipe(csv())
             .on("data", async (row: any) => {
-                const alumniData: object = this._getAlumniFormattedData(row);
+                const alumniData: object | null = this._getAlumniFormattedData(row);
+                if (alumniData == null) {
+                    return;
+                }
                 if (!(await this._insertAlumniRecord(alumniData))) {
                     console.error("DoAR DB Data Insertion Error.");
                     resolve(false);
@@ -150,6 +156,89 @@ class DoARDataManager {
                 resolve(true);
             });
         });
+    }
+
+    // async getFilters(): Promise<object> {
+    //     return null;
+    // }
+
+    async getHomeData(pageNo: number): Promise<object> {
+        const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
+
+        const pageSize = 50;
+        const skip = (pageNo - 1) * pageSize;
+        const limit = pageSize;
+
+        const query = [
+            {
+                $group: {
+                    _id: "$_id",
+                    name: {
+                        $first: "$name"
+                    },
+                    company: {
+                        $first: "$company"
+                    },
+                    education: {
+                        $first: {
+                            $arrayElemAt: [
+                                "$education",
+                                0
+                            ]
+                        }
+                    },
+                    linkedin: {
+                        $first: "$linkedin"
+                    },
+                    muj_from: {
+                        $first: "$muj_from"
+                    },
+                    muj_to: {
+                        $first: "$muj_to"
+                    },
+                    alumniId: {
+                        $first: "$alumniId"
+                    }
+                }
+            },
+            {
+                $sort: {
+                    muj_from: 1
+                }
+            },
+            {
+                $skip: skip
+            },
+            {
+                $limit: limit
+            }
+        ];
+
+        const result = await (await doarDbCollection.aggregate(query)).toArray();
+        const totalCount = await doarDbCollection.countDocuments();
+        const totalPages = Math.ceil(totalCount / pageSize);
+        const alumniData = result.map(alumni => {
+            return [
+                {
+                    name: alumni.name,
+                    muj_from: ((alumni.muj_from === "0") ? "N.A." : alumni.muj_from),
+                    muj_to: ((alumni.muj_to === "0") ? "N.A." : alumni.muj_to),
+                    alumniId: alumni.alumniId || "0"
+                },
+                alumni.company || ((alumni.company === "") ? "N.A." : alumni.company),
+                alumni.education?.institute || "N.A.",
+                {
+                    lu: "-",
+                    ls: "-",
+                    cs: (alumni.linkedin === "") ? "-" : "nl"
+                }
+            ];
+        });
+        return {
+            records: totalCount,
+            pages: totalPages,
+            data: alumniData
+        };
     }
 
 }

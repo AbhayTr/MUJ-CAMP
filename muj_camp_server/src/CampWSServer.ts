@@ -4,18 +4,19 @@ import WebSocket, { WebSocketServer } from "ws";
 import CAMPAuthManager from "./auth/auth";
 import SubscriberManager from "./doar/subscriberManager";
 import AlmaShineManager from "./doar/almashineManager";
+import DoARDataManager from "./doar/dataManager";
 
 let subscriberManager: SubscriberManager = new SubscriberManager();
 let almashineManager: AlmaShineManager;
+let dataManager: DoARDataManager;
 
 async function startAlmashinesSession() {
     await almashineManager.startSession();
-    console.log(await almashineManager.getAlumniData());
 }
 
 const startWSServer = async (app: Application) => {
-    
-    almashineManager = new AlmaShineManager(app.locals.campdb);
+    dataManager = new DoARDataManager(app.locals.campdb);
+    almashineManager = new AlmaShineManager(app.locals.campdb, dataManager);
     await startAlmashinesSession();
     
     const wss: WebSocketServer = new WebSocketServer({
@@ -33,55 +34,20 @@ const startWSServer = async (app: Application) => {
                 if (await CAMPAuthManager.validateTokenWS(authData.authToken, authData.authEmail, app)) {
                     subscriberManager.addSubscriber(ws);
                     if (jsonData.type === "init" || jsonData.type === "data") {
+                        const page = (jsonData.type === "init") ? 1 : jsonData.page;
+                        const homeData: any = await dataManager.getHomeData(page);
                         ws.send(JSON.stringify({
                             type: "data",
-                            pages: 104,
+                            pages: homeData.pages,
                             headers: [
                                 "Name",
                                 "Current Company",
-                                "Current Higher Education",
+                                "Latest Education (apart from MUJ)",
                                 "Profile Status"
                             ],
-                            data: [
-                                [
-                                    "Akshet Patel",
-                                    "Smart Power Systems Ltd.",
-                                    "UCL London",
-                                    `{"lu": ${1}, "ls": "${"s"}", "cs": "${"l"}"}`,
-                                ],
-                                [
-                                    "Akash Bhalotia",
-                                    "Google",
-                                    "-",
-                                    `{"lu": ${1}, "ls": "${"f"}", "cs": "${"nl"}"}`,
-                                ],
-                                [
-                                    "Vanshaj Arora",
-                                    "Smollan x Google",
-                                    "-",
-                                    `{"lu": ${1}, "ls": "${"f"}", "cs": "${"nl"}"}`,
-                                ],
-                                [
-                                    "Rishi Goyal",
-                                    "Celebel Technologies",
-                                    "-",
-                                    `{"lu": ${1}, "ls": "${"f"}", "cs": "${"nl"}"}`,
-                                ],
-                                [
-                                    "XYZ",
-                                    "ABC",
-                                    "-",
-                                    `{"lu": ${2}, "ls": "${"f"}", "cs": "${"nl"}"}`,
-                                ]
-                            ],
-                            filters: {
-                                "Test1": [
-                                    ["Value1", 2],
-                                    ["Value2", 3],
-                                    ["Value3", 4]
-                                ]
-                            },
-                            records: 100
+                            data: homeData.data,
+                            filters: null,
+                            records: homeData.records
                         }));
                     }
                 } else {
