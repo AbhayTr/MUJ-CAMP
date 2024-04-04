@@ -78,36 +78,44 @@ const Home = () => {
                         fontSynthesis: "initial",
                         fontWeight: "bold"
                     }}>
-                        {timestampToHumanTime(tableDataStats["lu"])}
+                        {(tableDataStats["lu"] !== "-") ? timestampToHumanTime(tableDataStats["lu"]) : "-"}
                     </span>
                     <br/>
                     Last update status:&nbsp;
                     <span style={{
-                        color: (tableDataStats["ls"] === "s") ? "#3fb950" : "tomato",
+                        color: (tableDataStats["ls"] === "s") ? "#3fb950" : (((tableDataStats["ls"] === "f")) ? "tomato" : "goldenrod"),
                         fontSynthesis: "initial",
                         fontWeight: "bold"
                     }}>
-                        {(tableDataStats["ls"] === "s") ? "Successfully Synced" : "Sync Failed"}
+                        {(tableDataStats["ls"] === "s") ? "Successfully Synced" : ((tableDataStats["ls"] === "f") ? "Sync Failed" : "Never Synced")}
                     </span>
                     <br/><br/>
                     Current status:&nbsp;
-                    <span style={(tableDataStats["cs"] !== "nl") ? {
+                    <span style={(tableDataStats["cs"] !== "nl") ? ((tableDataStats["cs"] === "l") ? {
                         fontWeight: "bold",
                         color: "goldenrod"
-                    } : {}}>
+                    } : {
+                        fontWeight: "bold",
+                        color: "tomato"
+                    }) : {}}>
                         {(tableDataStats["cs"] === "nl") ? (
                             <Button>Sync</Button>
-                        ) : (
-                            <>
-                                Syncing&nbsp;
-                                <Spinner
-                                    as="span"
-                                    animation="border"
-                                    size="sm"
-                                    role="status"
-                                    aria-hidden="true"
-                                />
-                            </>
+                        ) : (((tableDataStats["cs"] === "l")) ? (
+                                <>
+                                    Syncing&nbsp;
+                                    <Spinner
+                                        as="span"
+                                        animation="border"
+                                        size="sm"
+                                        role="status"
+                                        aria-hidden="true"
+                                    />
+                                </>
+                            ) : (
+                                <>
+                                    LinkedIn ID not linked
+                                </>
+                            ) 
                         )}
                     </span>
                 </div>

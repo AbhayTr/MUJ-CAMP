@@ -148,7 +148,7 @@ class CAMPOTP {
     }
 
     private static async _storeOTP(authEmail: string, sessionID: string, otp: string, app: Application, isResendRequest: boolean) {
-        const otpCollection: CAMPCollection = app.locals.campdb.collection("otp")
+        const otpCollection: CAMPCollection = app.locals.campdb.collection("otp");
 
         if (isResendRequest) {
             const result = await otpCollection.deleteMany({

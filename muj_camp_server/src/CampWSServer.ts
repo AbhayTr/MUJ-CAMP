@@ -10,6 +10,7 @@ let almashineManager: AlmaShineManager;
 
 async function startAlmashinesSession() {
     await almashineManager.startSession();
+    console.log(await almashineManager.getAlumniData());
 }
 
 const startWSServer = async (app: Application) => {

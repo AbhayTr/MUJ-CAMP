@@ -4,6 +4,7 @@ import { Transform } from "stream";
 
 import { CAMPDB } from "../utils/campdb";
 import CookieManager from "./cookieManager";
+import DoARDataManager from "./dataManager";
 
 class FileCleaner extends Transform {
     
@@ -44,9 +45,11 @@ class FileCleaner extends Transform {
 class AlmaShineManager {
 
     private _cookieManager: CookieManager;
+    private _dataManager: DoARDataManager;
  
     constructor(campdb: CAMPDB) {
         this._cookieManager = new CookieManager(campdb);
+        this._dataManager = new DoARDataManager(campdb);
     }
 
     private _extractCSRFToken(text: string): string {
@@ -168,12 +171,16 @@ class AlmaShineManager {
                 "method": "POST"
             }).then(response => {
                 response.json().then(async status => {
-                    if (!await this._wasSuccessful(status)) {
+                    if (!(await this._wasSuccessful(status))) {
                         console.error("DoAR Almashines Alumni Data Fetch Failed. Status Response:\n\n" + JSON.stringify(status));
                         resolve(false);
                     } else {
                         await this._fetchAlumniData(status.token);
-                        resolve(true);
+                        if (!(await this._dataManager.updateDBDataFromCSV())) {
+                            resolve(false);
+                        } else {
+                            resolve(true);
+                        }
                     }
                 });
             }).catch(error => {
@@ -194,7 +201,7 @@ class AlmaShineManager {
                 "method": "POST"
             }).then(response => {
                 response.json().then(async status => {
-                    if (!await this._wasSuccessful(status)) {
+                    if (!(await this._wasSuccessful(status))) {
                         console.error("DoAR Almashines Alumni Work Update Failed. Status Response:\n\n" + JSON.stringify(status));
                         resolve(false);
                     } else {
@@ -219,7 +226,7 @@ class AlmaShineManager {
                 "method": "POST"
             }).then(response => {
                 response.json().then(async status => {
-                    if (!await this._wasSuccessful(status)) {
+                    if (!(await this._wasSuccessful(status))) {
                         console.error("DoAR Almashines Alumni Education Update Failed. Status Response:\n\n" + JSON.stringify(status));
                         resolve(false);
                     } else {

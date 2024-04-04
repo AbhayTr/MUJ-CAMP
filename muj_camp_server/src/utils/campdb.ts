@@ -73,6 +73,10 @@ class CAMPCollection {
         return this._mongoCollection.aggregate(...params);
     }
 
+    async drop(...params: Parameters<Collection["drop"]>) {
+        return this._mongoCollection.drop(...params);
+    }
+
 }
 
 export { CAMPDB, CAMPCollection };
