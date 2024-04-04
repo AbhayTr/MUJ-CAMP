@@ -5,7 +5,6 @@ import CAMPAuthManager from "./auth/auth";
 import SubscriberManager from "./doar/subscriberManager";
 import AlmaShineManager from "./doar/almashineManager";
 
-let app: Application;
 let subscriberManager: SubscriberManager = new SubscriberManager();
 let almashineManager: AlmaShineManager;
 
@@ -13,10 +12,11 @@ async function startAlmashinesSession() {
     await almashineManager.startSession();
 }
 
-const setApp = async (expressApp: Application) => {
-    app = expressApp;
+const startWSServer = async (app: Application) => {
+    
     almashineManager = new AlmaShineManager(app.locals.campdb);
     await startAlmashinesSession();
+    
     const wss: WebSocketServer = new WebSocketServer({
         port: parseInt(process.env.WS_PORT!)
     });
@@ -98,8 +98,4 @@ const setApp = async (expressApp: Application) => {
     });
 }
 
-const publishMessage = (data: object) => {
-    subscriberManager.pushData(data);
-}
-
-export { setApp, publishMessage };
+export default startWSServer;
