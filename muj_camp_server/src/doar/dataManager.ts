@@ -242,7 +242,7 @@ class DoARDataManager {
             headers: [
                 "Name",
                 "Current Company",
-                "Latest Education (apart from MUJ)",
+                "Education (apart from MUJ)",
                 "Profile Status"
             ]
         };
@@ -255,6 +255,16 @@ class DoARDataManager {
             alumniId: alumniId
         });
         return alumniData;
+    }
+
+    private _getCompany(prevWorkData: any[], searchText: string): string {
+        for (var i = 0; i < prevWorkData.length; i++) {
+            const workData = prevWorkData[i];
+            if (workData.company.includes(searchText)) {
+                return workData.company;
+            }
+        }
+        return "N.A.";
     }
 
     async getAlumniDataSet(searchText: string, pageNumber: number): Promise<object> {
@@ -359,7 +369,7 @@ class DoARDataManager {
                     alumniId: alumni.alumniId || "0",
                 },
                 alumni.company || "N.A.",
-                alumni.prev_work.length > 0 ? alumni.prev_work[0].company : "N.A.",
+                alumni.prev_work.length > 0 ? this._getCompany(alumni.prev_work, searchText) : "N.A.",
                 latestEducationInstitution,
                 {
                     lu: "-",

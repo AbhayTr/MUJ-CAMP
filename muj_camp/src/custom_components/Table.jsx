@@ -23,6 +23,7 @@ import { Button, Modal, Spinner } from "react-bootstrap";
 
 import Widget from "./Widget.jsx";
 import LoadButton from "./LoadButton.jsx";
+import { moneyFormatIndia } from "../tools/UI.jsx";
 
 const DataTable = (props) => {
 
@@ -432,10 +433,10 @@ const DataTable = (props) => {
                                                                                             <b style={{
                                                                                                 color: "#3fb950"
                                                                                             }}>
-                                                                                                {word.replace("%t%", String(recordsNumber)).replace("%r%", `${
-                                                                                                    ((recordsPerPage) * (tableCurrentPage - 1)) + 1
+                                                                                                {word.replace("%t%", moneyFormatIndia(String(recordsNumber))).replace("%r%", `${
+                                                                                                    moneyFormatIndia(String(((recordsPerPage) * (tableCurrentPage - 1)) + 1))
                                                                                                 } to ${
-                                                                                                    (((recordsPerPage) * (tableCurrentPage - 1))) + (tableData.length)
+                                                                                                    moneyFormatIndia(String((((recordsPerPage) * (tableCurrentPage - 1))) + (tableData.length)))
                                                                                                 }`)}
                                                                                             </b>
                                                                                         ) : (word.replace("%e%", (((filtersOrSortApplied())) ? " who match your selected criteria" : (searchText !== "") ? " who match your search criteria" : "")))}

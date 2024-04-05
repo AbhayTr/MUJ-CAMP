@@ -114,4 +114,25 @@ const timestampToHumanTime = (timestamp) => {
     return formattedDate;
 };
 
-export { playSound, showAlert, confirmLogout, showCredits, timestampToHumanTime };
+function moneyFormatIndia(num) {
+    let explrestunits = "";
+    if (num.length > 3) {
+        let lastthree = num.substring(num.length - 3);
+        let restunits = num.substring(0, num.length - 3);
+        restunits = (restunits.length % 2 === 1) ? "0" + restunits : restunits;
+        let expunit = restunits.match(/.{1,2}/g);
+        for (let i = 0; i < expunit.length; i++) {
+            if (i === 0) {
+                explrestunits += parseInt(expunit[i], 10) + ",";
+            } else {
+                explrestunits += expunit[i] + ",";
+            }
+        }
+        let thecash = explrestunits + lastthree;
+        return thecash;
+    } else {
+        return num;
+    }
+}
+
+export { playSound, showAlert, confirmLogout, showCredits, timestampToHumanTime, moneyFormatIndia };
