@@ -37,8 +37,8 @@ class CAMPCollection {
         this._mongoCollection = mongoDb.collection(collectionName);
     }
 
-    async findOne(...params: Parameters<Collection["findOne"]>) {
-        return this._mongoCollection.findOne(...params);
+    async findOne<type>(...params: Parameters<Collection["findOne"]>) {
+        return this._mongoCollection.findOne<type>(...params);
     }
 
     async find(...params: Parameters<Collection["find"]>) {

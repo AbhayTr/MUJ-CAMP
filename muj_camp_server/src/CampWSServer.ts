@@ -35,16 +35,12 @@ const startWSServer = async (app: Application) => {
                     subscriberManager.addSubscriber(ws);
                     if (jsonData.type === "init" || jsonData.type === "data") {
                         const page = (jsonData.type === "init") ? 1 : jsonData.page;
-                        const homeData: any = await dataManager.getHomeData(page);
+                        const searchText = (jsonData.type === "init") ? "" : jsonData.search;
+                        const homeData: any = await dataManager.getAlumniDataSet(searchText, page);
                         ws.send(JSON.stringify({
                             type: "data",
                             pages: homeData.pages,
-                            headers: [
-                                "Name",
-                                "Current Company",
-                                "Latest Education (apart from MUJ)",
-                                "Profile Status"
-                            ],
+                            headers: homeData.headers,
                             data: homeData.data,
                             filters: null,
                             records: homeData.records

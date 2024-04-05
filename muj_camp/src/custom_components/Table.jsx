@@ -205,7 +205,15 @@ const DataTable = (props) => {
 
         for (let sortedField in sortedFields) {
             tempTableData.sort((dataRowX, dataRowY) => {
-                return (sortedFields[sortedField] === 0) ? (String(dataRowX[headerMap[sortedField]]).localeCompare(String(dataRowY[headerMap[sortedField]]))) : (String(dataRowY[headerMap[sortedField]]).localeCompare(String(dataRowX[headerMap[sortedField]])));
+                let toCompareX = String(dataRowX[headerMap[sortedField]]);
+                let toCompareY = String(dataRowY[headerMap[sortedField]]);
+                if (toCompareX.toLowerCase() === "[object object]") {
+                    toCompareX = dataRowX[headerMap[sortedField]].props?.sortvalue || "";
+                }
+                if (toCompareY.toLowerCase() === "[object object]") {
+                    toCompareY = dataRowY[headerMap[sortedField]].props?.sortvalue || "";
+                }
+                return (sortedFields[sortedField] === 0) ? (toCompareX.localeCompare(toCompareY)) : (toCompareY.localeCompare(toCompareX));
             });
         }
 

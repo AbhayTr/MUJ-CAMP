@@ -75,6 +75,7 @@ const Home = () => {
                         display: "inline-block",
                         cursor: "pointer"
                     }}
+                    sortvalue={tableDataStats["name"]}
                     onClick={() => {
                         window.open(`https://mujalumni.in/profile/${tableDataStats["alumniId"]}`);
                     }}
@@ -100,10 +101,13 @@ const Home = () => {
             let newTableRow = [...serverTableData[i]];
             let tableDataStats = newTableRow[newTableRow.length - 1];
             newTableRow[newTableRow.length - 1] = (
-                <div style={{
-                    padding: "17px"
-                }}>
-                    Last updated at:&nbsp;
+                <div
+                    style={{
+                        padding: "17px"
+                    }}
+                    sortvalue={(tableDataStats["lu"] !== "-") ? timestampToHumanTime(tableDataStats["lu"]) : "N.A."}
+                >
+                    Last updated at:<br/>
                     <span style={{
                         color: "#3fb950",
                         fontSynthesis: "initial",
@@ -112,7 +116,7 @@ const Home = () => {
                         {(tableDataStats["lu"] !== "-") ? timestampToHumanTime(tableDataStats["lu"]) : "N.A."}
                     </span>
                     <br/>
-                    Last update status:&nbsp;
+                    Last update status:<br/>
                     <span style={{
                         color: (tableDataStats["ls"] === "s") ? "#3fb950" : (((tableDataStats["ls"] === "f")) ? "tomato" : "goldenrod"),
                         fontSynthesis: "initial",
@@ -121,7 +125,7 @@ const Home = () => {
                         {(tableDataStats["ls"] === "s") ? "Successfully Synced" : ((tableDataStats["ls"] === "f") ? "Sync Failed" : "Never Synced")}
                     </span>
                     <br/><br/>
-                    Current status:&nbsp;
+                    Current status:<br/>
                     <span style={(tableDataStats["cs"] !== "nl") ? ((tableDataStats["cs"] === "l") ? {
                         fontWeight: "bold",
                         color: "goldenrod"

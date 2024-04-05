@@ -2,6 +2,7 @@ import fs from "fs";
 import csv from "csv-parser";
 
 import { CAMPCollection, CAMPDB } from "../utils/campdb";
+import { SortDirection } from "mongodb";
 
 class DoARDataManager {
 
@@ -162,10 +163,10 @@ class DoARDataManager {
     //     return null;
     // }
 
-    async getHomeData(pageNo: number): Promise<object> {
+    private async _getHomeDataSet(pageNo: number): Promise<object> {
         const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
 
-        const pageSize = 50;
+        const pageSize = parseInt(process.env.RECORDS_PER_PAGE_DOAR!);
         const skip = (pageNo - 1) * pageSize;
         const limit = pageSize;
 
@@ -203,7 +204,7 @@ class DoARDataManager {
             },
             {
                 $sort: {
-                    muj_from: 1
+                    linkedin: -1
                 }
             },
             {
@@ -226,7 +227,7 @@ class DoARDataManager {
                     alumniId: alumni.alumniId || "0"
                 },
                 alumni.company || ((alumni.company === "") ? "N.A." : alumni.company),
-                alumni.education?.institute || "N.A.",
+                alumni.education?.institution || "N.A.",
                 {
                     lu: "-",
                     ls: "-",
@@ -237,7 +238,150 @@ class DoARDataManager {
         return {
             records: totalCount,
             pages: totalPages,
-            data: alumniData
+            data: alumniData,
+            headers: [
+                "Name",
+                "Current Company",
+                "Latest Education (apart from MUJ)",
+                "Profile Status"
+            ]
+        };
+    }
+
+    private async _getAlumniData(alumniId: string): Promise<any | null> {
+        const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
+
+        const alumniData: Document | null = await doarDbCollection.findOne({
+            alumniId: alumniId
+        });
+        return alumniData;
+    }
+
+    async getAlumniDataSet(searchText: string, pageNumber: number): Promise<object> {
+        if (searchText == null || searchText === "") {
+            return this._getHomeDataSet(pageNumber);
+        }
+
+        const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
+        const recordsPerPage = parseInt(process.env.RECORDS_PER_PAGE_DOAR!);
+
+        const query = {
+            $or: [
+                {
+                    name: {
+                        $regex: searchText,
+                        $options: "i"
+                    }
+                },
+                {
+                    muj_from: searchText
+                },
+                {
+                    muj_to: searchText
+                },
+                {
+                    alumniId: searchText
+                },
+                {
+                    company: {
+                        $regex: searchText,
+                        $options: "i"
+                    }
+                },
+                {
+                    "prev_work.company": {
+                        $regex: searchText,
+                        $options: "i"
+                    }
+                },
+                {
+                    "education.institution": {
+                        $regex: searchText,
+                        $options: "i"
+                    }
+                }
+            ]
+        };
+
+        const projection = {
+            _id: 0,
+            name: 1,
+            muj_from: 1,
+            muj_to: 1,
+            alumniId: 1,
+            company: 1,
+            "prev_work.company": 1,
+            education: 1,
+            linkedin: 1
+        };
+
+        const totalRecords = await doarDbCollection.countDocuments(query);
+        const totalPages = Math.ceil(totalRecords / recordsPerPage);
+        
+        const skip = recordsPerPage * (pageNumber - 1);
+        const limit = recordsPerPage;
+
+        const sort: {[key: string]: SortDirection} = {
+            linkedin: -1
+        };
+
+        const cursor = (await doarDbCollection.find(query, { projection })).sort(sort).skip(skip).limit(limit);
+
+        const results = await cursor.toArray();
+        const formattedResults = await Promise.all(results.map(async alumni => {
+            let latestEducationInstitution = "N.A.";
+            if (!(alumni.education && alumni.education.length > 0)) {
+                const originalAlumniData = await this._getAlumniData(alumni.alumniId).then();
+                let sortedEducation;
+                if (originalAlumniData.education && originalAlumniData.education.length > 0) {
+                    sortedEducation = originalAlumniData.education.sort((a: any, b: any) => b.to.localeCompare(a.to));
+                } else {
+                    sortedEducation = [{
+                        institution: "N.A."
+                    }];
+                }
+                latestEducationInstitution = sortedEducation[0].institution;
+            } else {
+                const sortedEducation = alumni.education.sort((a: any, b: any) => {
+                    if (a.to == null || b.to == null) {
+                        return 0;
+                    }
+                    return b.to.localeCompare(a.to)
+                });
+                latestEducationInstitution = sortedEducation[0].institution;
+            }
+
+            const formattedAlumni = [
+                {
+                    name: alumni.name || "N.A.",
+                    muj_from: ((alumni.muj_from === "0") ? "N.A." : alumni.muj_from),
+                    muj_to: ((alumni.muj_to === "0") ? "N.A." : alumni.muj_to),
+                    alumniId: alumni.alumniId || "0",
+                },
+                alumni.company || "N.A.",
+                alumni.prev_work.length > 0 ? alumni.prev_work[0].company : "N.A.",
+                latestEducationInstitution,
+                {
+                    lu: "-",
+                    ls: "-",
+                    cs: (alumni.linkedin === "") ? "-" : "nl"
+                }
+            ];
+
+            return formattedAlumni;
+        }));
+
+        return {
+            records: totalRecords,
+            pages: totalPages,
+            data: formattedResults,
+            headers: [
+                "Name",
+                "Current Company",
+                "Previous Company",
+                "Education (apart from MUJ)",
+                "Profile Status"
+            ]
         };
     }
 
