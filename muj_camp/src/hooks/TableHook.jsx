@@ -14,6 +14,8 @@ const useTable = () => {
 
     const [recordsNumber, setRecordsNumber] = useState(0);
 
+    const [searchText, setSearchText] = useState("");
+
     return [
         tableLoading,
         setTableLoading,
@@ -28,7 +30,9 @@ const useTable = () => {
         filtersApplied,
         setFiltersApplied,
         recordsNumber,
-        setRecordsNumber
+        setRecordsNumber,
+        searchText,
+        setSearchText
     ];
 
 }

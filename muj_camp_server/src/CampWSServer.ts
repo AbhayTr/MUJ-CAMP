@@ -36,13 +36,14 @@ const startWSServer = async (app: Application) => {
                     if (jsonData.type === "init" || jsonData.type === "data") {
                         const page = (jsonData.type === "init") ? 1 : jsonData.page;
                         const searchText = (jsonData.type === "init") ? "" : jsonData.search;
-                        const homeData: any = await dataManager.getAlumniDataSet(searchText, page);
+                        const appliedFilters = (jsonData.type === "init") ? {} : jsonData.filters;
+                        const homeData: any = await dataManager.getAlumniDataSet(searchText, page, appliedFilters);
                         ws.send(JSON.stringify({
                             type: "data",
                             pages: homeData.pages,
                             headers: homeData.headers,
                             data: homeData.data,
-                            filters: null,
+                            filters: await dataManager.getHomeFilters(appliedFilters),
                             records: homeData.records
                         }));
                     }
@@ -51,6 +52,7 @@ const startWSServer = async (app: Application) => {
                 }
             } catch (e) {
                 ws.close();
+                throw e;
             }
         });
     

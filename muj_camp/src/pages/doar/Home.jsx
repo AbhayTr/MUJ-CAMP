@@ -38,7 +38,9 @@ const Home = () => {
         filtersApplied,
         setFiltersApplied,
         recordsNumber,
-        setRecordsNumber
+        setRecordsNumber,
+        searchText,
+        setSearchText
     ] = useTable();
     
     useEffect(() => {
@@ -60,6 +62,8 @@ const Home = () => {
             document.getElementById("main-content").scroll(0, 0);
         } catch (e) {}
         setFilters({});
+        setFiltersApplied({});
+        setSearchText("");
         setLiveConnected(liveConnected + 2);
     };
 
@@ -228,11 +232,14 @@ const Home = () => {
                         setFilters,
                         filtersApplied,
                         setFiltersApplied,
-                        recordsNumber
+                        recordsNumber,
+                        searchText,
+                        setSearchText
                     ]}
                     updatePageData={onPageUpdate}
                     searchPlaceholder="Search Alumni."
                     resultsPlaceholder="Showing %r% results out of %t% Alumni%e%"
+                    noResultsText="There is no alumni who matches your criteria 🤷"
                     searchDisabled={!(liveConnected === 0)}
                 >
                     <div

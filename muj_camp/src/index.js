@@ -7,6 +7,7 @@ import { PersistGate } from "redux-persist/lib/integration/react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 
+import "./tools/init";
 import { Home as RootHome } from "./pages/home/Home";
 import { Home as AppHome } from "./pages/app/Home";
 import { AuthStore, AuthPersistor } from "./app_state/auth/auth";

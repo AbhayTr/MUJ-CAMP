@@ -2,14 +2,22 @@ import fs from "fs";
 import csv from "csv-parser";
 
 import { CAMPCollection, CAMPDB } from "../utils/campdb";
-import { SortDirection } from "mongodb";
+import AlumniLSStatus from "./alumniLIStatus";
 
 class DoARDataManager {
 
     private _campdb!: CAMPDB;
+    private _alumniLIStatusManager: AlumniLSStatus;
+    private _filterKeyMap: any = {
+        Institute: "faculty",
+        Country: "country",
+        Gender: "gender",
+        School: "school"
+    };
 
     constructor(campdb: CAMPDB) {
         this._campdb = campdb;
+        this._alumniLIStatusManager = new AlumniLSStatus(campdb);
     }
 
     private _parseExperienceDataWithTimeline(dataString: string): object[] {
@@ -103,14 +111,11 @@ class DoARDataManager {
     }
 
     private _getAlumniFormattedData(alumniCSVDataRow: any): object | null {
-        if ((alumniCSVDataRow["Year of Joining"] == null || alumniCSVDataRow["Year of Joining"].trim() === "0") || (alumniCSVDataRow["Year of Graduation"] == null || alumniCSVDataRow["Year of Graduation"].trim() === "0")) {
-            return null;
-        }
         return {
             "name": (alumniCSVDataRow["First_Name"] + " " + alumniCSVDataRow["Last_Name"]).trim(),
             "gender": alumniCSVDataRow["Gender"].trim(),
-            "muj_from": alumniCSVDataRow["Year of Joining"].trim(),
-            "muj_to": alumniCSVDataRow["Year of Graduation"].trim(),
+            "muj_from": (alumniCSVDataRow["Year of Joining"].trim() === "0") ? "N.A." : alumniCSVDataRow["Year of Joining"].trim(),
+            "muj_to": (alumniCSVDataRow["Year of Graduation"].trim() === "0") ? "N.A." : alumniCSVDataRow["Year of Graduation"].trim(),
             "degree": alumniCSVDataRow["Course/ Degree"].trim(),
             "school": alumniCSVDataRow["Division/Department"].trim(),
             "faculty": alumniCSVDataRow["Institute"].trim(),
@@ -159,96 +164,19 @@ class DoARDataManager {
         });
     }
 
-    // async getFilters(): Promise<object> {
-    //     return null;
-    // }
-
-    private async _getHomeDataSet(pageNo: number): Promise<object> {
-        const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
-
-        const pageSize = parseInt(process.env.RECORDS_PER_PAGE_DOAR!);
-        const skip = (pageNo - 1) * pageSize;
-        const limit = pageSize;
-
-        const query = [
-            {
-                $group: {
-                    _id: "$_id",
-                    name: {
-                        $first: "$name"
-                    },
-                    company: {
-                        $first: "$company"
-                    },
-                    education: {
-                        $first: {
-                            $arrayElemAt: [
-                                "$education",
-                                0
-                            ]
-                        }
-                    },
-                    linkedin: {
-                        $first: "$linkedin"
-                    },
-                    muj_from: {
-                        $first: "$muj_from"
-                    },
-                    muj_to: {
-                        $first: "$muj_to"
-                    },
-                    alumniId: {
-                        $first: "$alumniId"
-                    }
-                }
-            },
-            {
-                $sort: {
-                    linkedin: -1
-                }
-            },
-            {
-                $skip: skip
-            },
-            {
-                $limit: limit
+    private _getMatchFilters(appliedFilters: any, query: any = {}): object {
+        const filters = Object.keys(appliedFilters);
+        for (var i = 0; i < filters.length; i++) {
+            const filter = filters[i];
+            const filterList = appliedFilters[filter];
+            query[this._filterKeyMap[filter]] = {
+                $in: filterList
             }
-        ];
-
-        const result = await (await doarDbCollection.aggregate(query)).toArray();
-        const totalCount = await doarDbCollection.countDocuments();
-        const totalPages = Math.ceil(totalCount / pageSize);
-        const alumniData = result.map(alumni => {
-            return [
-                {
-                    name: alumni.name,
-                    muj_from: ((alumni.muj_from === "0") ? "N.A." : alumni.muj_from),
-                    muj_to: ((alumni.muj_to === "0") ? "N.A." : alumni.muj_to),
-                    alumniId: alumni.alumniId || "0"
-                },
-                alumni.company || ((alumni.company === "") ? "N.A." : alumni.company),
-                alumni.education?.institution || "N.A.",
-                {
-                    lu: "-",
-                    ls: "-",
-                    cs: (alumni.linkedin === "") ? "-" : "nl"
-                }
-            ];
-        });
-        return {
-            records: totalCount,
-            pages: totalPages,
-            data: alumniData,
-            headers: [
-                "Name",
-                "Current Company",
-                "Education (apart from MUJ)",
-                "Profile Status"
-            ]
-        };
+        }
+        return query;
     }
 
-    private async _getAlumniData(alumniId: string): Promise<any | null> {
+    private async _getAlumniData(alumniId: string): Promise<any> {
         const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
 
         const alumniData: Document | null = await doarDbCollection.findOne({
@@ -267,81 +195,126 @@ class DoARDataManager {
         return "N.A.";
     }
 
-    async getAlumniDataSet(searchText: string, pageNumber: number): Promise<object> {
-        if (searchText == null || searchText === "") {
-            return this._getHomeDataSet(pageNumber);
-        }
-
+    async getAlumniDataSet(searchText: string, pageNumber: number, appliedFilters: any): Promise<object> {
         const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
         const recordsPerPage = parseInt(process.env.RECORDS_PER_PAGE_DOAR!);
-
-        const query = {
-            $or: [
-                {
-                    name: {
-                        $regex: searchText,
-                        $options: "i"
-                    }
-                },
-                {
-                    muj_from: searchText
-                },
-                {
-                    muj_to: searchText
-                },
-                {
-                    alumniId: searchText
-                },
-                {
-                    company: {
-                        $regex: searchText,
-                        $options: "i"
-                    }
-                },
-                {
-                    "prev_work.company": {
-                        $regex: searchText,
-                        $options: "i"
-                    }
-                },
-                {
-                    "education.institution": {
-                        $regex: searchText,
-                        $options: "i"
-                    }
-                }
-            ]
-        };
-
-        const projection = {
-            _id: 0,
-            name: 1,
-            muj_from: 1,
-            muj_to: 1,
-            alumniId: 1,
-            company: 1,
-            "prev_work.company": 1,
-            education: 1,
-            linkedin: 1
-        };
-
-        const totalRecords = await doarDbCollection.countDocuments(query);
-        const totalPages = Math.ceil(totalRecords / recordsPerPage);
         
         const skip = recordsPerPage * (pageNumber - 1);
         const limit = recordsPerPage;
 
-        const sort: {[key: string]: SortDirection} = {
-            linkedin: -1
-        };
+        const pipeline = [
+            {
+                $match: this._getMatchFilters(appliedFilters)
+            },
+            {
+                $match: {
+                    $or: [
+                        {
+                            name: {
+                                $regex: searchText,
+                                $options: "i"
+                            }
+                        },
+                        {
+                            muj_from: searchText
+                        },
+                        {
+                            muj_to: searchText
+                        },
+                        {
+                            alumniId: searchText
+                        },
+                        {
+                            company: {
+                                $regex: searchText,
+                                $options: "i"
+                            }
+                        },
+                        {
+                            "prev_work.company": {
+                                $regex: searchText,
+                                $options: "i"
+                            }
+                        },
+                        {
+                            "education.institution": {
+                                $regex: searchText,
+                                $options: "i"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    name: 1,
+                    muj_from: 1,
+                    muj_to: 1,
+                    alumniId: 1,
+                    company: 1,
+                    "prev_work.company": 1,
+                    education: 1,
+                    linkedin: 1
+                }
+            },
+            {
+                $facet: {
+                    metadata: [
+                        {
+                            $count: "totalRecords"
+                        },
+                        {
+                            $addFields: {
+                                totalPages: {
+                                    $ceil: {
+                                        $divide: [
+                                            "$totalRecords",
+                                            recordsPerPage
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    data: [
+                        {
+                            $sort: {
+                                linkedin: -1
+                            }
+                        },
+                        {
+                            $skip: skip
+                        },
+                        {
+                            $limit: limit
+                        }
+                    ]
+                }
+            },
+            {
+                $unwind: "$metadata" 
+            },
+            {
+                $project: {
+                    totalRecords: "$metadata.totalRecords",
+                    totalPages: "$metadata.totalPages",
+                    data: "$data"
+                }
+            }
+        ];
 
-        const cursor = (await doarDbCollection.find(query, { projection })).sort(sort).skip(skip).limit(limit);
+        const cursor = await doarDbCollection.aggregate(pipeline);
+        const [resultMain] = await cursor.toArray();
+        
+        const totalRecords = resultMain?.totalRecords || 0;
+        const totalPages = resultMain?.totalPages || 0;
 
-        const results = await cursor.toArray();
+        const results: Array<any> = resultMain?.data || [];
         const formattedResults = await Promise.all(results.map(async alumni => {
             let latestEducationInstitution = "N.A.";
             if (!(alumni.education && alumni.education.length > 0)) {
-                const originalAlumniData = await this._getAlumniData(alumni.alumniId).then();
+                const originalAlumniData = await this._getAlumniData(alumni.alumniId);
                 let sortedEducation;
                 if (originalAlumniData.education && originalAlumniData.education.length > 0) {
                     sortedEducation = originalAlumniData.education.sort((a: any, b: any) => b.to.localeCompare(a.to));
@@ -366,33 +339,95 @@ class DoARDataManager {
                     name: alumni.name || "N.A.",
                     muj_from: ((alumni.muj_from === "0") ? "N.A." : alumni.muj_from),
                     muj_to: ((alumni.muj_to === "0") ? "N.A." : alumni.muj_to),
-                    alumniId: alumni.alumniId || "0",
+                    alumniId: alumni.alumniId,
                 },
                 alumni.company || "N.A.",
                 alumni.prev_work.length > 0 ? this._getCompany(alumni.prev_work, searchText) : "N.A.",
                 latestEducationInstitution,
-                {
-                    lu: "-",
-                    ls: "-",
-                    cs: (alumni.linkedin === "") ? "-" : "nl"
-                }
+                await this._alumniLIStatusManager.getAlumniLIStatus(alumni)
             ];
+
+            if (searchText === "") {
+                formattedAlumni.splice(2, 1);
+            }
 
             return formattedAlumni;
         }));
+
+        const headersData = [
+            "Name",
+            "Current Company",
+            "Previous Company",
+            "Education (apart from MUJ)",
+            "Profile Status"
+        ];
+
+        if (searchText === "") {
+            headersData.splice(2, 1);
+        }
 
         return {
             records: totalRecords,
             pages: totalPages,
             data: formattedResults,
-            headers: [
-                "Name",
-                "Current Company",
-                "Previous Company",
-                "Education (apart from MUJ)",
-                "Profile Status"
-            ]
+            headers: headersData
         };
+    }
+
+    private async _getFilterOptions(filterID: string, appliedFilters: any): Promise<Array<Array<any>>> {
+        const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
+        
+        const matchQuery: any = {
+            $match: {}
+        };
+        matchQuery["$match"][this._filterKeyMap[filterID]] = {
+            $exists: true,
+            $ne: ""
+        };
+
+        matchQuery["$match"] = this._getMatchFilters(appliedFilters, matchQuery["$match"]);
+
+        const pipeline = [
+            matchQuery,
+            {
+                $group: {
+                    _id: `$${this._filterKeyMap[filterID]}`,
+                    count: {
+                        $sum: 1
+                    }
+                }
+            },
+            {
+                $sort: {
+                    count: -1
+                }
+            }
+        ];
+        
+        const result = await (await doarDbCollection.aggregate(pipeline)).toArray();
+
+        if (result.length > 0) {
+            const options: Array<Array<any>> = [];
+            result.forEach(item => {
+                options.push([item._id, item.count]);
+            });
+            return options;
+        } else {
+            return [];
+        }
+    }
+
+    private async _getFilters(filterNames: Array<string>, appliedFilters: any): Promise<object> {
+        const filters: any = {};
+        for (var i = 0; i < filterNames.length; i++) {
+            const filterName: string = filterNames[i];
+            filters[filterName] = await this._getFilterOptions(filterName, appliedFilters);
+        }
+        return filters;
+    }
+
+    async getHomeFilters(appliedFilters: any): Promise<object> {
+        return this._getFilters(Object.keys(this._filterKeyMap), appliedFilters);
     }
 
 }

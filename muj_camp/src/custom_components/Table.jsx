@@ -37,7 +37,8 @@ const DataTable = (props) => {
         searchPlaceholder,
         resultsPlaceholder,
         searchDisabled = false,
-        recordsPerPage = 50
+        recordsPerPage = 50,
+        noResultsText = "No result matches your search criteria 🤷"
     } = props;
 
     const [
@@ -50,7 +51,9 @@ const DataTable = (props) => {
         setFilters,
         filtersApplied,
         setFiltersApplied,
-        recordsNumber
+        recordsNumber,
+        searchText,
+        setSearchText
      ] = tableHook;
 
     const [sortedTableData, setSortedTableData] = useState([]);
@@ -62,7 +65,6 @@ const DataTable = (props) => {
 
     const [headerMap, setHeaderMap] = useState({});
 
-    const [searchText, setSearchText] = useState("");
     const [originalPage, setOriginalPage] = useState(-1);
 
     useEffect(() => {
@@ -381,6 +383,9 @@ const DataTable = (props) => {
                                                                                                 <DropdownItem
                                                                                                     key={filter}
                                                                                                     active={filtersApplied[filter] != null && filtersApplied[filter].length !== 0}
+                                                                                                    style={{
+                                                                                                        background: ((filtersApplied[filter] != null && filtersApplied[filter].length !== 0) ? "#198754" : "")
+                                                                                                    }}
                                                                                                     className={headerStyles.dropdownProfileItem}
                                                                                                     onClick={() => {
                                                                                                         setTempFiltersApplied(filtersApplied);
@@ -426,7 +431,7 @@ const DataTable = (props) => {
                                                                                 flexWrap: "wrap"
                                                                             }}
                                                                         >
-                                                                            {resultsPlaceholder.split(" ").map((word, index) => {
+                                                                            {(tableData.length !== 0) ? (resultsPlaceholder.split(" ").map((word, index) => {
                                                                                 return (
                                                                                     <span key={index}>
                                                                                         {(word === "%r%" || word === "%t%") ? (
@@ -442,8 +447,18 @@ const DataTable = (props) => {
                                                                                         ) : (word.replace("%e%", (((filtersOrSortApplied())) ? " who match your selected criteria" : (searchText !== "") ? " who match your search criteria" : "")))}
                                                                                         {(index !== resultsPlaceholder.split(" ").length - 1) ? (<>&nbsp;</>) : (<></>)}
                                                                                     </span>
+                                                                                );
+                                                                            })) : (
+                                                                                (filtersSortOrSearchApplied()) ? (
+                                                                                    <>
+                                                                                        {noResultsText}
+                                                                                    </>
+                                                                                ): (
+                                                                                    <>
+                                                                                        Yeah there is some problem with the system 😞. Please call Abhay Tripathi (+91-8800958568).
+                                                                                    </>
                                                                                 )
-                                                                            })}
+                                                                            )}
                                                                         </h5>
                                                                         {(filtersOrSortApplied()) ? (
                                                                             <LoadButton
@@ -464,6 +479,7 @@ const DataTable = (props) => {
                                                                     </div>
                                                                 </td>
                                                             </tr>
+                                                            {(tableData.length !== 0) ? (
                                                             <tr>
                                                                 {tableHeaders.map((item) => {
                                                                     return (
@@ -573,6 +589,7 @@ const DataTable = (props) => {
                                                                     );
                                                                 })}
                                                             </tr>
+                                                        ) : (<></>)}
                                                         </>
                                                     )}
                                                 </thead>
@@ -736,10 +753,11 @@ const DataTable = (props) => {
                                             }}
                                         >
                                             <span
-                                                className={`btn btn-${(tempFiltersApplied[choseFiltersModalShowing] != null && tempFiltersApplied[choseFiltersModalShowing].includes(filterOptionData[0])) ? "success" : "danger"}`}
+                                                className={`btn btn-${(tempFiltersApplied[choseFiltersModalShowing] != null && tempFiltersApplied[choseFiltersModalShowing].includes(filterOptionData[0])) ? "success" : "secondary"}`}
                                                 style={{
                                                     cursor: "pointer",
-                                                    userSelect: "none"
+                                                    userSelect: "none",
+                                                    textAlign: "left"
                                                 }}
                                                 onClick={() => {
                                                     const newData = {
@@ -761,7 +779,7 @@ const DataTable = (props) => {
                                                     setTempFiltersApplied(newData);
                                                 }}
                                             >
-                                                <i className={`fa fa-${(tempFiltersApplied[choseFiltersModalShowing] != null && tempFiltersApplied[choseFiltersModalShowing].includes(filterOptionData[0])) ? "check" : "times"}`}/>&nbsp;&nbsp;&nbsp;{filterOptionData[0]} (<b>x{filterOptionData[1]}</b>)
+                                                <i className={`fa fa-${(tempFiltersApplied[choseFiltersModalShowing] != null && tempFiltersApplied[choseFiltersModalShowing].includes(filterOptionData[0])) ? "check" : "times"}`}/>&nbsp;&nbsp;&nbsp;{filterOptionData[0].toTitleCase()} (<b>{filterOptionData[1]}</b>)
                                             </span>
                                         </div>
                                     )
