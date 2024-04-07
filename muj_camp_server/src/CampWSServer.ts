@@ -43,7 +43,7 @@ const startWSServer = async (app: Application) => {
                             pages: homeData.pages,
                             headers: homeData.headers,
                             data: homeData.data,
-                            filters: await dataManager.getHomeFilters(appliedFilters),
+                            filters: await dataManager.getHomeFilters(appliedFilters, searchText),
                             records: homeData.records
                         }));
                     }

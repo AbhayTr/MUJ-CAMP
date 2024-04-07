@@ -12,7 +12,8 @@ class DoARDataManager {
         Institute: "faculty",
         Country: "country",
         Gender: "gender",
-        School: "school"
+        School: "school",
+        // "Syncing Status": "liStatus.currentStatus"
     };
 
     constructor(campdb: CAMPDB) {
@@ -136,29 +137,27 @@ class DoARDataManager {
         await this._campdb.collection("doar_db").drop();
     }
 
-    private async _insertAlumniRecord(alumniData: object): Promise<boolean> {
-        return new Promise(async (resolve, reject) => {
-            const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
-            await doarDbCollection.insertOne(alumniData);
-            resolve(true);
-        });
-    }
-
     async updateDBDataFromCSV(): Promise<boolean> {
         return new Promise(async (resolve, reject) => {
+            const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
             await this._clearDB();
-            fs.createReadStream("./data/alumni_data.csv").pipe(csv())
-            .on("data", async (row: any) => {
-                const alumniData: object | null = this._getAlumniFormattedData(row);
+            
+            const insertPromises: Promise<any>[] = [];
+
+            fs.createReadStream("./data/alumni_data.csv")
+            .pipe(csv())
+            .on("data", (row: any) => {
+                const alumniData: any = this._getAlumniFormattedData(row);
                 if (alumniData == null) {
                     return;
                 }
-                if (!(await this._insertAlumniRecord(alumniData))) {
-                    console.error("DoAR DB Data Insertion Error.");
-                    resolve(false);
-                }
+                const insertLIPromise = this._alumniLIStatusManager.createAlumniLIStatusIfNotExists(alumniData);
+                const insertDataPromise = doarDbCollection.insertOne(alumniData);
+                insertPromises.push(insertLIPromise);
+                insertPromises.push(insertDataPromise);
             })
-            .on("end", () => {
+            .on("end", async () => {
+                await Promise.all(insertPromises);
                 resolve(true);
             });
         });
@@ -196,6 +195,7 @@ class DoARDataManager {
     }
 
     async getAlumniDataSet(searchText: string, pageNumber: number, appliedFilters: any): Promise<object> {
+        searchText = searchText.replace(/[#-.]|[[-^]|[?|{}]/g, "\\$&");
         const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
         const recordsPerPage = parseInt(process.env.RECORDS_PER_PAGE_DOAR!);
         
@@ -203,6 +203,14 @@ class DoARDataManager {
         const limit = recordsPerPage;
 
         const pipeline = [
+            {
+                $lookup: {
+                    from: "doar_li_db",
+                    localField: "alumniId",
+                    foreignField: "alumniId",
+                    as: "liStatus"
+                }
+            },
             {
                 $match: this._getMatchFilters(appliedFilters)
             },
@@ -374,7 +382,7 @@ class DoARDataManager {
         };
     }
 
-    private async _getFilterOptions(filterID: string, appliedFilters: any): Promise<Array<Array<any>>> {
+    private async _getFilterOptions(filterID: string, appliedFilters: any, searchText: string): Promise<Array<Array<any>>> {
         const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
         
         const matchQuery: any = {
@@ -388,6 +396,45 @@ class DoARDataManager {
         matchQuery["$match"] = this._getMatchFilters(appliedFilters, matchQuery["$match"]);
 
         const pipeline = [
+            {
+                $match: {
+                    $or: [
+                        {
+                            name: {
+                                $regex: searchText,
+                                $options: "i"
+                            }
+                        },
+                        {
+                            muj_from: searchText
+                        },
+                        {
+                            muj_to: searchText
+                        },
+                        {
+                            alumniId: searchText
+                        },
+                        {
+                            company: {
+                                $regex: searchText,
+                                $options: "i"
+                            }
+                        },
+                        {
+                            "prev_work.company": {
+                                $regex: searchText,
+                                $options: "i"
+                            }
+                        },
+                        {
+                            "education.institution": {
+                                $regex: searchText,
+                                $options: "i"
+                            }
+                        }
+                    ]
+                }
+            },
             matchQuery,
             {
                 $group: {
@@ -417,17 +464,21 @@ class DoARDataManager {
         }
     }
 
-    private async _getFilters(filterNames: Array<string>, appliedFilters: any): Promise<object> {
+    private async _getFilters(filterNames: Array<string>, appliedFilters: any, searchText: string): Promise<object> {
         const filters: any = {};
         for (var i = 0; i < filterNames.length; i++) {
             const filterName: string = filterNames[i];
-            filters[filterName] = await this._getFilterOptions(filterName, appliedFilters);
+            filters[filterName] = await this._getFilterOptions(filterName, appliedFilters, searchText);
         }
         return filters;
     }
 
-    async getHomeFilters(appliedFilters: any): Promise<object> {
-        return this._getFilters(Object.keys(this._filterKeyMap), appliedFilters);
+    async getHomeFilters(appliedFilters: any, searchText: string): Promise<object> {
+        const standardFilters: any = this._getFilters(Object.keys(this._filterKeyMap), appliedFilters, searchText);
+        // standardFilters["Syncing Status"] = [
+            
+        // ]
+        return standardFilters;
     }
 
 }

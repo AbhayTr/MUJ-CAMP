@@ -109,7 +109,7 @@ const Home = () => {
                     style={{
                         padding: "17px"
                     }}
-                    sortvalue={(tableDataStats["lu"] !== "-") ? timestampToHumanTime(tableDataStats["lu"]) : "N.A."}
+                    sortvalue={(tableDataStats["lastUpdated"] !== "-") ? timestampToHumanTime(tableDataStats["lastUpdated"]) : "N.A."}
                 >
                     Last updated at:<br/>
                     <span style={{
@@ -117,29 +117,29 @@ const Home = () => {
                         fontSynthesis: "initial",
                         fontWeight: "bold"
                     }}>
-                        {(tableDataStats["lu"] !== "-") ? timestampToHumanTime(tableDataStats["lu"]) : "N.A."}
+                        {(tableDataStats["lastUpdated"] !== "-") ? timestampToHumanTime(tableDataStats["lastUpdated"]) : "N.A."}
                     </span>
                     <br/>
                     Last update status:<br/>
                     <span style={{
-                        color: (tableDataStats["ls"] === "s") ? "#3fb950" : (((tableDataStats["ls"] === "f")) ? "tomato" : "goldenrod"),
+                        color: (tableDataStats["latestStatus"] === "s") ? "#3fb950" : (((tableDataStats["latestStatus"] === "f")) ? "tomato" : "goldenrod"),
                         fontSynthesis: "initial",
                         fontWeight: "bold"
                     }}>
-                        {(tableDataStats["ls"] === "s") ? "Successfully Synced" : ((tableDataStats["ls"] === "f") ? "Sync Failed" : "Never Synced")}
+                        {(tableDataStats["latestStatus"] === "s") ? "Successfully Synced" : ((tableDataStats["latestStatus"] === "f") ? "Sync Failed" : "Never Synced")}
                     </span>
                     <br/><br/>
                     Current status:<br/>
-                    <span style={(tableDataStats["cs"] !== "nl") ? ((tableDataStats["cs"] === "l") ? {
+                    <span style={(tableDataStats["currentStatus"] !== "nl") ? ((tableDataStats["currentStatus"] === "l") ? {
                         fontWeight: "bold",
                         color: "goldenrod"
                     } : {
                         fontWeight: "bold",
                         color: "tomato"
                     }) : {}}>
-                        {(tableDataStats["cs"] === "nl") ? (
+                        {(tableDataStats["currentStatus"] === "nl") ? (
                             <Button>Sync</Button>
-                        ) : (((tableDataStats["cs"] === "l")) ? (
+                        ) : (((tableDataStats["currentStatus"] === "l")) ? (
                                 <>
                                     Syncing&nbsp;
                                     <Spinner
