@@ -5,11 +5,13 @@ import CAMPAuthManager from "./auth/auth";
 import SubscriberManager from "./doar/subscriberManager";
 import AlmaShineManager from "./doar/almashineManager";
 import DoARDataManager from "./doar/dataManager";
+import ATLISManager from "./doar/atlisManager";
 
 let subscriberManager: SubscriberManager = new SubscriberManager();
 let almashineManager: AlmaShineManager;
 let dataManager: DoARDataManager;
 let dataIsBeingFetched = false;
+let atlisManager: ATLISManager;
 
 async function startAlmashinesSession() {
     await almashineManager.startSession();
@@ -17,6 +19,8 @@ async function startAlmashinesSession() {
 
 const startWSServer = async (app: Application) => {
     dataManager = new DoARDataManager(app.locals.campdb);
+    atlisManager = new ATLISManager();
+    await atlisManager.startSession();
     almashineManager = new AlmaShineManager(app.locals.campdb, dataManager);
     await startAlmashinesSession();
     
