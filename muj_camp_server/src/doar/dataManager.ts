@@ -4,10 +4,12 @@ import { Document } from "mongodb";
 
 import { CAMPCollection, CAMPDB } from "../utils/campdb";
 import AlumniLSStatus from "./alumniLIStatus";
+import { currentTime } from "../utils/common";
 
 class DoARDataManager {
 
-    private _doarDbCollection!: CAMPCollection;
+    private _doarDbCollection: CAMPCollection;
+    private _doarCollection: CAMPCollection;
     private _filterKeyMap: any = {
         Institute: "faculty",
         Country: "country",
@@ -19,6 +21,7 @@ class DoARDataManager {
 
     constructor(campdb: CAMPDB) {
         this._doarDbCollection = campdb.collection("doar_db");
+        this._doarCollection = campdb.collection("doar");
     }
 
     private _parseExperienceDataWithTimeline(dataString: string): object[] {
@@ -171,6 +174,16 @@ class DoARDataManager {
                 await this._updateAlumniData(alumniData);
             })
             .on("end", async () => {
+                await this._doarCollection.updateOne({
+                    "desc": "Alumni Data Details"
+                }, {
+                    $set: {
+                        "desc": "Alumni Data Details",
+                        "dataUpdatedAt": currentTime()
+                    }
+                }, {
+                    upsert: true
+                });
                 resolve(true);
             });
         });
@@ -372,6 +385,7 @@ class DoARDataManager {
                     muj_from: ((alumni.muj_from === "0") ? "N.A." : alumni.muj_from),
                     muj_to: ((alumni.muj_to === "0") ? "N.A." : alumni.muj_to),
                     alumniId: alumni.alumniId,
+                    linkedin: alumni.linkedin
                 },
                 alumni.company || "N.A.",
                 alumni.prev_work.length > 0 ? this._getCompany(alumni.prev_work, searchText) : "N.A.",

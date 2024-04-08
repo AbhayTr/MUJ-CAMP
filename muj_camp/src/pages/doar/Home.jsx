@@ -1,5 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 
+import LinkedInLogo from "../../assets/images/li.png";
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Spinner } from "react-bootstrap";
@@ -24,7 +26,25 @@ const Home = () => {
 
     const [updateDataLoading, setUpdateDataLoading] = useState(false);
 
-    const [requestCount, setRequestCount] = useState(1);
+    const [requestCount, setRequestCount] = useState(0);
+
+    const decrementRequestCount = () => {
+        setRequestCount((currentRequestCount) => {
+            if (currentRequestCount <= 0) {
+                return 0;
+            }
+            return currentRequestCount - 1;
+        });
+    }
+
+    const incrementRequestCount = () => {
+        setRequestCount((currentRequestCount) => {
+            if (currentRequestCount <= 0) {
+                return 1;
+            }
+            return currentRequestCount + 1;
+        });
+    }
 
     const [
         tableLoading,
@@ -48,6 +68,7 @@ const Home = () => {
     useEffect(() => {
 
         ensureAdminAccess("DOAR", setLoading, navigate);
+        incrementRequestCount();
 
         return (() => {
             try {
@@ -58,7 +79,7 @@ const Home = () => {
     }, []);
 
     useEffect(() => {
-        
+
         if (liveConnected !== 0) {
             return;
         }
@@ -74,6 +95,15 @@ const Home = () => {
         }
     }, [requestCount]);
 
+    useEffect(() => {
+
+        if (liveConnected === 0 && requestCount <= 0 && tableLoading) {
+            setTableLoading(false);
+            setRequestCount(0);
+        }
+
+    }, [liveConnected]);
+
     const handleWebSocketDown = async () => {
         setTableLoading(true);
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -83,7 +113,9 @@ const Home = () => {
         setFilters({});
         setFiltersApplied({});
         setSearchText("");
-        document.getElementById("Search").value = "";
+        try {
+            document.getElementById("Search").value = "";
+        } catch (e) {}
         setLiveConnected(liveConnected + 2);
     };
 
@@ -124,6 +156,26 @@ const Home = () => {
                     }}>
                         <b>{tableDataStats["alumniId"]}</b>
                     </span>
+                    {(tableDataStats["linkedin"] != null && tableDataStats["linkedin"] !== "") ? (
+                        <>
+                            <br/>
+                            <img
+                                src={LinkedInLogo}
+                                style={{
+                                    height: "2rem",
+                                    width: "auto",
+                                    marginTop: "0.4em",
+                                    cursor: "pointer"
+                                }}
+                                alt="LinkedIn"
+                                onClick={() => {
+                                    window.open((tableDataStats["linkedin"].startsWith("https://") || tableDataStats["linkedin"].startsWith("http://")) ? tableDataStats["linkedin"] : `https://${tableDataStats["linkedin"]}`);
+                                }}
+                            />
+                        </>
+                    ) : (
+                        <></>
+                    )}
                 </span>
             );
             newTableData.push(newTableRow);
@@ -215,7 +267,8 @@ const Home = () => {
                 return;
             }
             const messageJSON = JSON.parse(message.data);
-            if (String(messageJSON.type) === "data") {
+            const messageType = String(messageJSON.type);
+            if (messageType === "data") {
                 setTablePages(messageJSON.pages);
                 setTableHeaders(messageJSON.headers);
                 setFilters(messageJSON.filters);
@@ -224,7 +277,20 @@ const Home = () => {
                 setTableData(messageJSON.data);
                 setRecordsNumber(messageJSON.records);
                 setLiveConnected(0);
-                setRequestCount(requestCount - 1);
+                decrementRequestCount();
+            } else if (messageType === "dataUpdate") {
+                if (messageJSON.dataIsBeingFetched === true) {
+                    incrementRequestCount();
+                    setUpdateDataLoading(true);
+                } else {
+                    decrementRequestCount();
+                    setUpdateDataLoading(false);
+                    if (messageJSON.status === true) {
+                        showAlert("Data updated from AlmaShine successfully!");
+                    } else if (messageJSON.status === false) {
+                        showAlert("Data update from AlmaShine failed. Please try again after some time", toast.error, false);
+                    }
+                }
             }
         };
 
@@ -239,7 +305,7 @@ const Home = () => {
     }, [liveConnected]);
 
     const onPageUpdate = (tableCurrentPage, appliedFilters, searchText) => {
-        setRequestCount(requestCount + 1);
+        incrementRequestCount();
         makeWebSocketRequest(webSocket, {
             type: "data",
             filters: appliedFilters,
@@ -247,6 +313,12 @@ const Home = () => {
             page: tableCurrentPage
         });
     };
+
+    const startDataUpdate = () => {
+        makeWebSocketRequest(webSocket, {
+            type: "dataUpdate"
+        });
+    }
 
     return (
         (loading) ? (
@@ -353,7 +425,7 @@ const Home = () => {
                                     lbDisabled={tableLoading}
                                     lbLoading={updateDataLoading}
                                     clickHandler={() => {
-                                        setUpdateDataLoading(true);
+                                        startDataUpdate();
                                     }}
                                 />
                                 <LoadButton

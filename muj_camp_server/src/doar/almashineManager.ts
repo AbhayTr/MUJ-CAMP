@@ -136,16 +136,15 @@ class AlmaShineManager {
         });
     }
 
-    private async _fetchAlumniData(token: string): Promise<void> {
+    private async _fetchAlumniData(token: string): Promise<boolean> {
         return new Promise((resolve, reject) => {
             const alumniDataFile = fs.createWriteStream("./data/alumni_data.csv", {
                 flags: "w"
             });
-            https.get(`https://mujalumni.in/api/search/download_new/Search%20by%20Role%20%3A%20Alumni?role%5B0%5D=2&other_params[fetch_lost]=true&other_params[viewName]=directory&token=${token}`, {
+            const request = https.get(`https://mujalumni.in/api/search/download_new/Search%20by%20Role%20%3A%20Alumni?role%5B0%5D=2&other_params[fetch_lost]=true&other_params[viewName]=directory&token=${token}`, {
                 headers: {
                     cookie: this._cookieManager.getCookies(["tz", "lgdomain", "u_i", "c_i", "l_c", "r_v", "mul", "ast_login_id", "encToken", "PHPSESSID"])!
-                },
-                timeout: 600000
+                }
             }, fileData => {
                 fileData
                 .pipe(new FileCleaner())
@@ -153,10 +152,14 @@ class AlmaShineManager {
                 
                 alumniDataFile.on("finish", () => {
                     alumniDataFile.close();
-                    resolve();
+                    resolve(true);
                 })
 
             });
+            setTimeout(() => {
+                request.abort();
+                resolve(false);
+            }, 1200000);
         });
     }
 
@@ -175,7 +178,9 @@ class AlmaShineManager {
                         console.error("DoAR Almashines Alumni Data Fetch Failed. Status Response:\n\n" + JSON.stringify(status));
                         resolve(false);
                     } else {
-                        await this._fetchAlumniData(status.token);
+                        if (!(await this._fetchAlumniData(status.token))) {
+                            resolve(false);
+                        }
                         if (!(await this._dataManager.updateDBDataFromCSV())) {
                             resolve(false);
                         } else {

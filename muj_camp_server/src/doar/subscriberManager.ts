@@ -19,6 +19,7 @@ class SubscriberManager {
             return;
         }
         this._subsribersList.push(subscriberConnection);
+        console.log(this._subsribersList.length);
     }
 
     removeSubscriber(subscriberConnection: WebSocket) {
@@ -30,6 +31,7 @@ class SubscriberManager {
     }
 
     pushData(data: object) {
+        console.log(this._subsribersList.length);
         if (this._pushingInProcess) {
             this._pushStack.push(data);
             return;
