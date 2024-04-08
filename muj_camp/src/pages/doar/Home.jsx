@@ -14,6 +14,7 @@ import { AuthStore } from "../../app_state/auth/auth";
 import useTable from "../../hooks/TableHook";
 import LoadButton from "../../custom_components/LoadButton";
 import { showAlert, timestampToHumanTime } from "../../tools/UI";
+import { confirm } from "react-bootstrap-confirmation";
 
 let webSocket = null;
 
@@ -27,6 +28,8 @@ const Home = () => {
     const [updateDataLoading, setUpdateDataLoading] = useState(false);
 
     const [requestCount, setRequestCount] = useState(0);
+
+    const [updateDataStatus, setUpdateDataStatus] = useState(null);
 
     const decrementRequestCount = () => {
         setRequestCount((currentRequestCount) => {
@@ -250,6 +253,22 @@ const Home = () => {
 
     useEffect(() => {
 
+        if (updateDataStatus == null) {
+            return;
+        }
+
+        if (updateDataStatus === true) {
+            showAlert("Data updated from AlmaShine successfully!", toast.success, false);
+        } else if (updateDataStatus === false) {
+            showAlert("Data update from AlmaShine failed. Please try again after some time", toast.error, false);
+        }
+        setUpdateDataLoading(false);
+        setUpdateDataStatus(null);
+
+    }, [updateDataStatus]);
+
+    useEffect(() => {
+
         if (liveConnected === 0) {
             return;
         }
@@ -284,12 +303,14 @@ const Home = () => {
                     setUpdateDataLoading(true);
                 } else {
                     decrementRequestCount();
-                    setUpdateDataLoading(false);
-                    if (messageJSON.status === true) {
-                        showAlert("Data updated from AlmaShine successfully!");
-                    } else if (messageJSON.status === false) {
-                        showAlert("Data update from AlmaShine failed. Please try again after some time", toast.error, false);
-                    }
+                    setUpdateDataStatus(messageJSON.status);
+                    setFiltersApplied({});
+                    setFilters({});
+                    setSearchText("");
+                    onPageUpdate(1, {}, searchText);
+                    try {
+                        document.getElementById("Search").value = "";
+                    } catch (e) {}
                 }
             }
         };
@@ -361,7 +382,7 @@ const Home = () => {
                             then please <b>call Abhay Tripathi (+91-8800958568)</b>.
                         </div>
                     }
-                    searchDisabled={!(liveConnected === 0)}
+                    searchDisabled={!(liveConnected === 0 && !updateDataLoading)}
                 >
                     <div
                         style={{
@@ -424,8 +445,16 @@ const Home = () => {
                                     lbId="updateData"
                                     lbDisabled={tableLoading}
                                     lbLoading={updateDataLoading}
-                                    clickHandler={() => {
-                                        startDataUpdate();
+                                    clickHandler={async () => {
+                                        if (await confirm("Are you sure you want to update the Alumni Data? This will take 2 to 5 minutes.", {
+                                            title: "Update Alumni Data",
+                                            okText: "Yes 😎",
+                                            cancelText: "No will do later 😅",
+                                            okButtonStyle: "success",
+                                            cancelButtonStyle: "warning"
+                                        })) {
+                                            startDataUpdate();
+                                        }
                                     }}
                                 />
                                 <LoadButton

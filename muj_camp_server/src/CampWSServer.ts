@@ -33,9 +33,9 @@ const startWSServer = async (app: Application) => {
                 const authData = jsonData.auth;
                 jsonData = jsonData.data;
                 if (await CAMPAuthManager.validateTokenWS(authData.authToken, authData.authEmail, app)) {
-                    subscriberManager.addSubscriber(ws);
                     if (jsonData.type === "init" || jsonData.type === "data") {
                         if (jsonData.type === "init") {
+                            subscriberManager.addSubscriber(ws);
                             ws.send(JSON.stringify({
                                 type: "dataUpdate",
                                 dataIsBeingFetched: dataIsBeingFetched
@@ -65,7 +65,7 @@ const startWSServer = async (app: Application) => {
                                 type: "dataUpdate",
                                 dataIsBeingFetched: dataIsBeingFetched
                             });
-                            const fetchStatus = false;// await almashineManager.getAlumniData();
+                            const fetchStatus = await almashineManager.getAlumniData();
                             dataIsBeingFetched = false;
                             subscriberManager.pushData({
                                 type: "dataUpdate",

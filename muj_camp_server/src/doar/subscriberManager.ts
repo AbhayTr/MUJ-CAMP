@@ -2,13 +2,13 @@ import { WebSocket } from "ws";
 
 class SubscriberManager {
 
-    private _subsribersList: WebSocket[];
+    private _subscribersList: Set<WebSocket>;
     private _operationStack: Array<Array<any>>;
     private _pushStack: Array<object>;
     private _pushingInProcess = false;
 
     constructor() {
-        this._subsribersList = [];
+        this._subscribersList = new Set<WebSocket>();
         this._operationStack = [];
         this._pushStack = [];
     }
@@ -18,8 +18,7 @@ class SubscriberManager {
             this._operationStack.push([this.addSubscriber, subscriberConnection]);
             return;
         }
-        this._subsribersList.push(subscriberConnection);
-        console.log(this._subsribersList.length);
+        this._subscribersList.add(subscriberConnection);
     }
 
     removeSubscriber(subscriberConnection: WebSocket) {
@@ -27,23 +26,22 @@ class SubscriberManager {
             this._operationStack.push([this.removeSubscriber, subscriberConnection]);
             return;
         }
-        this._subsribersList.splice(this._subsribersList.indexOf(subscriberConnection), 1);
+        this._subscribersList.delete(subscriberConnection);
     }
 
     pushData(data: object) {
-        console.log(this._subsribersList.length);
         if (this._pushingInProcess) {
             this._pushStack.push(data);
             return;
         }
         this._pushingInProcess = true;
-        for (var i = 0; i < this._subsribersList.length; i++) {
-            if (this._subsribersList[i] != null) {
+        for (const subscriber of this._subscribersList) {
+            if (subscriber != null) {
                 try {
-                    this._subsribersList[i].send(JSON.stringify(data));
+                    subscriber.send(JSON.stringify(data));
                 } catch (e) {
-                    this._subsribersList[i].close();
-                    this._operationStack.push([this.removeSubscriber, this._subsribersList[i]]);
+                    subscriber.close();
+                    this._operationStack.push([this.removeSubscriber, subscriber]);
                 }
             }
         }

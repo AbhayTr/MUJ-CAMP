@@ -782,7 +782,7 @@ const DataTable = (props) => {
                                                     setTempFiltersApplied(newData);
                                                 }}
                                             >
-                                                <i className={`fa fa-${(tempFiltersApplied[choseFiltersModalShowing] != null && tempFiltersApplied[choseFiltersModalShowing].includes(filterOptionData[0])) ? "check" : "times"}`}/>&nbsp;&nbsp;&nbsp;{filterOptionData[0].toTitleCase()} (<b>{filterOptionData[1]}</b>)
+                                                <i className={`fa fa-${(tempFiltersApplied[choseFiltersModalShowing] != null && tempFiltersApplied[choseFiltersModalShowing].includes(filterOptionData[0])) ? "check" : "times"}`}/>&nbsp;&nbsp;&nbsp;{filterOptionData[0].toTitleCase()} (<b>{moneyFormatIndia(String(filterOptionData[1]))}</b>)
                                             </span>
                                         </div>
                                     )
