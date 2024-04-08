@@ -1,24 +1,24 @@
 import fs from "fs";
 import csv from "csv-parser";
+import { Document } from "mongodb";
 
 import { CAMPCollection, CAMPDB } from "../utils/campdb";
 import AlumniLSStatus from "./alumniLIStatus";
 
 class DoARDataManager {
 
-    private _campdb!: CAMPDB;
-    private _alumniLIStatusManager: AlumniLSStatus;
+    private _doarDbCollection!: CAMPCollection;
     private _filterKeyMap: any = {
         Institute: "faculty",
         Country: "country",
         Gender: "gender",
         School: "school",
-        // "Syncing Status": "liStatus.currentStatus"
+        "Syncing Status": "liStatus.currentStatus",
+        "Latest Status": "liStatus.latestStatus"
     };
 
     constructor(campdb: CAMPDB) {
-        this._campdb = campdb;
-        this._alumniLIStatusManager = new AlumniLSStatus(campdb);
+        this._doarDbCollection = campdb.collection("doar_db");
     }
 
     private _parseExperienceDataWithTimeline(dataString: string): object[] {
@@ -115,8 +115,8 @@ class DoARDataManager {
         return {
             "name": (alumniCSVDataRow["First_Name"] + " " + alumniCSVDataRow["Last_Name"]).trim(),
             "gender": alumniCSVDataRow["Gender"].trim(),
-            "muj_from": (alumniCSVDataRow["Year of Joining"].trim() === "0") ? "N.A." : alumniCSVDataRow["Year of Joining"].trim(),
-            "muj_to": (alumniCSVDataRow["Year of Graduation"].trim() === "0") ? "N.A." : alumniCSVDataRow["Year of Graduation"].trim(),
+            "muj_from": (alumniCSVDataRow["Year of Joining"].trim() === "0" || alumniCSVDataRow["Year of Joining"].trim() === "") ? "N.A." : alumniCSVDataRow["Year of Joining"].trim(),
+            "muj_to": (alumniCSVDataRow["Year of Graduation"].trim() === "0" || alumniCSVDataRow["Year of Graduation"].trim() === "") ? "N.A." : alumniCSVDataRow["Year of Graduation"].trim(),
             "degree": alumniCSVDataRow["Course/ Degree"].trim(),
             "school": alumniCSVDataRow["Division/Department"].trim(),
             "faculty": alumniCSVDataRow["Institute"].trim(),
@@ -133,31 +133,44 @@ class DoARDataManager {
         };
     }
 
-    private async _clearDB() {
-        await this._campdb.collection("doar_db").drop();
+    private async _updateAlumniData(alumniData: any) {
+
+        const alumniId = alumniData.alumniId;
+
+        if (await this._doarDbCollection.countDocuments({
+            alumniId: alumniId
+        }) === 0) {
+            alumniData["liStatus"] = {
+                lastUpdated: "-",
+                latestStatus: "-",
+                currentStatus: (alumniData.linkedin === "") ? "-" : "nl"
+            };
+        }
+        await this._doarDbCollection.updateOne(
+            {
+                alumniId: alumniId
+            },
+            {
+                $set: alumniData
+            },
+            {
+                upsert: true
+            }
+        );
     }
 
     async updateDBDataFromCSV(): Promise<boolean> {
         return new Promise(async (resolve, reject) => {
-            const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
-            await this._clearDB();
-            
-            const insertPromises: Promise<any>[] = [];
-
             fs.createReadStream("./data/alumni_data.csv")
             .pipe(csv())
-            .on("data", (row: any) => {
+            .on("data", async (row: any) => {
                 const alumniData: any = this._getAlumniFormattedData(row);
                 if (alumniData == null) {
                     return;
                 }
-                const insertLIPromise = this._alumniLIStatusManager.createAlumniLIStatusIfNotExists(alumniData);
-                const insertDataPromise = doarDbCollection.insertOne(alumniData);
-                insertPromises.push(insertLIPromise);
-                insertPromises.push(insertDataPromise);
+                await this._updateAlumniData(alumniData);
             })
             .on("end", async () => {
-                await Promise.all(insertPromises);
                 resolve(true);
             });
         });
@@ -167,7 +180,28 @@ class DoARDataManager {
         const filters = Object.keys(appliedFilters);
         for (var i = 0; i < filters.length; i++) {
             const filter = filters[i];
-            const filterList = appliedFilters[filter];
+            let filterList = appliedFilters[filter];
+            if (filter === "Syncing Status") {
+                filterList = filterList.map((syncingStatusFilter: any) => {
+                    if (syncingStatusFilter == "Not Syncing") {
+                        return "nl";
+                    } else if (syncingStatusFilter == "Currently Syncing") {
+                        return "l";
+                    } else {
+                        return "-";
+                    }
+                });
+            } else if (filter === "Latest Status") {
+                filterList = filterList.map((latesetStatusFilter: any) => {
+                    if (latesetStatusFilter == "Sync Failed") {
+                        return "f";
+                    } else if (latesetStatusFilter == "Successfully Synced") {
+                        return "s";
+                    } else {
+                        return "-";
+                    }
+                });
+            }
             query[this._filterKeyMap[filter]] = {
                 $in: filterList
             }
@@ -176,9 +210,7 @@ class DoARDataManager {
     }
 
     private async _getAlumniData(alumniId: string): Promise<any> {
-        const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
-
-        const alumniData: Document | null = await doarDbCollection.findOne({
+        const alumniData: Document | null = await this._doarDbCollection.findOne({
             alumniId: alumniId
         });
         return alumniData;
@@ -195,22 +227,12 @@ class DoARDataManager {
     }
 
     async getAlumniDataSet(searchText: string, pageNumber: number, appliedFilters: any): Promise<object> {
-        searchText = searchText.replace(/[#-.]|[[-^]|[?|{}]/g, "\\$&");
-        const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
         const recordsPerPage = parseInt(process.env.RECORDS_PER_PAGE_DOAR!);
         
         const skip = recordsPerPage * (pageNumber - 1);
         const limit = recordsPerPage;
 
         const pipeline = [
-            {
-                $lookup: {
-                    from: "doar_li_db",
-                    localField: "alumniId",
-                    foreignField: "alumniId",
-                    as: "liStatus"
-                }
-            },
             {
                 $match: this._getMatchFilters(appliedFilters)
             },
@@ -263,7 +285,8 @@ class DoARDataManager {
                     company: 1,
                     "prev_work.company": 1,
                     education: 1,
-                    linkedin: 1
+                    linkedin: 1,
+                    liStatus: 1
                 }
             },
             {
@@ -312,7 +335,8 @@ class DoARDataManager {
             }
         ];
 
-        const cursor = await doarDbCollection.aggregate(pipeline);
+        
+        const cursor = await this._doarDbCollection.aggregate(pipeline);
         const [resultMain] = await cursor.toArray();
         
         const totalRecords = resultMain?.totalRecords || 0;
@@ -352,7 +376,7 @@ class DoARDataManager {
                 alumni.company || "N.A.",
                 alumni.prev_work.length > 0 ? this._getCompany(alumni.prev_work, searchText) : "N.A.",
                 latestEducationInstitution,
-                await this._alumniLIStatusManager.getAlumniLIStatus(alumni)
+                AlumniLSStatus.getAlumniLIStatus(alumni)
             ];
 
             if (searchText === "") {
@@ -383,8 +407,6 @@ class DoARDataManager {
     }
 
     private async _getFilterOptions(filterID: string, appliedFilters: any, searchText: string): Promise<Array<Array<any>>> {
-        const doarDbCollection: CAMPCollection = this._campdb.collection("doar_db");
-        
         const matchQuery: any = {
             $match: {}
         };
@@ -451,8 +473,7 @@ class DoARDataManager {
             }
         ];
         
-        const result = await (await doarDbCollection.aggregate(pipeline)).toArray();
-
+        const result = await (await this._doarDbCollection.aggregate(pipeline)).toArray();
         if (result.length > 0) {
             const options: Array<Array<any>> = [];
             result.forEach(item => {
@@ -474,10 +495,47 @@ class DoARDataManager {
     }
 
     async getHomeFilters(appliedFilters: any, searchText: string): Promise<object> {
-        const standardFilters: any = this._getFilters(Object.keys(this._filterKeyMap), appliedFilters, searchText);
-        // standardFilters["Syncing Status"] = [
-            
-        // ]
+        const standardFilters: any = await this._getFilters(Object.keys(this._filterKeyMap), appliedFilters, searchText);
+        if (standardFilters["Syncing Status"]) {
+            standardFilters["Syncing Status"] = standardFilters["Syncing Status"].map((syncingStatusFilter: any) => {
+                if (syncingStatusFilter[0] == "nl") {
+                    return [
+                        "Not Syncing",
+                        syncingStatusFilter[1]
+                    ];
+                } else if (syncingStatusFilter[0] == "l") {
+                    return [
+                        "Currently Syncing",
+                        syncingStatusFilter[1]
+                    ];
+                } else {
+                    return [
+                        "LinkedIn Not Linked",
+                        syncingStatusFilter[1]
+                    ];
+                }
+            });
+        }
+        if (standardFilters["Latest Status"]) {
+            standardFilters["Latest Status"] = standardFilters["Latest Status"].map((latesetStatusFilter: any) => {
+                if (latesetStatusFilter[0] == "f") {
+                    return [
+                        "Sync Failed",
+                        latesetStatusFilter[1]
+                    ];
+                } else if (latesetStatusFilter[0] == "s") {
+                    return [
+                        "Successfully Synced",
+                        latesetStatusFilter[1]
+                    ];
+                } else {
+                    return [
+                        "Never Synced",
+                        latesetStatusFilter[1]
+                    ];
+                }
+            });
+        }
         return standardFilters;
     }
 

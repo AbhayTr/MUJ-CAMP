@@ -1,4 +1,5 @@
 import { Application, Request, Response } from "express";
+import { Document } from "mongodb";
 
 import User from "./user";
 import CAMPOTP from "./otp";

@@ -170,7 +170,7 @@ class AlmaShineManager {
                 "body": `{\"enteredPass\":\"${process.env.MAS_PASS}\"}`,
                 "method": "POST"
             }).then(response => {
-                response.json().then(async status => {
+                response.json().then(async (status: any) => {
                     if (!(await this._wasSuccessful(status))) {
                         console.error("DoAR Almashines Alumni Data Fetch Failed. Status Response:\n\n" + JSON.stringify(status));
                         resolve(false);

@@ -38,12 +38,12 @@ const DataTable = (props) => {
         resultsPlaceholder,
         searchDisabled = false,
         recordsPerPage = 50,
-        noResultsText = "No result matches your search criteria 🤷"
+        noResultsText = "No result matches your search criteria 🤷",
+        systemDownText = "Yeah there is some problem with the system 😞. Please call Abhay Tripathi (+91-8800958568)."
     } = props;
 
     const [
         tableLoading,
-        setTableLoading,
         tableHeaders,
         tableData,
         tablePages,
@@ -161,7 +161,6 @@ const DataTable = (props) => {
     const [choseFiltersModalShowing, setChoseFiltersModalShowing] = useState(null);
 
     const updatePage = () => {
-        setTableLoading(true);
         updatePageData(tableCurrentPage, filtersApplied, searchText);
         setSortInvalidated(true);
     }
@@ -305,7 +304,7 @@ const DataTable = (props) => {
                                                             >
                                                                 {(true) ? (
                                                                     <>
-                                                                        <label htmlFor="search">
+                                                                        <label htmlFor={`${title.toLowerCase().replaceAll(" ", "")}Search`}>
                                                                             <img
                                                                                 className="d-sm-block"
                                                                                 src={searchIcon}
@@ -321,7 +320,7 @@ const DataTable = (props) => {
                                                                             type="search"
                                                                             className="form-control mr-sm-2"
                                                                             placeholder={searchPlaceholder}
-                                                                            id="search"
+                                                                            id={`${title.toLowerCase().replaceAll(" ", "")}Search`}
                                                                             onInput={(e) => {
                                                                                 setSearchText(e.target.value);
                                                                             }}
@@ -455,7 +454,7 @@ const DataTable = (props) => {
                                                                                     </>
                                                                                 ): (
                                                                                     <>
-                                                                                        Yeah there is some problem with the system 😞. Please call Abhay Tripathi (+91-8800958568).
+                                                                                        {systemDownText}
                                                                                     </>
                                                                                 )
                                                                             )}
@@ -657,44 +656,48 @@ const DataTable = (props) => {
                                                     </tbody>
                                                 )}
                                             </Table>
-                                            <Pagination
-                                                className="pagination-borderless"
-                                                style={{
-                                                    display: "flex",
-                                                    marginTop: "1rem",
-                                                    overflow: "auto"
-                                                }}
-                                            >
-                                                {/* <PaginationItem disabled={tableCurrentPage <= 1}>
-                                                    <PaginationLink
-                                                        onClick={e => setTableCurrentPage(tableCurrentPage - 1)}
-                                                        previous
-                                                    />
-                                                </PaginationItem> */}
-                                                {[...Array(tablePages)].map((page, index) =>
-                                                    <PaginationItem
-                                                        active={tableCurrentPage === (index + 1)}
-                                                        key={index + 1}
-                                                    >
+                                            {(!tableLoading) ? (
+                                                <Pagination
+                                                    className="pagination-borderless"
+                                                    style={{
+                                                        display: "flex",
+                                                        marginTop: "1rem",
+                                                        overflow: "auto"
+                                                    }}
+                                                >
+                                                    {/* <PaginationItem disabled={tableCurrentPage <= 1}>
                                                         <PaginationLink
-                                                            onClick={e => {
-                                                                if ((index + 1) === tableCurrentPage) {
-                                                                    return;
-                                                                }
-                                                                setTableCurrentPage(index + 1);
-                                                            }}
+                                                            onClick={e => setTableCurrentPage(tableCurrentPage - 1)}
+                                                            previous
+                                                        />
+                                                    </PaginationItem> */}
+                                                    {[...Array(tablePages)].map((page, index) =>
+                                                        <PaginationItem
+                                                            active={tableCurrentPage === (index + 1)}
+                                                            key={index + 1}
                                                         >
-                                                            {index + 1}
-                                                        </PaginationLink>
-                                                    </PaginationItem>
-                                                )}
-                                                {/* <PaginationItem disabled={tableCurrentPage >= tablePages}>
-                                                    <PaginationLink
-                                                        onClick={e => setTableCurrentPage(tableCurrentPage + 1)}
-                                                        next
-                                                    />
-                                                </PaginationItem> */}
-                                            </Pagination>
+                                                            <PaginationLink
+                                                                onClick={e => {
+                                                                    if ((index + 1) === tableCurrentPage) {
+                                                                        return;
+                                                                    }
+                                                                    setTableCurrentPage(index + 1);
+                                                                }}
+                                                            >
+                                                                {index + 1}
+                                                            </PaginationLink>
+                                                        </PaginationItem>
+                                                    )}
+                                                    {/* <PaginationItem disabled={tableCurrentPage >= tablePages}>
+                                                        <PaginationLink
+                                                            onClick={e => setTableCurrentPage(tableCurrentPage + 1)}
+                                                            next
+                                                        />
+                                                    </PaginationItem> */}
+                                                </Pagination>
+                                            ) : (
+                                                <></>
+                                            )}
                                         </>
                                     )}
                                 </div>

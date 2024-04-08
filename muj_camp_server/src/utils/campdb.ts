@@ -81,6 +81,10 @@ class CAMPCollection {
         return this._mongoCollection.countDocuments(...params);
     }
 
+    async createIndex(...params: Parameters<Collection["createIndex"]>) {
+        return this._mongoCollection.createIndex(...params);
+    }
+
 }
 
 export { CAMPDB, CAMPCollection };

@@ -35,7 +35,7 @@ const startWSServer = async (app: Application) => {
                     subscriberManager.addSubscriber(ws);
                     if (jsonData.type === "init" || jsonData.type === "data") {
                         const page = (jsonData.type === "init") ? 1 : jsonData.page;
-                        const searchText = (jsonData.type === "init") ? "" : jsonData.search;
+                        const searchText = ((jsonData.type === "init") ? "" : jsonData.search).replace(/[^a-zA-Z0-9,-]/g, "");
                         const appliedFilters = (jsonData.type === "init") ? {} : jsonData.filters;
                         const homeData: any = await dataManager.getAlumniDataSet(searchText, page, appliedFilters);
                         ws.send(JSON.stringify({

@@ -24,6 +24,8 @@ const Home = () => {
 
     const [updateDataLoading, setUpdateDataLoading] = useState(false);
 
+    const [requestCount, setRequestCount] = useState(1);
+
     const [
         tableLoading,
         setTableLoading,
@@ -55,6 +57,23 @@ const Home = () => {
 
     }, []);
 
+    useEffect(() => {
+        
+        if (liveConnected !== 0) {
+            return;
+        }
+
+        if (requestCount < 0) {
+            setRequestCount(0);
+        }
+
+        if (requestCount === 0) {
+            setTableLoading(false);
+        } else {
+            setTableLoading(true);
+        }
+    }, [requestCount]);
+
     const handleWebSocketDown = async () => {
         setTableLoading(true);
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -64,6 +83,7 @@ const Home = () => {
         setFilters({});
         setFiltersApplied({});
         setSearchText("");
+        document.getElementById("Search").value = "";
         setLiveConnected(liveConnected + 2);
     };
 
@@ -76,22 +96,34 @@ const Home = () => {
                 <span
                     style={{
                         paddingLeft: "17px",
-                        display: "inline-block",
-                        cursor: "pointer"
+                        display: "inline-block"
                     }}
                     sortvalue={tableDataStats["name"]}
-                    onClick={() => {
-                        window.open(`https://mujalumni.in/profile/${tableDataStats["alumniId"]}`);
-                    }}
                 >
-                    <span style={{
-                        color: "#0d6efd",
-                        fontWeight: "bold"
-                    }}>
-                        {tableDataStats["name"]}
+                    <span
+                        style={{
+                            cursor: "pointer"
+                        }}
+                        onClick={() => {
+                            window.open(`https://mujalumni.in/profile/${tableDataStats["alumniId"]}`);
+                        }}
+                    >
+                        <span style={{
+                            color: "#0d6efd",
+                            fontWeight: "bold"
+                        }}>
+                            {tableDataStats["name"]}
+                        </span>
+                        <br/>
+                        ({tableDataStats["muj_from"]} - {tableDataStats["muj_to"]})
                     </span>
                     <br/>
-                    ({tableDataStats["muj_from"]} - {tableDataStats["muj_to"]})
+                    Alumni ID:&nbsp;
+                    <span style={{
+                        userSelect: "text"
+                    }}>
+                        <b>{tableDataStats["alumniId"]}</b>
+                    </span>
                 </span>
             );
             newTableData.push(newTableRow);
@@ -172,7 +204,7 @@ const Home = () => {
 
         webSocket = new WebSocket(process.env.REACT_APP_WS_URL);
 
-        webSocket.onopen = (message) => {
+        webSocket.onopen = () => {
             makeWebSocketRequest(webSocket, {
                 type: "init"
             });
@@ -191,8 +223,8 @@ const Home = () => {
                 messageJSON.data = processTableDataStatus(messageJSON.data);
                 setTableData(messageJSON.data);
                 setRecordsNumber(messageJSON.records);
-                setTableLoading(false);
                 setLiveConnected(0);
+                setRequestCount(requestCount - 1);
             }
         };
 
@@ -207,6 +239,7 @@ const Home = () => {
     }, [liveConnected]);
 
     const onPageUpdate = (tableCurrentPage, appliedFilters, searchText) => {
+        setRequestCount(requestCount + 1);
         makeWebSocketRequest(webSocket, {
             type: "data",
             filters: appliedFilters,
@@ -224,7 +257,6 @@ const Home = () => {
                     setFiltersAutomatically={false}
                     tableHook={[
                         tableLoading,
-                        setTableLoading,
                         tableHeaders,
                         tableData,
                         tablePages,
@@ -240,6 +272,23 @@ const Home = () => {
                     searchPlaceholder="Search Alumni."
                     resultsPlaceholder="Showing %r% results out of %t% Alumni%e%"
                     noResultsText="There is no alumni who matches your criteria 🤷"
+                    systemDownText={
+                        <div>
+                            Welcome to <b>&nbsp;MUJ CAMP 🎓</b>
+                            <br/><br/>
+                            Please click on the &nbsp;
+                            <button
+                                className="btn btn-success"
+                                disabled={true}
+                            >
+                                Update Alumni Data
+                            </button>
+                            &nbsp; button located above the Search Bar 🔍 to <b>load the data from AlmaShine Portal</b> and get started.
+                            <br/><br/>
+                            If you have <b>already clicked on that button in the past, and are seeing this message again</b>,<br/>
+                            then please <b>call Abhay Tripathi (+91-8800958568)</b>.
+                        </div>
+                    }
                     searchDisabled={!(liveConnected === 0)}
                 >
                     <div

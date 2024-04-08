@@ -8,15 +8,14 @@ class CookieManager {
     private _cookieData: any = {};
     private _csrfToken: string | null = "";
 
-    private _campdb!: CAMPDB;
+    private _doarCollection!: CAMPCollection;
 
     constructor(campdb: CAMPDB) {
-        this._campdb = campdb;
+        this._doarCollection = campdb.collection("doar");
     }
 
     async startSession() {
-        const doarCollection: CAMPCollection = this._campdb.collection("doar");
-        const almaShineCookies: Document[] = await (await doarCollection.find({
+        const almaShineCookies: Document[] = await (await this._doarCollection.find({
             desc: "AlmaShine Cookies"
         })).project({
             cookies: 1,
@@ -83,8 +82,7 @@ class CookieManager {
     }
 
     private async _updateCookiesInDB() {
-        const doarCollection: CAMPCollection = this._campdb.collection("doar");
-        const result = await doarCollection.updateOne({
+        const result = await this._doarCollection.updateOne({
             desc: "AlmaShine Cookies"
         }, {
             $set: {
