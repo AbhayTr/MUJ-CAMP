@@ -1,5 +1,6 @@
 import { Application } from "express";
 import WebSocket, { WebSocketServer } from "ws";
+import { Mutex } from "async-mutex";
 
 import CAMPAuthManager from "./auth/auth";
 import SubscriberManager from "./doar/subscriberManager";
@@ -57,25 +58,32 @@ const startWSServer = async (app: Application) => {
                             records: homeData.records
                         }));
                     } else if (jsonData.type === "dataUpdate") {
-                        if (dataIsBeingFetched) {
-                            ws.send(JSON.stringify({
-                                type: "dataUpdate",
-                                dataIsBeingFetched: dataIsBeingFetched
-                            }));
-                        } else {
-                            dataIsBeingFetched = true;
-                            subscriberManager.pushData({
-                                type: "dataUpdate",
-                                dataIsBeingFetched: dataIsBeingFetched
-                            });
-                            const fetchStatus = await almashineManager.getAlumniData();
-                            dataIsBeingFetched = false;
-                            subscriberManager.pushData({
-                                type: "dataUpdate",
-                                dataIsBeingFetched: dataIsBeingFetched,
-                                status: fetchStatus
-                            });
-                        }
+                        await new Mutex().acquire().then(async (release) => {
+                            try {
+                                if (dataIsBeingFetched) {
+                                    ws.send(JSON.stringify({
+                                        type: "dataUpdate",
+                                        dataIsBeingFetched: dataIsBeingFetched
+                                    }));
+                                } else {
+                                    dataIsBeingFetched = true;
+                                    subscriberManager.pushData({
+                                        type: "dataUpdate",
+                                        dataIsBeingFetched: dataIsBeingFetched
+                                    });
+                                    const fetchStatus = await almashineManager.getAlumniData();
+                                    dataIsBeingFetched = false;
+                                    subscriberManager.pushData({
+                                        type: "dataUpdate",
+                                        dataIsBeingFetched: dataIsBeingFetched,
+                                        status: fetchStatus
+                                    });
+                                }
+                            } catch (e) {
+                            } finally {
+                                release();
+                            }
+                        });
                     } else if (jsonData.type === "fetchLIData") {
                         atlisManager.fetchLIData(jsonData.linkedin);
                     }

@@ -12,6 +12,7 @@
     ],
     "author": "Abhay Tripathi, B.Tech CSE 2021 - 25, Manipal University Jaipur (Reg. No. 219301226)",
     "dependencies": {
+        "async-mutex": "^0.5.0",
         "csv-parser": "^3.0.0",
         "express": "^4.18.2",
         "nodemailer": "^6.9.12",
