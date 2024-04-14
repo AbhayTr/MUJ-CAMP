@@ -1,10 +1,8 @@
 import { WebSocket, Event, ErrorEvent, MessageEvent, CloseEvent } from "ws";
-import { Mutex } from "async-mutex";
 
 import SubscriberManager from "./subscriberManager";
 import DoARDataManager from "./dataManager";
 import AlmaShineManager from "./almashineManager";
-import { synchronizeCode } from "../utils/common";
 
 class ATLISManager {
 
@@ -31,7 +29,7 @@ class ATLISManager {
         return this._isConnected;
     }
 
-    async startSession(): Promise<boolean> {
+    async startSession(): Promise<void> {
         return new Promise((resolve) => {
             this._atlisWS = new WebSocket(process.env.ATLIS_ADDRESS!);
             
@@ -41,7 +39,7 @@ class ATLISManager {
                 this._setConnectionStatus(true);
                 this._connectedOnce = true;
                 console.log("Connected to ATLIS Engine.")
-                resolve(true);
+                resolve();
             }
 
             this._atlisWS.onerror = (errorEvent: ErrorEvent) => {
@@ -52,7 +50,7 @@ class ATLISManager {
                         this._setConnectionStatus(false);   
                     } else if (!this._connectedOnce) {
                         console.log("ATLIS Server not available.");
-                        resolve(false);
+                        resolve();
                     }
                     if (this._connectedOnce) {
                         setTimeout(() => {

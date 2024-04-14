@@ -67,6 +67,8 @@ const DataTable = (props) => {
 
     const [originalPage, setOriginalPage] = useState(-1);
 
+    const [noOfFilters, setNoOfFilters] = useState(0);
+
     useEffect(() => {
 
         const tempHeaderMap = {};
@@ -127,6 +129,20 @@ const DataTable = (props) => {
         setFilters(finalTempFilter);
 
     }, [tableData, headerMap]);
+
+    useEffect(() => {
+
+        if (filters == null) {
+            return;
+        }
+
+        let filtersCount = 0;
+        for (let filter in filters) {
+            filtersCount += filters[filter].length;
+        }
+        setNoOfFilters(filtersCount);
+
+    }, [filters]);
 
     const scrollToTop = () => {
         try {
@@ -245,6 +261,10 @@ const DataTable = (props) => {
         return filtersOrSortApplied() || searchText !== "";
     }
 
+    const filtersAreVisible = () => {
+        return (filters != null && noOfFilters > 0);
+    }
+
     const [filterResetButtonLoading, setResetButtonFiltersLoading] = useState(false);
     
     return (
@@ -332,7 +352,7 @@ const DataTable = (props) => {
                                                                                 borderColor: "black"
                                                                             }}
                                                                         />
-                                                                        {(tableLoading || (filters == null || Object.keys(filters).length === 0)) ? (
+                                                                        {(tableLoading || !filtersAreVisible()) ? (
                                                                             <></>
                                                                         ) : (
                                                                             <div className="d-flex">
@@ -378,6 +398,9 @@ const DataTable = (props) => {
                                                                                             </span>
                                                                                         </DropdownItem>
                                                                                         {Object.keys(filters).map((filter) => {
+                                                                                            if (!filters[filter] || filters[filter].length === 0) {
+                                                                                                return (<></>);
+                                                                                            }
                                                                                             return (
                                                                                                 <DropdownItem
                                                                                                     key={filter}
