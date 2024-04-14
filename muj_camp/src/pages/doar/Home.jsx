@@ -65,7 +65,9 @@ const Home = () => {
         recordsNumber,
         setRecordsNumber,
         searchText,
-        setSearchText
+        setSearchText,
+        tableCurrentPage,
+        setTableCurrentPage
     ] = useTable();
     
     useEffect(() => {
@@ -119,6 +121,9 @@ const Home = () => {
         try {
             document.getElementById("Search").value = "";
         } catch (e) {}
+        setTableCurrentPage(1);
+        setUpdateDataLoading(false);
+        setUpdateDataStatus(null);
         setLiveConnected(liveConnected + 2);
     };
 
@@ -225,7 +230,11 @@ const Home = () => {
                         color: "tomato"
                     }) : {}}>
                         {(tableDataStats["currentStatus"] === "nl") ? (
-                            <Button>Sync</Button>
+                            <Button onClick={() => {
+                                startLIDataUpdate(newTableRow[0]["linkedin"])
+                            }}>
+                                Sync
+                            </Button>
                         ) : (((tableDataStats["currentStatus"] === "l")) ? (
                                 <>
                                     Syncing&nbsp;
@@ -291,15 +300,18 @@ const Home = () => {
                 setTablePages(messageJSON.pages);
                 setTableHeaders(messageJSON.headers);
                 setFilters(messageJSON.filters);
-                messageJSON.data = processTableDataName(messageJSON.data);
                 messageJSON.data = processTableDataStatus(messageJSON.data);
+                messageJSON.data = processTableDataName(messageJSON.data);
                 setTableData(messageJSON.data);
                 setRecordsNumber(messageJSON.records);
                 setLiveConnected(0);
                 decrementRequestCount();
-            } else if (messageType === "dataUpdate") {
+            } else if (messageType === "dataUpdate" || messageType === "initDataUpdate") {
                 if (messageJSON.dataIsBeingFetched === true) {
                     incrementRequestCount();
+                    if (messageType === "initDataUpdate") {
+                        decrementRequestCount();
+                    }
                     setUpdateDataLoading(true);
                 } else {
                     decrementRequestCount();
@@ -327,6 +339,9 @@ const Home = () => {
 
     const onPageUpdate = (tableCurrentPage, appliedFilters, searchText) => {
         incrementRequestCount();
+        if (webSocket == null) {
+            return;
+        }
         makeWebSocketRequest(webSocket, {
             type: "data",
             filters: appliedFilters,
@@ -338,6 +353,13 @@ const Home = () => {
     const startDataUpdate = () => {
         makeWebSocketRequest(webSocket, {
             type: "dataUpdate"
+        });
+    }
+
+    const startLIDataUpdate = (linkedin) => {
+        makeWebSocketRequest(webSocket, {
+            type: "fetchLIData",
+            linkedin: linkedin
         });
     }
 
@@ -359,7 +381,9 @@ const Home = () => {
                         setFiltersApplied,
                         recordsNumber,
                         searchText,
-                        setSearchText
+                        setSearchText,
+                        tableCurrentPage,
+                        setTableCurrentPage
                     ]}
                     updatePageData={onPageUpdate}
                     searchPlaceholder="Search Alumni."
@@ -379,7 +403,7 @@ const Home = () => {
                             &nbsp; button located above the Search Bar 🔍 to <b>load the data from AlmaShine Portal</b> and get started.
                             <br/><br/>
                             If you have <b>already clicked on that button in the past, and are seeing this message again</b>,<br/>
-                            then please <b>call Abhay Tripathi (+91-8800958568)</b>.
+                            then please <b>call {process.env.REACT_APP_CONTACT_PERSON}</b>.
                         </div>
                     }
                     searchDisabled={!(liveConnected === 0 && !updateDataLoading)}

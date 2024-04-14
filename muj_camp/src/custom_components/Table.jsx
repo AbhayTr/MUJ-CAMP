@@ -39,7 +39,7 @@ const DataTable = (props) => {
         searchDisabled = false,
         recordsPerPage = 50,
         noResultsText = "No result matches your search criteria 🤷",
-        systemDownText = "Yeah there is some problem with the system 😞. Please call Abhay Tripathi (+91-8800958568)."
+        systemDownText = "Yeah there is some problem with the system 😞. Please call " + process.env.REACT_APP_CONTACT_PERSON + "."
     } = props;
 
     const [
@@ -53,12 +53,12 @@ const DataTable = (props) => {
         setFiltersApplied,
         recordsNumber,
         searchText,
-        setSearchText
+        setSearchText,
+        tableCurrentPage,
+        setTableCurrentPage
      ] = tableHook;
 
     const [sortedTableData, setSortedTableData] = useState([]);
-
-    const [tableCurrentPage, setTableCurrentPage] = useState(1);
     
     const [sortedFields, setSortedFields] = useState({});
     const [sortInvalidated, setSortInvalidated] = useState(false);

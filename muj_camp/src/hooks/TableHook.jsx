@@ -15,6 +15,8 @@ const useTable = () => {
     const [recordsNumber, setRecordsNumber] = useState(0);
 
     const [searchText, setSearchText] = useState("");
+    
+    const [tableCurrentPage, setTableCurrentPage] = useState(1);
 
     return [
         tableLoading,
@@ -32,7 +34,9 @@ const useTable = () => {
         recordsNumber,
         setRecordsNumber,
         searchText,
-        setSearchText
+        setSearchText,
+        tableCurrentPage,
+        setTableCurrentPage
     ];
 
 }

@@ -148,18 +148,17 @@ class DoARDataManager {
                 latestStatus: "-",
                 currentStatus: (alumniData.linkedin === "") ? "-" : "nl"
             };
+            await this._doarDbCollection.insertOne(alumniData);
+        } else {
+            await this._doarDbCollection.updateOne(
+                {
+                    alumniId: alumniId
+                },
+                {
+                    $set: alumniData
+                }
+            );
         }
-        await this._doarDbCollection.updateOne(
-            {
-                alumniId: alumniId
-            },
-            {
-                $set: alumniData
-            },
-            {
-                upsert: true
-            }
-        );
     }
 
     async updateDBDataFromCSV(): Promise<boolean> {
@@ -348,14 +347,16 @@ class DoARDataManager {
             }
         ];
 
-        
+        console.log("Start 1");
         const cursor = await this._doarDbCollection.aggregate(pipeline);
         const [resultMain] = await cursor.toArray();
+        console.log("End 1");
         
         const totalRecords = resultMain?.totalRecords || 0;
         const totalPages = resultMain?.totalPages || 0;
 
         const results: Array<any> = resultMain?.data || [];
+        console.log("Start 2");
         const formattedResults = await Promise.all(results.map(async alumni => {
             let latestEducationInstitution = "N.A.";
             if (!(alumni.education && alumni.education.length > 0)) {
@@ -399,6 +400,7 @@ class DoARDataManager {
 
             return formattedAlumni;
         }));
+        console.log("End 2");
 
         const headersData = [
             "Name",
@@ -551,6 +553,99 @@ class DoARDataManager {
             });
         }
         return standardFilters;
+    }
+
+    async getAlumniCompanies(alumniId: string): Promise<Array<string>> {
+        const result = await (await this._doarDbCollection.aggregate([
+            {
+                $match: {
+                    alumniId: alumniId
+                }
+            },
+            {
+                $project: {
+                    companies: {
+                        $setUnion: [
+                            {
+                                $cond: {
+                                    if: {
+                                        $isArray: "$company"
+                                    }, then: "$company",
+                                    else: ["$company"]
+                                }
+                            },
+                            {
+                                $ifNull: [{
+                                    $map: {
+                                        input: "$prev_work",
+                                        as: "work",
+                                        in: "$$work.company"
+                                    }
+                                }, []
+                            ]}
+                        ]
+                    }
+                }
+            },
+            {
+                $unwind: "$companies"
+            },
+            {
+                $group: {
+                    _id: null,
+                    companies: {
+                        $addToSet: "$companies"
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    companies: 1
+                }
+            }
+        ])).toArray();
+        if (result.length > 0) {
+            return result[0].companies;
+        } else {
+            return [];
+        }
+    }
+
+    async getAlumniEducationalInstitutions(alumniId: string): Promise<Array<string>> {
+        const result = await (await this._doarDbCollection.aggregate([
+            {
+                $match: {
+                    alumniId: alumniId
+                } 
+            },
+            {
+                $unwind: "$education"
+            },
+            {
+                $group: {
+                    _id: null,
+                    institutions: {
+                        $addToSet: "$education.institution"
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    institutions: 1
+                }
+            }
+        ])).toArray();
+        if (result.length > 0) {
+            return result[0].institutions;
+        } else {
+            return [];
+        }
+    }
+
+    async updateAlumniLIData(alumniId: string, alumniData: any) {
+        await AlumniLSStatus.updateAlumniLIStatus(alumniId, alumniData, this._doarDbCollection);
     }
 
 }

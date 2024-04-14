@@ -19,10 +19,10 @@ async function startAlmashinesSession() {
 
 const startWSServer = async (app: Application) => {
     dataManager = new DoARDataManager(app.locals.campdb);
-    atlisManager = new ATLISManager();
-    await atlisManager.startSession();
     almashineManager = new AlmaShineManager(app.locals.campdb, dataManager);
     await startAlmashinesSession();
+    atlisManager = new ATLISManager(subscriberManager, dataManager, almashineManager);
+    await atlisManager.startSession();
     
     const wss: WebSocketServer = new WebSocketServer({
         port: parseInt(process.env.WS_PORT!)
@@ -37,17 +37,16 @@ const startWSServer = async (app: Application) => {
                 const authData = jsonData.auth;
                 jsonData = jsonData.data;
                 if (await CAMPAuthManager.validateTokenWS(authData.authToken, authData.authEmail, app)) {
-                    if (jsonData.type === "init" || jsonData.type === "data") {
-                        if (jsonData.type === "init") {
-                            subscriberManager.addSubscriber(ws);
-                            ws.send(JSON.stringify({
-                                type: "dataUpdate",
-                                dataIsBeingFetched: dataIsBeingFetched
-                            }));
-                        }
-                        const page = (jsonData.type === "init") ? 1 : jsonData.page;
-                        const searchText = ((jsonData.type === "init") ? "" : jsonData.search).replace(/[^a-zA-Z0-9, -]/g, "");
-                        const appliedFilters = (jsonData.type === "init") ? {} : jsonData.filters;
+                    if (jsonData.type === "init") {
+                        subscriberManager.addSubscriber(ws);
+                        ws.send(JSON.stringify({
+                            type: "initDataUpdate",
+                            dataIsBeingFetched: dataIsBeingFetched
+                        }));
+                    } else if (jsonData.type === "data") {
+                        const page = jsonData.page;
+                        const searchText = jsonData.search.replace(/[^a-zA-Z0-9, -]/g, "");
+                        const appliedFilters = jsonData.filters;
                         const homeData: any = await dataManager.getAlumniDataSet(searchText, page, appliedFilters);
                         ws.send(JSON.stringify({
                             type: "data",
@@ -77,6 +76,8 @@ const startWSServer = async (app: Application) => {
                                 status: fetchStatus
                             });
                         }
+                    } else if (jsonData.type === "fetchLIData") {
+                        atlisManager.fetchLIData(jsonData.linkedin);
                     }
                 } else {
                     ws.close()
