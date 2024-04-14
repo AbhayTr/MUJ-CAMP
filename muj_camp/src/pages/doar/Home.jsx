@@ -313,6 +313,7 @@ const Home = () => {
                         decrementRequestCount();
                     }
                     setUpdateDataLoading(true);
+                    showAlert("Alumni Data Updation in process...", toast.info, false);
                 } else {
                     decrementRequestCount();
                     setUpdateDataStatus(messageJSON.status);
@@ -470,7 +471,7 @@ const Home = () => {
                                     lbDisabled={tableLoading}
                                     lbLoading={updateDataLoading}
                                     clickHandler={async () => {
-                                        if (await confirm("Are you sure you want to update the Alumni Data? This will take 2 to 5 minutes.", {
+                                        if (await confirm("Are you sure you want to update the Alumni Data? This will take 20 seconds to 5 minutes.", {
                                             title: "Update Alumni Data",
                                             okText: "Yes 😎",
                                             cancelText: "No will do later 😅",

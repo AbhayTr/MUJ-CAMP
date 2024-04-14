@@ -163,6 +163,7 @@ class DoARDataManager {
 
     async updateDBDataFromCSV(): Promise<boolean> {
         return new Promise(async (resolve, reject) => {
+            const updateAlumniPromises: Array<Promise<void>> = [];
             fs.createReadStream("./data/alumni_data.csv")
             .pipe(csv())
             .on("data", async (row: any) => {
@@ -170,9 +171,10 @@ class DoARDataManager {
                 if (alumniData == null) {
                     return;
                 }
-                await this._updateAlumniData(alumniData);
+                updateAlumniPromises.push(this._updateAlumniData(alumniData));
             })
             .on("end", async () => {
+                await Promise.all(updateAlumniPromises);
                 await this._doarCollection.updateOne({
                     "desc": "Alumni Data Details"
                 }, {
@@ -347,16 +349,13 @@ class DoARDataManager {
             }
         ];
 
-        console.log("Start 1");
         const cursor = await this._doarDbCollection.aggregate(pipeline);
         const [resultMain] = await cursor.toArray();
-        console.log("End 1");
         
         const totalRecords = resultMain?.totalRecords || 0;
         const totalPages = resultMain?.totalPages || 0;
 
         const results: Array<any> = resultMain?.data || [];
-        console.log("Start 2");
         const formattedResults = await Promise.all(results.map(async alumni => {
             let latestEducationInstitution = "N.A.";
             if (!(alumni.education && alumni.education.length > 0)) {
@@ -400,7 +399,6 @@ class DoARDataManager {
 
             return formattedAlumni;
         }));
-        console.log("End 2");
 
         const headersData = [
             "Name",

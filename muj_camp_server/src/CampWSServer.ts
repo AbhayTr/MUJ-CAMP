@@ -18,8 +18,8 @@ async function startAlmashinesSession() {
 }
 
 const startWSServer = async (app: Application) => {
-    dataManager = new DoARDataManager(app.locals.campdb);
-    almashineManager = new AlmaShineManager(app.locals.campdb, dataManager);
+    dataManager = new DoARDataManager(app.locals.campdbDoar);
+    almashineManager = new AlmaShineManager(app.locals.campdbDoar, dataManager);
     await startAlmashinesSession();
     atlisManager = new ATLISManager(subscriberManager, dataManager, almashineManager);
     await atlisManager.startSession();
