@@ -1,7 +1,10 @@
 import { WebSocket, Event, ErrorEvent, MessageEvent, CloseEvent } from "ws";
+import { Mutex } from "async-mutex";
+
 import SubscriberManager from "./subscriberManager";
 import DoARDataManager from "./dataManager";
 import AlmaShineManager from "./almashineManager";
+import { synchronizeCode } from "../utils/common";
 
 class ATLISManager {
 
@@ -20,13 +23,22 @@ class ATLISManager {
         this._almashinesManager = almashinesManager;
     }
 
+    private _setConnectionStatus(connectionStatus: boolean) {
+        this._isConnected = connectionStatus;
+    }
+
+    private _connected(): boolean {
+        return this._isConnected;
+    }
+
     async startSession(): Promise<boolean> {
         return new Promise((resolve) => {
             this._atlisWS = new WebSocket(process.env.ATLIS_ADDRESS!);
             
             this._atlisWS.onopen = (event: Event) => {
                 this._connectionCrashed = false;
-                this._isConnected = true;
+                
+                this._setConnectionStatus(true);
                 this._connectedOnce = true;
                 console.log("Connected to ATLIS Engine.")
                 resolve(true);
@@ -35,11 +47,12 @@ class ATLISManager {
             this._atlisWS.onerror = (errorEvent: ErrorEvent) => {
                 this._connectionCrashed = true;
                 try {
-                    if (this._isConnected) {
+                    if (this._connected()) {
                         console.error("Error ocurred during ATLIS Connection. Retrying to connect...");
-                        this._isConnected = false;   
+                        this._setConnectionStatus(false);   
                     } else if (!this._connectedOnce) {
                         console.log("ATLIS Server not available.");
+                        resolve(false);
                     }
                     if (this._connectedOnce) {
                         setTimeout(() => {
@@ -48,7 +61,7 @@ class ATLISManager {
                     }
                 } catch (exception) {
                     console.error("Error ocurred during ATLIS re-Connection. Retrying to connect...");
-                    this._isConnected = false;
+                    this._setConnectionStatus(false);
                     setTimeout(() => {
                         this.startSession();
                     }, 2000);
@@ -61,13 +74,13 @@ class ATLISManager {
                 }
                 try {
                     console.error("ATLIS Connection was closed. Retrying to connect...");
-                    this._isConnected = false;
+                    this._setConnectionStatus(false);
                     setTimeout(() => {
                         this.startSession();
                     }, 2000);
                 } catch (exception) {
                     console.error("Error ocurred during ATLIS re-Connection after closing. Retrying to connect...");
-                    this._isConnected = false;
+                    this._setConnectionStatus(false);
                     setTimeout(() => {
                         this.startSession();
                     }, 2000);

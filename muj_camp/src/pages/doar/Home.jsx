@@ -313,7 +313,7 @@ const Home = () => {
                         decrementRequestCount();
                     }
                     setUpdateDataLoading(true);
-                    showAlert("Alumni Data Updation in process...", toast.info, false);
+                    showAlert("Alumni Data Updation in progress...", toast.info, false);
                 } else {
                     decrementRequestCount();
                     setUpdateDataStatus(messageJSON.status);

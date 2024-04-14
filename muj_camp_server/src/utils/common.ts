@@ -1,18 +1,19 @@
+import { Mutex } from "async-mutex";
 import { createHash } from "crypto";
 
-function sha256(text: string) {
+const sha256 = (text: string) => {
     return String(createHash("sha256").update(text).digest("hex"));
 }
 
-function getSessionID(email: string): string {
+const getSessionID = (email: string): string => {
     return String(email.toAlphaNumeric() + String(Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)));
 }
 
-function currentTime(): number {
+const currentTime = (): number => {
     return Math.floor(new Date().getTime() / 1000);
 }
 
-function timestampToHumanTime(timestamp: number): string {
+const timestampToHumanTime = (timestamp: number): string => {
     const monthNames = [
         "January", "February", "March",
         "April", "May", "June", "July",
@@ -52,4 +53,21 @@ function timestampToHumanTime(timestamp: number): string {
     return formattedDate;
 }
 
-export { sha256, getSessionID, currentTime, timestampToHumanTime };
+const synchronizeCode = async (mutex: Mutex, callback: Function) => {
+    await mutex
+    .waitForUnlock()
+    .then(() => {
+        mutex
+        .acquire()
+        .then(async (release) => {
+            try {
+                await callback();
+            } catch (e) {
+            } finally {
+                release();
+            }
+        })
+    });
+}
+
+export { sha256, getSessionID, currentTime, timestampToHumanTime, synchronizeCode };

@@ -7,12 +7,15 @@ import SubscriberManager from "./doar/subscriberManager";
 import AlmaShineManager from "./doar/almashineManager";
 import DoARDataManager from "./doar/dataManager";
 import ATLISManager from "./doar/atlisManager";
+import { synchronizeCode } from "./utils/common";
 
 let subscriberManager: SubscriberManager = new SubscriberManager();
 let almashineManager: AlmaShineManager;
 let dataManager: DoARDataManager;
 let dataIsBeingFetched = false;
 let atlisManager: ATLISManager;
+
+const alumniDataUpdateMutex: Mutex = new Mutex();
 
 async function startAlmashinesSession() {
     await almashineManager.startSession();
@@ -58,30 +61,25 @@ const startWSServer = async (app: Application) => {
                             records: homeData.records
                         }));
                     } else if (jsonData.type === "dataUpdate") {
-                        await new Mutex().acquire().then(async (release) => {
-                            try {
-                                if (dataIsBeingFetched) {
-                                    ws.send(JSON.stringify({
-                                        type: "dataUpdate",
-                                        dataIsBeingFetched: dataIsBeingFetched
-                                    }));
-                                } else {
-                                    dataIsBeingFetched = true;
-                                    subscriberManager.pushData({
-                                        type: "dataUpdate",
-                                        dataIsBeingFetched: dataIsBeingFetched
-                                    });
-                                    const fetchStatus = await almashineManager.getAlumniData();
-                                    dataIsBeingFetched = false;
-                                    subscriberManager.pushData({
-                                        type: "dataUpdate",
-                                        dataIsBeingFetched: dataIsBeingFetched,
-                                        status: fetchStatus
-                                    });
-                                }
-                            } catch (e) {
-                            } finally {
-                                release();
+                        await synchronizeCode(alumniDataUpdateMutex, async () => {
+                            if (dataIsBeingFetched) {
+                                ws.send(JSON.stringify({
+                                    type: "dataUpdate",
+                                    dataIsBeingFetched: dataIsBeingFetched
+                                }));
+                            } else {
+                                dataIsBeingFetched = true;
+                                subscriberManager.pushData({
+                                    type: "dataUpdate",
+                                    dataIsBeingFetched: dataIsBeingFetched
+                                });
+                                const fetchStatus = await almashineManager.getAlumniData();
+                                dataIsBeingFetched = false;
+                                subscriberManager.pushData({
+                                    type: "dataUpdate",
+                                    dataIsBeingFetched: dataIsBeingFetched,
+                                    status: fetchStatus
+                                });
                             }
                         });
                     } else if (jsonData.type === "fetchLIData") {

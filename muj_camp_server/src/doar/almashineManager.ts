@@ -98,8 +98,10 @@ class AlmaShineManager {
                     console.error("DoAR Almashines Unable to fetch CSRF Token.");
                 }
             });
+            await this._updatePHPSessionCookie();
+        }).catch(error => {
+            console.error("DoAR Almashines Login Session Cookie Error.");
         });
-        await this._updatePHPSessionCookie();
     }
 
     private async _updatePHPSessionCookie() {
@@ -110,10 +112,12 @@ class AlmaShineManager {
             },
             "method": "POST"
         })
-        .then(response => {
+        .then(async (response) => {
             this._cookieManager.updateCookies(response.headers.get("set-cookie")!);
+            await this._login();
+        }).catch(error => {
+            console.error("DoAR Almashines Login PHP Session Error.");
         });
-        await this._login();
     }
 
     private async _login() {
@@ -133,6 +137,8 @@ class AlmaShineManager {
                     console.log("DoAR Almashines Login Successful (New Cookies).");
                 }
             });
+        }).catch(error => {
+            console.error("DoAR Almashines Login Error.");
         });
     }
 
