@@ -133,65 +133,69 @@ const Home = () => {
         setLiveConnected(liveConnected + 2);
     };
 
+    const getProfileComponent = (tableDataStats) => {
+        return (
+            <span
+                style={{
+                    paddingLeft: "17px",
+                    display: "inline-block"
+                }}
+                sortvalue={tableDataStats["name"]}
+            >
+                <span
+                    style={{
+                        cursor: "pointer"
+                    }}
+                    onClick={() => {
+                        window.open(`https://mujalumni.in/profile/${tableDataStats["alumniId"]}`);
+                    }}
+                >
+                    <span style={{
+                        color: "#0d6efd",
+                        fontWeight: "bold"
+                    }}>
+                        {tableDataStats["name"]}
+                    </span>
+                    <br/>
+                    ({tableDataStats["muj_from"]} - {tableDataStats["muj_to"]})
+                </span>
+                <br/>
+                Alumni ID:&nbsp;
+                <span style={{
+                    userSelect: "text"
+                }}>
+                    <b>{tableDataStats["alumniId"]}</b>
+                </span>
+                {(tableDataStats["linkedin"] != null && tableDataStats["linkedin"] !== "") ? (
+                    <>
+                        <br/>
+                        <img
+                            src={LinkedInLogo}
+                            style={{
+                                height: "2rem",
+                                width: "auto",
+                                marginTop: "0.4em",
+                                cursor: "pointer"
+                            }}
+                            alt="LinkedIn"
+                            onClick={() => {
+                                window.open(tableDataStats["linkedin"]);
+                            }}
+                        />
+                    </>
+                ) : (
+                    <></>
+                )}
+            </span>
+        );
+    }
+
     const processTableDataName = (serverTableData) => {
         const newTableData = [];
         for (let i = 0; i < serverTableData.length; i++) {
             let newTableRow = [...serverTableData[i]];
             let tableDataStats = newTableRow[0];
-            newTableRow[0] = (
-                <span
-                    style={{
-                        paddingLeft: "17px",
-                        display: "inline-block"
-                    }}
-                    sortvalue={tableDataStats["name"]}
-                >
-                    <span
-                        style={{
-                            cursor: "pointer"
-                        }}
-                        onClick={() => {
-                            window.open(`https://mujalumni.in/profile/${tableDataStats["alumniId"]}`);
-                        }}
-                    >
-                        <span style={{
-                            color: "#0d6efd",
-                            fontWeight: "bold"
-                        }}>
-                            {tableDataStats["name"]}
-                        </span>
-                        <br/>
-                        ({tableDataStats["muj_from"]} - {tableDataStats["muj_to"]})
-                    </span>
-                    <br/>
-                    Alumni ID:&nbsp;
-                    <span style={{
-                        userSelect: "text"
-                    }}>
-                        <b>{tableDataStats["alumniId"]}</b>
-                    </span>
-                    {(tableDataStats["linkedin"] != null && tableDataStats["linkedin"] !== "") ? (
-                        <>
-                            <br/>
-                            <img
-                                src={LinkedInLogo}
-                                style={{
-                                    height: "2rem",
-                                    width: "auto",
-                                    marginTop: "0.4em",
-                                    cursor: "pointer"
-                                }}
-                                alt="LinkedIn"
-                                onClick={() => {
-                                    window.open(tableDataStats["linkedin"]);
-                                }}
-                            />
-                        </>
-                    ) : (
-                        <></>
-                    )}
-                </span>
-            );
+            newTableRow[0] = getProfileComponent(tableDataStats);
             newTableData.push(newTableRow);
         }
         return newTableData;
@@ -297,7 +301,7 @@ const Home = () => {
                 showAlert(messageJSON.error.replaceAll("%t%", process.env.REACT_APP_CONTACT_PERSON), toast.error, false);
                 return;
             }
-            if (messageJSON.liStatus == null || messageJSON.alumniId == null) {
+            if ((messageJSON.liStatus == null && messageJSON.newData == null) || messageJSON.alumniId == null) {
                 return;
             }
             const alumniIndex = alumniIndexMap[messageJSON.alumniId];
@@ -305,11 +309,18 @@ const Home = () => {
                 return;
             }
             const newTableData = [...tableData];
-            const newTableRow = newTableData[alumniIndex];
-            newTableRow[newTableRow.length - 1] = messageJSON.liStatus;
+            var newTableRow = null;
+            if (messageJSON.newData != null) {
+                newTableRow = messageJSON.newData;
+                newTableRow[0] = getProfileComponent(newTableRow[0]);
+            } else {
+                newTableRow = newTableData[alumniIndex];
+                newTableRow[newTableRow.length - 1] = messageJSON.liStatus;
+            }
             newTableRow[newTableRow.length - 1] = getStatusComponent(newTableRow[newTableRow.length - 1]);
             newTableData[alumniIndex] = newTableRow;
             setTableData(newTableData);
+            requestNewFilters();
             setNewLIStatusReceived(null);
         }
 
@@ -366,6 +377,8 @@ const Home = () => {
                 }
             } else if (messageType === "liData") {
                 setNewLIStatusReceived(messageJSON);
+            } else if (messageType === "filters") {
+                setFilters(messageJSON.filters);
             }
         };
 
@@ -379,18 +392,26 @@ const Home = () => {
 
     }, [liveConnected]);
 
-    const onPageUpdate = (tableCurrentPage, appliedFilters, searchText) => {
+    const onPageUpdate = () => {
         incrementRequestCount();
         if (webSocket == null) {
             return;
         }
         makeWebSocketRequest(webSocket, {
             type: "data",
-            filters: appliedFilters,
+            filters: filtersApplied,
             search: searchText,
             page: tableCurrentPage
         });
     };
+
+    const requestNewFilters = () => {
+        makeWebSocketRequest(webSocket, {
+            type: "filters",
+            filters: filtersApplied,
+            search: searchText
+        });
+    }
 
     const startDataUpdate = () => {
         makeWebSocketRequest(webSocket, {

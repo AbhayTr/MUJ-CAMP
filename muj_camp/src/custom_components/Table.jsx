@@ -181,7 +181,7 @@ const DataTable = (props) => {
     const [choseFiltersModalShowing, setChoseFiltersModalShowing] = useState(null);
 
     const updatePage = () => {
-        updatePageData(tableCurrentPage, filtersApplied, searchText);
+        updatePageData();
         setSortInvalidated(true);
     }
 

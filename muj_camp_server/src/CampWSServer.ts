@@ -51,14 +51,14 @@ const startWSServer = async (app: Application) => {
                         try {
                             const page = jsonData.page;
                             const searchText = jsonData.search.replace(/[^a-zA-Z0-9, -]/g, "");
-                            const appliedFilters = jsonData.filters;
-                            const homeData: any = await dataManager.getAlumniDataSet(searchText, page, appliedFilters);
+                            const filtersApplied = jsonData.filters;
+                            const homeData: any = await dataManager.getAlumniDataSet(searchText, page, filtersApplied);
                             ws.send(JSON.stringify({
                                 type: "data",
                                 pages: homeData.pages,
                                 headers: homeData.headers,
                                 data: homeData.data,
-                                filters: await dataManager.getHomeFilters(appliedFilters, searchText),
+                                filters: await dataManager.getHomeFilters(filtersApplied, searchText),
                                 records: homeData.records
                             }));
                         } catch (e) {
@@ -98,6 +98,13 @@ const startWSServer = async (app: Application) => {
                         if (alumniLIStatusData !== null) {
                             await atlisManager.fetchLIData(alumniLIStatusData, jsonData.alumniId, ws);
                         }
+                    } else if (jsonData.type === "filters") {
+                        const searchText = jsonData.search.replace(/[^a-zA-Z0-9, -]/g, "");
+                        const filtersApplied = jsonData.filters;
+                        ws.send(JSON.stringify({
+                            type: "filters",
+                            filters: await dataManager.getHomeFilters(filtersApplied, searchText)
+                        }));
                     }
                 } else {
                     ws.close()

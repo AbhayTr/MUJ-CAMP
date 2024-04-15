@@ -3,6 +3,7 @@ import { WebSocket, Event, ErrorEvent, MessageEvent, CloseEvent } from "ws";
 import SubscriberManager from "./subscriberManager";
 import DoARDataManager from "./dataManager";
 import AlmaShineManager from "./almashineManager";
+import { currentTime } from "../utils/common";
 
 class ATLISManager {
 
@@ -86,18 +87,32 @@ class ATLISManager {
             }
 
             this._atlisWS.onmessage = async (messageEvent: MessageEvent) => {
-                const data: object = JSON.parse(messageEvent.data.toString());
+                const data: any = JSON.parse(messageEvent.data.toString());
                 if (data == null) {
                     return;
                 }
                 const alumniLI = Object.keys(data)[0];
-                const alumniId = await this._dataManager.getAlumniIDFromLI(alumniLI);
-                console.log("Alumni LinkedIn: " + alumniLI);
-                console.log("Alumni ID: " + alumniId);
-                console.log("Alumni Data: ");
-                console.log(data);
+                const alumniDBData: any = await this._dataManager.getAlumniFromLI(alumniLI);
+                const alumniId = alumniDBData[0].alumniId;
+                const alumniData = data[alumniLI];
+                alumniDBData[3]["currentStatus"] = "nl";
+                if (alumniData.error) {
+                    alumniDBData[3]["latestStatus"] = "f";
+                } else {
+                    alumniDBData[3]["latestStatus"] = "s";
+                    alumniDBData[3]["lastUpdated"] = currentTime();
+                }
+                const liStatus = alumniDBData[3];
+                delete liStatus["alumniId"];
+                await this._dataManager.updateAlumniLIData(alumniId, alumniDBData[3]);
+                alumniDBData[3]["alumniId"] = alumniId;
+                this._subscriberManager.pushData({
+                    type: "liData",
+                    wasSuccessful: true,
+                    alumniId: alumniId,
+                    newData: alumniDBData
+                });
             }
-
         });
     }
 

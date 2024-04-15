@@ -195,11 +195,11 @@ class DoARDataManager {
         });
     }
 
-    private _getMatchFilters(appliedFilters: any, query: any = {}): object {
-        const filters = Object.keys(appliedFilters);
+    private _getMatchFilters(filtersApplied: any, query: any = {}): object {
+        const filters = Object.keys(filtersApplied);
         for (var i = 0; i < filters.length; i++) {
             const filter = filters[i];
-            let filterList = appliedFilters[filter];
+            let filterList = filtersApplied[filter];
             if (filter === "Syncing Status") {
                 filterList = filterList.map((syncingStatusFilter: any) => {
                     if (syncingStatusFilter == "Not Syncing") {
@@ -245,7 +245,7 @@ class DoARDataManager {
         return "N.A.";
     }
 
-    async getAlumniDataSet(searchText: string, pageNumber: number, appliedFilters: any): Promise<object> {
+    async getAlumniDataSet(searchText: string, pageNumber: number, filtersApplied: any): Promise<object> {
         const recordsPerPage = parseInt(process.env.RECORDS_PER_PAGE_DOAR!);
         
         const skip = recordsPerPage * (pageNumber - 1);
@@ -253,7 +253,7 @@ class DoARDataManager {
 
         const pipeline = [
             {
-                $match: this._getMatchFilters(appliedFilters)
+                $match: this._getMatchFilters(filtersApplied)
             },
             {
                 $match: {
@@ -425,7 +425,7 @@ class DoARDataManager {
         };
     }
 
-    private async _getFilterOptions(filterID: string, appliedFilters: any, searchText: string): Promise<Array<Array<any>>> {
+    private async _getFilterOptions(filterID: string, filtersApplied: any, searchText: string): Promise<Array<Array<any>>> {
         const matchQuery: any = {
             $match: {}
         };
@@ -434,7 +434,7 @@ class DoARDataManager {
             $ne: ""
         };
 
-        matchQuery["$match"] = this._getMatchFilters(appliedFilters, matchQuery["$match"]);
+        matchQuery["$match"] = this._getMatchFilters(filtersApplied, matchQuery["$match"]);
 
         const pipeline = [
             {
@@ -504,17 +504,17 @@ class DoARDataManager {
         }
     }
 
-    private async _getFilters(filterNames: Array<string>, appliedFilters: any, searchText: string): Promise<object> {
+    private async _getFilters(filterNames: Array<string>, filtersApplied: any, searchText: string): Promise<object> {
         const filters: any = {};
         for (var i = 0; i < filterNames.length; i++) {
             const filterName: string = filterNames[i];
-            filters[filterName] = await this._getFilterOptions(filterName, appliedFilters, searchText);
+            filters[filterName] = await this._getFilterOptions(filterName, filtersApplied, searchText);
         }
         return filters;
     }
 
-    async getHomeFilters(appliedFilters: any, searchText: string): Promise<object> {
-        const standardFilters: any = await this._getFilters(Object.keys(this._filterKeyMap), appliedFilters, searchText);
+    async getHomeFilters(filtersApplied: any, searchText: string): Promise<object> {
+        const standardFilters: any = await this._getFilters(Object.keys(this._filterKeyMap), filtersApplied, searchText);
         if (standardFilters["Syncing Status"]) {
             standardFilters["Syncing Status"] = standardFilters["Syncing Status"].map((syncingStatusFilter: any) => {
                 if (syncingStatusFilter[0] == "nl") {
@@ -664,18 +664,26 @@ class DoARDataManager {
         return alumniLIDataFormatted;
     }
 
-    async getAlumniIDFromLI(alumniLI: string): Promise<string> {
-        const alumniIdData: Document | null = await this._doarDbCollection.findOne({
+    async getAlumniFromLI(alumniLI: string): Promise<any> {
+        const alumni: Document | null = await this._doarDbCollection.findOne({
             linkedin: alumniLI
-        }, {
-            projection: {
-                alumniId: 1
-            }
         });
-        if (alumniIdData == null || alumniIdData.alumniId == null) {
-            return "";
+        if (alumni == null) {
+            return null;
         }
-        return alumniIdData.alumniId;
+        const formattedAlumni = [
+            {
+                name: alumni.name || "N.A.",
+                muj_from: ((alumni.muj_from === "0") ? "N.A." : alumni.muj_from),
+                muj_to: ((alumni.muj_to === "0") ? "N.A." : alumni.muj_to),
+                alumniId: alumni.alumniId,
+                linkedin: alumni.linkedin
+            },
+            alumni.company || "N.A.",
+            alumni.education.length > 0 ? alumni.education[0].institution : "N.A.",
+            AlumniLSStatus.getAlumniLIStatus(alumni)
+        ];
+        return formattedAlumni;
     }
 
     async updateAlumniLIData(alumniId: string, alumniData: any) {
