@@ -12,12 +12,12 @@ class AlumniLSStatus {
     }
 
     static async updateAlumniLIStatus(alumniId: string, alumniData: any, doarDbCollection: CAMPCollection) {
-        doarDbCollection.updateOne({
-            alumniId: alumniId
-        }, {
-            $set: {
-                liStatus: alumniData
-            }
+        const toCheck: any = {};
+        if (alumniId !== "") {
+            toCheck["alumniId"] = alumniId;
+        }
+        await doarDbCollection.updateMany(toCheck, {
+            $set: alumniData
         });
     }
 

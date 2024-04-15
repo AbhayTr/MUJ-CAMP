@@ -43,11 +43,18 @@ class ATLISManager {
                 resolve();
             }
 
-            this._atlisWS.onerror = (errorEvent: ErrorEvent) => {
+            this._atlisWS.onerror = async (errorEvent: ErrorEvent) => {
                 this._connectionCrashed = true;
                 try {
                     if (this._connected()) {
                         console.error("Error ocurred during ATLIS Connection. Retrying to connect...");
+                        await this._dataManager.updateAlumniLIData("", {
+                            currentStatus: "nl"
+                        });
+                        this._subscriberManager.pushData({
+                            type: "liData",
+                            error: "ATLIS Engine connection failed or crashed. Please contact %t%"
+                        });
                         this._setConnectionStatus(false);   
                     } else if (!this._connectedOnce) {
                         console.log("ATLIS Server not available.");
@@ -67,12 +74,19 @@ class ATLISManager {
                 }
             }
 
-            this._atlisWS.onclose = (closeEvent: CloseEvent) => {
+            this._atlisWS.onclose = async (closeEvent: CloseEvent) => {
                 if (this._connectionCrashed) {
                     return;
                 }
                 try {
                     console.error("ATLIS Connection was closed. Retrying to connect...");
+                    await this._dataManager.updateAlumniLIData("", {
+                        currentStatus: "nl"
+                    });
+                    this._subscriberManager.pushData({
+                        type: "liData",
+                        error: "ATLIS Engine connection closed. Please contact %t%"
+                    });
                     this._setConnectionStatus(false);
                     setTimeout(() => {
                         this.startSession();
@@ -92,58 +106,50 @@ class ATLISManager {
                     return;
                 }
                 const alumniLI = Object.keys(data)[0];
-                const alumniDBData: any = await this._dataManager.getAlumniFromLI(alumniLI);
-                const alumniId = alumniDBData[0].alumniId;
-                const alumniData = data[alumniLI];
-                alumniDBData[3]["currentStatus"] = "nl";
-                if (alumniData.error) {
-                    alumniDBData[3]["latestStatus"] = "f";
-                } else {
-                    alumniDBData[3]["latestStatus"] = "s";
-                    alumniDBData[3]["lastUpdated"] = currentTime();
+                const alumniId = await this._dataManager.getAlumniIDFromLI(alumniLI);
+                if (alumniId !== "") {
+                    const toUpdate: any = {
+                        currentStatus: "nl"
+                    };
+                    if (!data[alumniLI].error) {
+                        toUpdate["latestStatus"] = "s";
+                        toUpdate["lastUpdated"] = currentTime();
+                    } else {
+                        toUpdate["latestStatus"] = "f";
+                    }
+                    await this._dataManager.updateAlumniLIData(alumniId, toUpdate);
+                    this._subscriberManager.pushData({
+                        type: "liData"
+                    });
                 }
-                const liStatus = alumniDBData[3];
-                delete liStatus["alumniId"];
-                await this._dataManager.updateAlumniLIData(alumniId, alumniDBData[3]);
-                alumniDBData[3]["alumniId"] = alumniId;
-                this._subscriberManager.pushData({
-                    type: "liData",
-                    wasSuccessful: true,
-                    alumniId: alumniId,
-                    newData: alumniDBData
-                });
             }
         });
     }
 
-    async fetchLIData(alumniLIStatusData: any, alumniId: string, sourceWebSocketConnection: WebSocket) {
+    async fetchLIData(alumniLI: string, alumniId: string, sourceWebSocketConnection: WebSocket) {
         if (!this._connected()) {
             try {
                 sourceWebSocketConnection.send(JSON.stringify({
                     type: "liData",
-                    alumniId: alumniId,
-                    wasSuccessful: false,
                     error: "ATLIS Engine is not connected. Please contact %t%"
                 }));
-            } catch (error) {}
+            } catch (error) {
+            } finally {
+                return;
+            }
         }
         if (this._atlisWS != null) {
             try {
-                this._atlisWS.send(`${alumniLIStatusData.linkedin}[%ATLIS%]N`);
-                delete alumniLIStatusData["linkedin"];
-                alumniLIStatusData["currentStatus"] = "l";
-                await this._dataManager.updateAlumniLIData(alumniId, alumniLIStatusData);
+                this._atlisWS.send(`${alumniLI}[%ATLIS%]N`);
+                await this._dataManager.updateAlumniLIData(alumniId, {
+                    currentStatus: "l"
+                });
                 this._subscriberManager.pushData({
-                    type: "liData",
-                    wasSuccessful: true,
-                    alumniId: alumniId,
-                    liStatus: alumniLIStatusData
+                    type: "liData"
                 });
             } catch (e) {
                 sourceWebSocketConnection.send(JSON.stringify({
                     type: "liData",
-                    alumniId: alumniId,
-                    wasSuccessful: false,
                     error: "Failed to connect to ATLIS Engine. Please try again after some time or contact %t%"
                 }));
             }

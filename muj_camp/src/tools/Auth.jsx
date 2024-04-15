@@ -115,6 +115,9 @@ const ensureAdminAccess = (pageName, setLoading, navigate) => {
 }
 
 const makeWebSocketRequest = (webSocket, data) => {
+    if (webSocket == null) {
+        return;
+    }
     webSocket.send(JSON.stringify({
         "auth": {
             "authEmail": AuthStore.getState().authEmail,

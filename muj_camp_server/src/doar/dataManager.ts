@@ -647,47 +647,40 @@ class DoARDataManager {
         }
     }
 
-    async getAlumniLIStatus(alumniId: string): Promise<any> {
+    async getAlumniLI(alumniId: string): Promise<string> {
         const alumniLIData: Document | null = await this._doarDbCollection.findOne({
             alumniId: alumniId
         }, {
             projection: {
-                liStatus: 1,
                 linkedin: 1
             }
         });
-        if (alumniLIData == null || alumniLIData.linkedin == null || alumniLIData.liStatus == null) {
-            return null;
+        if (alumniLIData == null || alumniLIData.linkedin == null) {
+            return "";
         }
-        const alumniLIDataFormatted = alumniLIData.liStatus;
-        alumniLIDataFormatted["linkedin"] = alumniLIData.linkedin;
-        return alumniLIDataFormatted;
+        return alumniLIData.linkedin;
     }
 
-    async getAlumniFromLI(alumniLI: string): Promise<any> {
+    async getAlumniIDFromLI(alumniLI: string): Promise<string> {
         const alumni: Document | null = await this._doarDbCollection.findOne({
             linkedin: alumniLI
+        }, {
+            projection: {
+                alumniId: 1
+            }
         });
-        if (alumni == null) {
-            return null;
+        if (alumni == null || alumni.alumniId == null) {
+            return "";
         }
-        const formattedAlumni = [
-            {
-                name: alumni.name || "N.A.",
-                muj_from: ((alumni.muj_from === "0") ? "N.A." : alumni.muj_from),
-                muj_to: ((alumni.muj_to === "0") ? "N.A." : alumni.muj_to),
-                alumniId: alumni.alumniId,
-                linkedin: alumni.linkedin
-            },
-            alumni.company || "N.A.",
-            alumni.education.length > 0 ? alumni.education[0].institution : "N.A.",
-            AlumniLSStatus.getAlumniLIStatus(alumni)
-        ];
-        return formattedAlumni;
+        return alumni.alumniId;
     }
 
     async updateAlumniLIData(alumniId: string, alumniData: any) {
-        await AlumniLSStatus.updateAlumniLIStatus(alumniId, alumniData, this._doarDbCollection);
+        let updateObject: any = {};
+        for (let key in alumniData) {
+            updateObject["liStatus." + key] = alumniData[key];
+        }
+        await AlumniLSStatus.updateAlumniLIStatus(alumniId, updateObject, this._doarDbCollection);
     }
 
 }

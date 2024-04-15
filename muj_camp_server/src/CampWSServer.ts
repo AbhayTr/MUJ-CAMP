@@ -94,17 +94,10 @@ const startWSServer = async (app: Application) => {
                             }
                         });
                     } else if (jsonData.type === "fetchLIData") {
-                        const alumniLIStatusData = await dataManager.getAlumniLIStatus(jsonData.alumniId);
-                        if (alumniLIStatusData !== null) {
-                            await atlisManager.fetchLIData(alumniLIStatusData, jsonData.alumniId, ws);
+                        const alumniLI = await dataManager.getAlumniLI(jsonData.alumniId);
+                        if (alumniLI !== "") {
+                            await atlisManager.fetchLIData(alumniLI, jsonData.alumniId, ws);
                         }
-                    } else if (jsonData.type === "filters") {
-                        const searchText = jsonData.search.replace(/[^a-zA-Z0-9, -]/g, "");
-                        const filtersApplied = jsonData.filters;
-                        ws.send(JSON.stringify({
-                            type: "filters",
-                            filters: await dataManager.getHomeFilters(filtersApplied, searchText)
-                        }));
                     }
                 } else {
                     ws.close()

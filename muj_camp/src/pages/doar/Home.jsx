@@ -31,7 +31,6 @@ const Home = () => {
 
     const [updateDataStatus, setUpdateDataStatus] = useState(null);
 
-    const [alumniIndexMap, setAlumniIndexMap] = useState({});
     const [newLIStatusReceived, setNewLIStatusReceived] = useState(null);
 
     const decrementRequestCount = () => {
@@ -129,7 +128,6 @@ const Home = () => {
         setUpdateDataStatus(null);
         setTableData([]);
         setTableHeaders([]);
-        setAlumniIndexMap({});
         setLiveConnected(liveConnected + 2);
     };
 
@@ -236,9 +234,14 @@ const Home = () => {
                     color: "tomato"
                 }) : {}}>
                     {(tableDataStats["currentStatus"] === "nl") ? (
-                        <Button onClick={() => {
-                            startLIDataUpdate(tableDataStats["alumniId"])
-                        }}>
+                        <Button
+                            id={`sync${tableDataStats["alumniId"]}`}
+                            onClick={() => {
+                                document.getElementById(`sync${tableDataStats["alumniId"]}`).disabled = true;
+                                document.getElementById(`sync${tableDataStats["alumniId"]}`).innerText = "Starting Syncing Process...";
+                                startLIDataUpdate(tableDataStats["alumniId"])
+                            }}
+                        >
                             Sync
                         </Button>
                     ) : (((tableDataStats["currentStatus"] === "l")) ? (
@@ -265,15 +268,12 @@ const Home = () => {
 
     const processTableDataStatus = (serverTableData) => {
         const newTableData = [];
-        const newAlumniIndexMap = {};
         for (var i = 0; i < serverTableData.length; i++) {
             const newTableRow = [...serverTableData[i]];
             const tableDataStats = newTableRow[newTableRow.length - 1];
-            newAlumniIndexMap[tableDataStats["alumniId"]] = i;
             newTableRow[newTableRow.length - 1] = getStatusComponent(tableDataStats);
             newTableData.push(newTableRow);
         }
-        setAlumniIndexMap(newAlumniIndexMap);
         return newTableData;
     }
 
@@ -297,30 +297,15 @@ const Home = () => {
 
         if (newLIStatusReceived) {
             const messageJSON = newLIStatusReceived;
-            if (!messageJSON.wasSuccessful) {
+            if (messageJSON.error) {
                 showAlert(messageJSON.error.replaceAll("%t%", process.env.REACT_APP_CONTACT_PERSON), toast.error, false);
-                return;
             }
-            if ((messageJSON.liStatus == null && messageJSON.newData == null) || messageJSON.alumniId == null) {
-                return;
-            }
-            const alumniIndex = alumniIndexMap[messageJSON.alumniId];
-            if (alumniIndex == null) {
-                return;
-            }
-            const newTableData = [...tableData];
-            var newTableRow = null;
-            if (messageJSON.newData != null) {
-                newTableRow = messageJSON.newData;
-                newTableRow[0] = getProfileComponent(newTableRow[0]);
-            } else {
-                newTableRow = newTableData[alumniIndex];
-                newTableRow[newTableRow.length - 1] = messageJSON.liStatus;
-            }
-            newTableRow[newTableRow.length - 1] = getStatusComponent(newTableRow[newTableRow.length - 1]);
-            newTableData[alumniIndex] = newTableRow;
-            setTableData(newTableData);
-            requestNewFilters();
+            makeWebSocketRequest(webSocket, {
+                type: "data",
+                filters: filtersApplied,
+                search: searchText,
+                page: tableCurrentPage
+            });
             setNewLIStatusReceived(null);
         }
 
@@ -377,8 +362,6 @@ const Home = () => {
                 }
             } else if (messageType === "liData") {
                 setNewLIStatusReceived(messageJSON);
-            } else if (messageType === "filters") {
-                setFilters(messageJSON.filters);
             }
         };
 
@@ -394,9 +377,6 @@ const Home = () => {
 
     const onPageUpdate = () => {
         incrementRequestCount();
-        if (webSocket == null) {
-            return;
-        }
         makeWebSocketRequest(webSocket, {
             type: "data",
             filters: filtersApplied,
@@ -404,14 +384,6 @@ const Home = () => {
             page: tableCurrentPage
         });
     };
-
-    const requestNewFilters = () => {
-        makeWebSocketRequest(webSocket, {
-            type: "filters",
-            filters: filtersApplied,
-            search: searchText
-        });
-    }
 
     const startDataUpdate = () => {
         makeWebSocketRequest(webSocket, {
