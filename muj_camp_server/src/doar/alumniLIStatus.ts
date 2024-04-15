@@ -4,6 +4,7 @@ class AlumniLSStatus {
 
     static getAlumniLIStatus(alumni: any): object {
         return {
+            alumniId: alumni.alumniId,
             lastUpdated: alumni.liStatus.lastUpdated || "-",
             latestStatus: alumni.liStatus.latestStatus || "-",
             currentStatus: alumni.liStatus.currentStatus || ((alumni.linkedin === "") ? "-" : "nl")
@@ -14,7 +15,9 @@ class AlumniLSStatus {
         doarDbCollection.updateOne({
             alumniId: alumniId
         }, {
-            $set: alumniData
+            $set: {
+                liStatus: alumniData
+            }
         });
     }
 

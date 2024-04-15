@@ -107,8 +107,13 @@ class DoARDataManager {
     }
 
     private _returnProperLinkedInURLOrEmpty(publicProfilesString: string): string {
-        if (publicProfilesString != null && publicProfilesString != "" && publicProfilesString.startsWith("LinkedIn Profile Url:")) {
-            return publicProfilesString.replace("LinkedIn Profile Url:", "").trim();
+        if (publicProfilesString != null && publicProfilesString != "" && publicProfilesString.startsWith("LinkedIn Profile Url:") && !publicProfilesString.includes("/mwlite/") && !publicProfilesString.includes("/public-profile/")) {
+            var liUrl = publicProfilesString.replace("LinkedIn Profile Url:", "").trim();
+            if (!(liUrl.startsWith("https://") || liUrl.startsWith("http://"))) {
+                return `https://${liUrl}`;
+            } else {
+                return liUrl;
+            }
         } else {
             return "";
         }
@@ -640,6 +645,37 @@ class DoARDataManager {
         } else {
             return [];
         }
+    }
+
+    async getAlumniLIStatus(alumniId: string): Promise<any> {
+        const alumniLIData: Document | null = await this._doarDbCollection.findOne({
+            alumniId: alumniId
+        }, {
+            projection: {
+                liStatus: 1,
+                linkedin: 1
+            }
+        });
+        if (alumniLIData == null || alumniLIData.linkedin == null || alumniLIData.liStatus == null) {
+            return null;
+        }
+        const alumniLIDataFormatted = alumniLIData.liStatus;
+        alumniLIDataFormatted["linkedin"] = alumniLIData.linkedin;
+        return alumniLIDataFormatted;
+    }
+
+    async getAlumniIDFromLI(alumniLI: string): Promise<string> {
+        const alumniIdData: Document | null = await this._doarDbCollection.findOne({
+            linkedin: alumniLI
+        }, {
+            projection: {
+                alumniId: 1
+            }
+        });
+        if (alumniIdData == null || alumniIdData.alumniId == null) {
+            return "";
+        }
+        return alumniIdData.alumniId;
     }
 
     async updateAlumniLIData(alumniId: string, alumniData: any) {

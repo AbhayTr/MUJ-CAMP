@@ -23,7 +23,7 @@ import { Button, Modal, Spinner } from "react-bootstrap";
 
 import Widget from "./Widget.jsx";
 import LoadButton from "./LoadButton.jsx";
-import { moneyFormatIndia } from "../tools/UI.jsx";
+import { moneyFormatIndia, scrollHorizontallyTo } from "../tools/UI.jsx";
 
 const DataTable = (props) => {
 
@@ -166,6 +166,10 @@ const DataTable = (props) => {
     useEffect(() => {
 
         if (!tableLoading) {
+            try {
+                scrollHorizontallyTo(document.getElementById(`page${tableCurrentPage}`));
+            } catch (e) {}
+
             if (setTableHeight == null) {
                 return;
             }
@@ -696,6 +700,7 @@ const DataTable = (props) => {
                                                     </PaginationItem> */}
                                                     {[...Array(tablePages)].map((page, index) =>
                                                         <PaginationItem
+                                                            id={`page${index + 1}`}
                                                             active={tableCurrentPage === (index + 1)}
                                                             key={index + 1}
                                                         >

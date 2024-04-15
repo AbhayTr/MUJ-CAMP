@@ -114,7 +114,7 @@ const timestampToHumanTime = (timestamp) => {
     return formattedDate;
 };
 
-function moneyFormatIndia(num) {
+const moneyFormatIndia = (num) => {
     let explrestunits = "";
     if (num.length > 3) {
         let lastthree = num.substring(num.length - 3);
@@ -135,4 +135,18 @@ function moneyFormatIndia(num) {
     }
 }
 
-export { playSound, showAlert, confirmLogout, showCredits, timestampToHumanTime, moneyFormatIndia };
+const scrollHorizontallyTo = (element) => {
+    const elementRight = element.offsetLeft + element.offsetWidth;
+    const elementLeft = element.offsetLeft;
+
+    const elementParentRight = element.parentNode.offsetLeft + element.parentNode.offsetWidth;
+    const elementParentLeft = element.parentNode.offsetLeft;
+
+    if (elementRight > elementParentRight + element.parentNode.scrollLeft) {
+        element.parentNode.scrollLeft = elementRight - elementParentRight;
+    } else if (elementLeft < elementParentLeft + element.parentNode.scrollLeft) {
+        element.parentNode.scrollLeft = elementLeft - elementParentLeft;
+    }
+}
+
+export { playSound, showAlert, confirmLogout, showCredits, timestampToHumanTime, moneyFormatIndia, scrollHorizontallyTo };

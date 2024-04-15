@@ -48,18 +48,29 @@ const startWSServer = async (app: Application) => {
                             dataIsBeingFetched: dataIsBeingFetched
                         }));
                     } else if (jsonData.type === "data") {
-                        const page = jsonData.page;
-                        const searchText = jsonData.search.replace(/[^a-zA-Z0-9, -]/g, "");
-                        const appliedFilters = jsonData.filters;
-                        const homeData: any = await dataManager.getAlumniDataSet(searchText, page, appliedFilters);
-                        ws.send(JSON.stringify({
-                            type: "data",
-                            pages: homeData.pages,
-                            headers: homeData.headers,
-                            data: homeData.data,
-                            filters: await dataManager.getHomeFilters(appliedFilters, searchText),
-                            records: homeData.records
-                        }));
+                        try {
+                            const page = jsonData.page;
+                            const searchText = jsonData.search.replace(/[^a-zA-Z0-9, -]/g, "");
+                            const appliedFilters = jsonData.filters;
+                            const homeData: any = await dataManager.getAlumniDataSet(searchText, page, appliedFilters);
+                            ws.send(JSON.stringify({
+                                type: "data",
+                                pages: homeData.pages,
+                                headers: homeData.headers,
+                                data: homeData.data,
+                                filters: await dataManager.getHomeFilters(appliedFilters, searchText),
+                                records: homeData.records
+                            }));
+                        } catch (e) {
+                            ws.send(JSON.stringify({
+                                type: "data",
+                                pages: 0,
+                                headers: [],
+                                data: [],
+                                filters: {},
+                                records: 0
+                            }));
+                        }
                     } else if (jsonData.type === "dataUpdate") {
                         await synchronizeCode(alumniDataUpdateMutex, async () => {
                             if (dataIsBeingFetched) {
@@ -83,7 +94,10 @@ const startWSServer = async (app: Application) => {
                             }
                         });
                     } else if (jsonData.type === "fetchLIData") {
-                        atlisManager.fetchLIData(jsonData.linkedin);
+                        const alumniLIStatusData = await dataManager.getAlumniLIStatus(jsonData.alumniId);
+                        if (alumniLIStatusData !== null) {
+                            await atlisManager.fetchLIData(alumniLIStatusData, jsonData.alumniId, ws);
+                        }
                     }
                 } else {
                     ws.close()

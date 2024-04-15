@@ -31,6 +31,9 @@ const Home = () => {
 
     const [updateDataStatus, setUpdateDataStatus] = useState(null);
 
+    const [alumniIndexMap, setAlumniIndexMap] = useState({});
+    const [newLIStatusReceived, setNewLIStatusReceived] = useState(null);
+
     const decrementRequestCount = () => {
         setRequestCount((currentRequestCount) => {
             if (currentRequestCount <= 0) {
@@ -124,6 +127,9 @@ const Home = () => {
         setTableCurrentPage(1);
         setUpdateDataLoading(false);
         setUpdateDataStatus(null);
+        setTableData([]);
+        setTableHeaders([]);
+        setAlumniIndexMap({});
         setLiveConnected(liveConnected + 2);
     };
 
@@ -177,7 +183,7 @@ const Home = () => {
                                 }}
                                 alt="LinkedIn"
                                 onClick={() => {
-                                    window.open((tableDataStats["linkedin"].startsWith("https://") || tableDataStats["linkedin"].startsWith("http://")) ? tableDataStats["linkedin"] : `https://${tableDataStats["linkedin"]}`);
+                                    window.open(tableDataStats["linkedin"]);
                                 }}
                             />
                         </>
@@ -191,72 +197,79 @@ const Home = () => {
         return newTableData;
     }
 
+    const getStatusComponent = (tableDataStats) => {
+        return (
+            <div
+                style={{
+                    padding: "17px"
+                }}
+                sortvalue={(tableDataStats["lastUpdated"] !== "-") ? timestampToHumanTime(tableDataStats["lastUpdated"]) : "N.A."}
+            >
+                Last updated at:<br/>
+                <span style={{
+                    color: "#3fb950",
+                    fontSynthesis: "initial",
+                    fontWeight: "bold"
+                }}>
+                    {(tableDataStats["lastUpdated"] !== "-") ? timestampToHumanTime(tableDataStats["lastUpdated"]) : "N.A."}
+                </span>
+                <br/>
+                Last update status:<br/>
+                <span style={{
+                    color: (tableDataStats["latestStatus"] === "s") ? "#3fb950" : (((tableDataStats["latestStatus"] === "f")) ? "tomato" : "goldenrod"),
+                    fontSynthesis: "initial",
+                    fontWeight: "bold"
+                }}>
+                    {(tableDataStats["latestStatus"] === "s") ? "Successfully Synced" : ((tableDataStats["latestStatus"] === "f") ? "Sync Failed" : "Never Synced")}
+                </span>
+                <br/><br/>
+                Current status:<br/>
+                <span style={(tableDataStats["currentStatus"] !== "nl") ? ((tableDataStats["currentStatus"] === "l") ? {
+                    fontWeight: "bold",
+                    color: "goldenrod"
+                } : {
+                    fontWeight: "bold",
+                    color: "tomato"
+                }) : {}}>
+                    {(tableDataStats["currentStatus"] === "nl") ? (
+                        <Button onClick={() => {
+                            startLIDataUpdate(tableDataStats["alumniId"])
+                        }}>
+                            Sync
+                        </Button>
+                    ) : (((tableDataStats["currentStatus"] === "l")) ? (
+                            <>
+                                Syncing&nbsp;
+                                <Spinner
+                                    as="span"
+                                    animation="border"
+                                    size="sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                            </>
+                        ) : (
+                            <>
+                                LinkedIn ID not linked
+                            </>
+                        ) 
+                    )}
+                </span>
+            </div>
+        );
+    }
+
     const processTableDataStatus = (serverTableData) => {
         const newTableData = [];
-        for (let i = 0; i < serverTableData.length; i++) {
-            let newTableRow = [...serverTableData[i]];
-            let tableDataStats = newTableRow[newTableRow.length - 1];
-            newTableRow[newTableRow.length - 1] = (
-                <div
-                    style={{
-                        padding: "17px"
-                    }}
-                    sortvalue={(tableDataStats["lastUpdated"] !== "-") ? timestampToHumanTime(tableDataStats["lastUpdated"]) : "N.A."}
-                >
-                    Last updated at:<br/>
-                    <span style={{
-                        color: "#3fb950",
-                        fontSynthesis: "initial",
-                        fontWeight: "bold"
-                    }}>
-                        {(tableDataStats["lastUpdated"] !== "-") ? timestampToHumanTime(tableDataStats["lastUpdated"]) : "N.A."}
-                    </span>
-                    <br/>
-                    Last update status:<br/>
-                    <span style={{
-                        color: (tableDataStats["latestStatus"] === "s") ? "#3fb950" : (((tableDataStats["latestStatus"] === "f")) ? "tomato" : "goldenrod"),
-                        fontSynthesis: "initial",
-                        fontWeight: "bold"
-                    }}>
-                        {(tableDataStats["latestStatus"] === "s") ? "Successfully Synced" : ((tableDataStats["latestStatus"] === "f") ? "Sync Failed" : "Never Synced")}
-                    </span>
-                    <br/><br/>
-                    Current status:<br/>
-                    <span style={(tableDataStats["currentStatus"] !== "nl") ? ((tableDataStats["currentStatus"] === "l") ? {
-                        fontWeight: "bold",
-                        color: "goldenrod"
-                    } : {
-                        fontWeight: "bold",
-                        color: "tomato"
-                    }) : {}}>
-                        {(tableDataStats["currentStatus"] === "nl") ? (
-                            <Button onClick={() => {
-                                startLIDataUpdate(newTableRow[0]["linkedin"])
-                            }}>
-                                Sync
-                            </Button>
-                        ) : (((tableDataStats["currentStatus"] === "l")) ? (
-                                <>
-                                    Syncing&nbsp;
-                                    <Spinner
-                                        as="span"
-                                        animation="border"
-                                        size="sm"
-                                        role="status"
-                                        aria-hidden="true"
-                                    />
-                                </>
-                            ) : (
-                                <>
-                                    LinkedIn ID not linked
-                                </>
-                            ) 
-                        )}
-                    </span>
-                </div>
-            );
+        const newAlumniIndexMap = {};
+        for (var i = 0; i < serverTableData.length; i++) {
+            const newTableRow = [...serverTableData[i]];
+            const tableDataStats = newTableRow[newTableRow.length - 1];
+            newAlumniIndexMap[tableDataStats["alumniId"]] = i;
+            newTableRow[newTableRow.length - 1] = getStatusComponent(tableDataStats);
             newTableData.push(newTableRow);
         }
+        setAlumniIndexMap(newAlumniIndexMap);
         return newTableData;
     }
 
@@ -275,6 +288,32 @@ const Home = () => {
         setUpdateDataStatus(null);
 
     }, [updateDataStatus]);
+
+    useEffect(() => {
+
+        if (newLIStatusReceived) {
+            const messageJSON = newLIStatusReceived;
+            if (!messageJSON.wasSuccessful) {
+                showAlert(messageJSON.error.replaceAll("%t%", process.env.REACT_APP_CONTACT_PERSON), toast.error, false);
+                return;
+            }
+            if (messageJSON.liStatus == null || messageJSON.alumniId == null) {
+                return;
+            }
+            const alumniIndex = alumniIndexMap[messageJSON.alumniId];
+            if (alumniIndex == null) {
+                return;
+            }
+            const newTableData = [...tableData];
+            const newTableRow = newTableData[alumniIndex];
+            newTableRow[newTableRow.length - 1] = messageJSON.liStatus;
+            newTableRow[newTableRow.length - 1] = getStatusComponent(newTableRow[newTableRow.length - 1]);
+            newTableData[alumniIndex] = newTableRow;
+            setTableData(newTableData);
+            setNewLIStatusReceived(null);
+        }
+
+    }, [newLIStatusReceived])
 
     useEffect(() => {
 
@@ -325,6 +364,8 @@ const Home = () => {
                         document.getElementById("Search").value = "";
                     } catch (e) {}
                 }
+            } else if (messageType === "liData") {
+                setNewLIStatusReceived(messageJSON);
             }
         };
 
@@ -357,10 +398,10 @@ const Home = () => {
         });
     }
 
-    const startLIDataUpdate = (linkedin) => {
+    const startLIDataUpdate = (alumniId) => {
         makeWebSocketRequest(webSocket, {
             type: "fetchLIData",
-            linkedin: linkedin
+            alumniId: alumniId
         });
     }
 

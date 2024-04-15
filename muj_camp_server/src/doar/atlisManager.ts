@@ -85,17 +85,53 @@ class ATLISManager {
                 }
             }
 
-            this._atlisWS.onmessage = (messageEvent: MessageEvent) => {
+            this._atlisWS.onmessage = async (messageEvent: MessageEvent) => {
                 const data: object = JSON.parse(messageEvent.data.toString());
+                if (data == null) {
+                    return;
+                }
+                const alumniLI = Object.keys(data)[0];
+                const alumniId = await this._dataManager.getAlumniIDFromLI(alumniLI);
+                console.log("Alumni LinkedIn: " + alumniLI);
+                console.log("Alumni ID: " + alumniId);
+                console.log("Alumni Data: ");
                 console.log(data);
             }
 
         });
     }
 
-    fetchLIData(linkedin: string) {
+    async fetchLIData(alumniLIStatusData: any, alumniId: string, sourceWebSocketConnection: WebSocket) {
+        if (!this._connected()) {
+            try {
+                sourceWebSocketConnection.send(JSON.stringify({
+                    type: "liData",
+                    alumniId: alumniId,
+                    wasSuccessful: false,
+                    error: "ATLIS Engine is not connected. Please contact %t%"
+                }));
+            } catch (error) {}
+        }
         if (this._atlisWS != null) {
-            this._atlisWS.send(`${linkedin}[%ATLIS%]N`);
+            try {
+                this._atlisWS.send(`${alumniLIStatusData.linkedin}[%ATLIS%]N`);
+                delete alumniLIStatusData["linkedin"];
+                alumniLIStatusData["currentStatus"] = "l";
+                await this._dataManager.updateAlumniLIData(alumniId, alumniLIStatusData);
+                this._subscriberManager.pushData({
+                    type: "liData",
+                    wasSuccessful: true,
+                    alumniId: alumniId,
+                    liStatus: alumniLIStatusData
+                });
+            } catch (e) {
+                sourceWebSocketConnection.send(JSON.stringify({
+                    type: "liData",
+                    alumniId: alumniId,
+                    wasSuccessful: false,
+                    error: "Failed to connect to ATLIS Engine. Please try again after some time or contact %t%"
+                }));
+            }
         }
     }
 
