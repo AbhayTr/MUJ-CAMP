@@ -33,6 +33,8 @@ const Home = () => {
 
     const [newLIStatusReceived, setNewLIStatusReceived] = useState(null);
 
+    const [globalOpsAllowed, allowGlobalOps] = useState(true);
+
     const decrementRequestCount = () => {
         setRequestCount((currentRequestCount) => {
             if (currentRequestCount <= 0) {
@@ -200,6 +202,9 @@ const Home = () => {
     }
 
     const getStatusComponent = (tableDataStats) => {
+        if (tableDataStats["currentStatus"] === "l") {
+            allowGlobalOps(false);
+        }
         return (
             <div
                 style={{
@@ -267,6 +272,7 @@ const Home = () => {
     }
 
     const processTableDataStatus = (serverTableData) => {
+        allowGlobalOps(true);
         const newTableData = [];
         for (var i = 0; i < serverTableData.length; i++) {
             const newTableRow = [...serverTableData[i]];
@@ -502,7 +508,7 @@ const Home = () => {
                                     lbText="Update Alumni Data"
                                     type="success"
                                     lbId="updateData"
-                                    lbDisabled={tableLoading}
+                                    lbDisabled={tableLoading || updateDataLoading || !globalOpsAllowed}
                                     lbLoading={updateDataLoading}
                                     clickHandler={async () => {
                                         if (await confirm("Are you sure you want to update the Alumni Data? This will take 20 seconds to 5 minutes.", {
@@ -523,7 +529,7 @@ const Home = () => {
                                     lbText="Sync All Alumni Data"
                                     type="primary"
                                     lbId="syncData"
-                                    lbDisabled={tableLoading || updateDataLoading}
+                                    lbDisabled={tableLoading || updateDataLoading || !globalOpsAllowed}
                                     clickHandler={() => {
                                         showAlert("Coming Soon...", toast.info)
                                     }}

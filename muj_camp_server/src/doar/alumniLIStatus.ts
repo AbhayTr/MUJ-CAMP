@@ -12,7 +12,11 @@ class AlumniLSStatus {
     }
 
     static async updateAlumniLIStatus(alumniId: string, alumniData: any, doarDbCollection: CAMPCollection) {
-        const toCheck: any = {};
+        const toCheck: any = {
+            linkedin: {
+                $ne: ""
+            }
+        };
         if (alumniId !== "") {
             toCheck["alumniId"] = alumniId;
         }
