@@ -124,7 +124,11 @@ class CAMPAuthManager {
         })).project({
             roles: 1
         }).toArray();
-        return userRolesData[0]["roles" as keyof Document] as unknown as string[];
+        const userRoles: string[] = userRolesData[0]["roles" as keyof Document] as unknown as string[];
+        userRoles.sort((roleX: string, roleY: string) => {
+            return roleX.localeCompare(roleY);
+        });
+        return userRoles;
     }
 
     static async validateToken(req: Request, res: Response, app: Application) {
