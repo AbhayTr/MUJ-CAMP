@@ -62,9 +62,6 @@ const Home = () => {
                         </>
                     ) : (
                         <>
-                            {/* <h1 className="student-home-heading">
-                                Hey <span className="muj-camp-heading">{AuthStore.getState().authName}</span> 👋
-                            </h1> */}
                             <h1 className="student-home-heading">
                                 <TypeAnimation
                                     sequence={[
