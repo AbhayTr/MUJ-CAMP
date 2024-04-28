@@ -1,11 +1,11 @@
 import { WebSocket, Event, ErrorEvent, MessageEvent, CloseEvent } from "ws";
 import { Mutex } from "async-mutex";
+import { Document } from "mongodb";
 
 import SubscriberManager from "./subscriberManager";
 import DoARDataManager from "./dataManager";
 import AlmaShineManager from "./almashineManager";
-import { currentTime, sendMessageToWSClient, synchronizeCode } from "../utils/common";
-import { Document } from "mongodb";
+import { currentTime, sendMessageToWSClient, synchronizeCode, specialHash } from "../utils/common";
 
 class ATLISManager {
 
@@ -177,8 +177,8 @@ class ATLISManager {
         const currentDesignation = alumniLIData.designation;
         const otherWorkCompanies = alumniLIData.experience.map((work: any) => {
             const workData: any = {};
-            workData.company = work.company_name.replaceAll(",", " ");
-            workData.designation = work.designation.replaceAll(",", " ");
+            workData.company = work.company_name.replaceAll(",", " ").replaceAll("-", " ");
+            workData.designation = work.designation.replaceAll(",", " ").replaceAll("-", " ");
             workData.fromYear = (work.from === "N.A." || work.from === "") ? null : this._extractYear(work.from);
             workData.fromMonth = (work.from === "N.A." || work.from === "") ? null : this._extractMonth(work.from);
             workData.untilWhen = (work.to === "N.A." || work.to === "") ? "N.A." : work.to;
@@ -205,10 +205,10 @@ class ATLISManager {
 
         result.institutions = alumniLIData.education.map((education: any) => {
             const educationData: any = {};
-            educationData.institute = education.institution_name.replaceAll(",", " ");
-            educationData.degree = education.program.replaceAll(",", " ");
-            educationData.from = (education.from === "N.A." || education.from === "") ? null : education.from.replaceAll(",", " ");
-            educationData.to = (education.to === "N.A." || education.to === "") ? null : education.to.replaceAll(",", " ");
+            educationData.institute = education.institution_name.replaceAll(",", " ").replaceAll("-", " ");
+            educationData.degree = education.program.replaceAll(",", " ").replaceAll("-", " ");
+            educationData.from = (education.from === "N.A." || education.from === "") ? null : education.from.replaceAll(",", " ").replaceAll("-", " ");
+            educationData.to = (education.to === "N.A." || education.to === "") ? null : education.to.replaceAll(",", " ").replaceAll("-", " ");
             return educationData;
         });
 
@@ -235,13 +235,15 @@ class ATLISManager {
         };
         for (var i = 0; i < newAlumniLIData.companies.length; i++) {
             const company = newAlumniLIData.companies[i].company;
-            if (!this._valueInArray(existingAlumniData.companies, company)) {
+            const designation = newAlumniLIData.companies[i].designation;
+            if (!this._valueInArray(existingAlumniData.companies, specialHash(company, designation))) {
                 newAlumniData.companies.push(newAlumniLIData.companies[i]);
             }
         }
         for (var j = 0; j < newAlumniLIData.institutions.length; j++) {
             const institute = newAlumniLIData.institutions[j].institute;
-            if (!this._valueInArray(existingAlumniData.institutions, institute)) {
+            const degree = newAlumniLIData.institutions[j].degree;
+            if (!this._valueInArray(existingAlumniData.institutions, specialHash(institute, degree))) {
                 newAlumniData.institutions.push(newAlumniLIData.institutions[j]);
             }
         }

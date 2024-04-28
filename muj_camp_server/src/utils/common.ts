@@ -81,4 +81,8 @@ const sendMessageToWSClient = (wsClient: WebSocket, jsonMessage: object) => {
     }
 }
 
-export { sha256, getSessionID, currentTime, timestampToHumanTime, synchronizeCode, sendMessageToWSClient };
+const specialHash = (string1: string, string2: string): string => {
+    return (string1 + string2).replaceAll(" ", "");
+} 
+
+export { sha256, getSessionID, currentTime, timestampToHumanTime, synchronizeCode, sendMessageToWSClient, specialHash };

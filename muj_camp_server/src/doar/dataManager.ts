@@ -4,7 +4,7 @@ import { Document } from "mongodb";
 
 import { CAMPCollection, CAMPDB } from "../utils/campdb";
 import AlumniLSStatus from "./alumniLIStatus";
-import { currentTime } from "../utils/common";
+import { currentTime, specialHash } from "../utils/common";
 
 class DoARDataManager {
 
@@ -726,6 +726,27 @@ class DoARDataManager {
         return alumniList;
     }
 
+    private _generateWordCombinations(sentence1: string, sentence2: string, callback: Function) {
+        const words1 = sentence1.split(" ");
+        const words2 = sentence2.split(" ");
+    
+        for (let i = 0; i < words1.length; i++) {
+            const word1 = words1[i];
+            callback(word1, words2[0]);
+            for (let j = 1; j < words2.length; j++) {
+                callback(word1, words2.slice(0, j + 1).join(" "));
+            }
+        }
+    
+        for (let i = 0; i < words2.length; i++) {
+            const word2 = words2[i];
+            callback(words1[0], word2);
+            for (let j = 1; j < words1.length; j++) {
+                callback(words1.slice(0, j + 1).join(" "), word2);
+            }
+        }
+    }
+
     async getAlumniCompaniesAndInstitutions(alumniId: string): Promise<object> {
         const result: any = {};
         
@@ -733,16 +754,23 @@ class DoARDataManager {
             alumniId: alumniId
         })).project({
             company: 1,
+            designation: 1,
             "prev_work.company": 1,
-            "education.institution": 1
+            "prev_work.designation": 1,
+            "education.institution": 1,
+            "education.degree": 1
         }).toArray();
         
         const currentCompany = alumniData[0].company;
-        const otherWorkCompanies = alumniData[0].prev_work.map((work: any) => work.company);
-        const allCompanies = [currentCompany, ...otherWorkCompanies];
+        const currentDesignation = alumniData[0].designation;
+        const otherWorkCompanies = alumniData[0].prev_work.map((work: any) => specialHash(work.company, work.designation));
+        const allCompanies = [...otherWorkCompanies];
+        this._generateWordCombinations(currentCompany.replaceAll("\n", " "), currentDesignation.replaceAll("\n", " "), (newCompany: string, newDesignation: string) => {
+            allCompanies.push(specialHash(newCompany, newDesignation));
+        });
         result.companies = allCompanies;
 
-        result.institutions = alumniData[0].education.map((education: any) => education.institution);
+        result.institutions = alumniData[0].education.map((education: any) => specialHash(education.institution, education.degree));
 
         return result;
     }
