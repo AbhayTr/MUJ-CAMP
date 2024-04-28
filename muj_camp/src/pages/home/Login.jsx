@@ -171,7 +171,7 @@ let Login = ({
     }
 
     const isValidManipalEmail = (inputText) => {
-        if (inputText.length < 9) {
+        if (inputText.length < 4) {
             return false;
         }
         return (/^\S+@jaipur.manipal.edu/.test(inputText) || /^\S+@muj.manipal.edu/.test(inputText) || /^\w+\.\w+$/.test(inputText) || /^[a-zA-Z0-9]*$/.test(inputText));

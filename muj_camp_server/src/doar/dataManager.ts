@@ -155,6 +155,11 @@ class DoARDataManager {
             };
             await this._doarDbCollection.insertOne(alumniData);
         } else {
+            if (alumniData.linkedin !== "") {
+                await this.updateAlumniLIData(alumniId, {
+                    currentStatus: "nl"
+                });
+            }
             await this._doarDbCollection.updateOne(
                 {
                     alumniId: alumniId

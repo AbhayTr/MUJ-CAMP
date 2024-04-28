@@ -15,7 +15,7 @@ let dataManager: DoARDataManager;
 let dataIsBeingFetched = false;
 let atlisManager: ATLISManager;
 
-const alumniDataUpdateMutex: Mutex = new Mutex();
+const alumniOpsExclusivityMutex: Mutex = new Mutex();
 
 async function startAlmashinesSession() {
     await almashineManager.startSession();
@@ -72,32 +72,53 @@ const startWSServer = async (app: Application) => {
                             }));
                         }
                     } else if (jsonData.type === "dataUpdate") {
-                        await synchronizeCode(alumniDataUpdateMutex, async () => {
-                            if (dataIsBeingFetched) {
+                        await synchronizeCode(alumniOpsExclusivityMutex, async () => {
+                            if (!atlisManager.someSyncingIsGoingOn()) {
+                                if (dataIsBeingFetched) {
+                                    ws.send(JSON.stringify({
+                                        type: "dataUpdate",
+                                        dataIsBeingFetched: dataIsBeingFetched
+                                    }));
+                                } else {
+                                    dataIsBeingFetched = true;
+                                    subscriberManager.pushData({
+                                        type: "dataUpdate",
+                                        dataIsBeingFetched: dataIsBeingFetched
+                                    });
+                                    const fetchStatus = await almashineManager.getAlumniData();
+                                    dataIsBeingFetched = false;
+                                    subscriberManager.pushData({
+                                        type: "dataUpdate",
+                                        dataIsBeingFetched: dataIsBeingFetched,
+                                        status: fetchStatus
+                                    });
+                                }
+                            } else {
                                 ws.send(JSON.stringify({
                                     type: "dataUpdate",
-                                    dataIsBeingFetched: dataIsBeingFetched
+                                    dataIsBeingFetched: false,
+                                    status: false
                                 }));
-                            } else {
-                                dataIsBeingFetched = true;
-                                subscriberManager.pushData({
-                                    type: "dataUpdate",
-                                    dataIsBeingFetched: dataIsBeingFetched
-                                });
-                                const fetchStatus = await almashineManager.getAlumniData();
-                                dataIsBeingFetched = false;
-                                subscriberManager.pushData({
-                                    type: "dataUpdate",
-                                    dataIsBeingFetched: dataIsBeingFetched,
-                                    status: fetchStatus
-                                });
                             }
                         });
                     } else if (jsonData.type === "fetchLIData") {
-                        const alumniLI = await dataManager.getAlumniLI(jsonData.alumniId);
-                        if (alumniLI !== "") {
-                            await atlisManager.fetchLIData(alumniLI, jsonData.alumniId, ws);
-                        }
+                        await synchronizeCode(alumniOpsExclusivityMutex, async () => {
+                            if (!dataIsBeingFetched) {
+                                const alumniLI = await dataManager.getAlumniLI(jsonData.alumniId);
+                                if (alumniLI !== "") {
+                                    await atlisManager.fetchLIData(alumniLI, jsonData.alumniId, ws);
+                                }
+                            } else {
+                                ws.send(JSON.stringify({
+                                    type: "liData",
+                                    error: "Almashines Data Updation is in progress. Please wait for the data updation to complete and then try again."
+                                }));
+                            }
+                        });
+                    } else if (jsonData.type === "fetchAllData") {
+                        await synchronizeCode(alumniOpsExclusivityMutex, async () => {
+
+                        });
                     }
                 } else {
                     ws.close()

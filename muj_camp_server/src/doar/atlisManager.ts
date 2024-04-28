@@ -16,6 +16,8 @@ class ATLISManager {
     private _isConnected = false;
     private _connectedOnce = false;
 
+    private _pendingUpdates = 0;
+
     constructor(subscriberManager: SubscriberManager, dataManager: DoARDataManager, almashinesManager: AlmaShineManager) {
         this._subscriberManager = subscriberManager;
         this._dataManager = dataManager;
@@ -28,6 +30,10 @@ class ATLISManager {
 
     private _connected(): boolean {
         return this._isConnected;
+    }
+
+    someSyncingIsGoingOn(): boolean {
+        return (this._pendingUpdates !== 0);
     }
 
     async startSession(): Promise<void> {
@@ -51,6 +57,7 @@ class ATLISManager {
                         await this._dataManager.updateAlumniLIData("", {
                             currentStatus: "nl"
                         });
+                        this._pendingUpdates = 0;
                         this._subscriberManager.pushData({
                             type: "liData",
                             error: "ATLIS Engine connection failed or crashed. Please contact %t%"
@@ -83,6 +90,7 @@ class ATLISManager {
                     await this._dataManager.updateAlumniLIData("", {
                         currentStatus: "nl"
                     });
+                    this._pendingUpdates = 0;
                     this._subscriberManager.pushData({
                         type: "liData",
                         error: "ATLIS Engine connection closed. Please contact %t%"
@@ -101,6 +109,7 @@ class ATLISManager {
             }
 
             this._atlisWS.onmessage = async (messageEvent: MessageEvent) => {
+                this._pendingUpdates--;
                 const data: any = JSON.parse(messageEvent.data.toString());
                 if (data == null) {
                     return;
@@ -147,6 +156,7 @@ class ATLISManager {
                 this._subscriberManager.pushData({
                     type: "liData"
                 });
+                this._pendingUpdates++;
             } catch (e) {
                 sourceWebSocketConnection.send(JSON.stringify({
                     type: "liData",

@@ -33,8 +33,6 @@ const Home = () => {
 
     const [newLIStatusReceived, setNewLIStatusReceived] = useState(null);
 
-    const [globalOpsAllowed, allowGlobalOps] = useState(true);
-
     const decrementRequestCount = () => {
         setRequestCount((currentRequestCount) => {
             if (currentRequestCount <= 0) {
@@ -202,9 +200,6 @@ const Home = () => {
     }
 
     const getStatusComponent = (tableDataStats) => {
-        if (tableDataStats["currentStatus"] === "l") {
-            allowGlobalOps(false);
-        }
         return (
             <div
                 style={{
@@ -272,7 +267,6 @@ const Home = () => {
     }
 
     const processTableDataStatus = (serverTableData) => {
-        allowGlobalOps(true);
         const newTableData = [];
         for (var i = 0; i < serverTableData.length; i++) {
             const newTableRow = [...serverTableData[i]];
@@ -292,7 +286,7 @@ const Home = () => {
         if (updateDataStatus === true) {
             showAlert("Data updated from AlmaShine successfully!", toast.success, false);
         } else if (updateDataStatus === false) {
-            showAlert("Data update from AlmaShine failed. Please try again after some time", toast.error, false);
+            showAlert(`Data update from AlmaShine failed. Please ensure that no alumni's data is being synced currently and try again after some time. If the issue persits, kindly contact ${process.env.REACT_APP_CONTACT_PERSON}`, toast.error, false);
         }
         setUpdateDataLoading(false);
         setUpdateDataStatus(null);
@@ -508,7 +502,7 @@ const Home = () => {
                                     lbText="Update Alumni Data"
                                     type="success"
                                     lbId="updateData"
-                                    lbDisabled={tableLoading || updateDataLoading || !globalOpsAllowed}
+                                    lbDisabled={tableLoading || updateDataLoading}
                                     lbLoading={updateDataLoading}
                                     clickHandler={async () => {
                                         if (await confirm("Are you sure you want to update the Alumni Data? This will take 20 seconds to 5 minutes.", {
@@ -529,7 +523,7 @@ const Home = () => {
                                     lbText="Sync All Alumni Data"
                                     type="primary"
                                     lbId="syncData"
-                                    lbDisabled={tableLoading || updateDataLoading || !globalOpsAllowed}
+                                    lbDisabled={tableLoading || updateDataLoading}
                                     clickHandler={() => {
                                         showAlert("Coming Soon...", toast.info)
                                     }}
