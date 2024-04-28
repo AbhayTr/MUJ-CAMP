@@ -747,6 +747,54 @@ class DoARDataManager {
         return result;
     }
 
+    async addAlumniEducation(alumniId: string, educationDetails: any) {
+        const newEducation = {
+            institution: educationDetails.institute,
+            degree: educationDetails.degree,
+            from: educationDetails.from,
+            to: educationDetails.to
+        };
+        const result = await this._doarDbCollection.updateOne(
+            {
+                alumniId: alumniId
+            },
+            {
+                $push: {
+                    "education": newEducation
+                }
+            }
+        );
+        if (!(result.modifiedCount > 0)) {
+            console.error(`Alumni DB Data Update Error (Education) for:\n\nAlumni ID: ${alumniId}\nData: ${educationDetails}`);
+        }
+    }
+
+    async addAlumniWorkExperience(alumniId: string, workDetailsData: any) {
+        const workDetails = {
+            company: workDetailsData.company,
+            designation: workDetailsData.designation,
+            untilWhen: workDetailsData.untilWhen
+        }
+        const result = await this._doarDbCollection.updateOne(
+            {
+                alumniId: alumniId
+            },
+            (workDetails.untilWhen !== "c") ? {
+                $push: {
+                    "prev_work": workDetails
+                }
+            } : {
+                $set: {
+                    "company": workDetails.company,
+                    "designation": workDetails.designation
+                }
+            }
+        );
+        if (!(result.modifiedCount > 0)) {
+            console.error(`Alumni DB Data Update Error (Work Experience) for:\n\nAlumni ID: ${alumniId}\nData: ${workDetails}`);
+        }
+    }
+
 }
 
 export default DoARDataManager;

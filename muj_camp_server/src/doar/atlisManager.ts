@@ -179,22 +179,20 @@ class ATLISManager {
             const workData: any = {};
             workData.company = work.company_name.replaceAll(",", " ");
             workData.designation = work.designation;
-            workData.from = (work.from === "N.A." || work.from === "") ? "N.A." : work.from
             workData.fromYear = (work.from === "N.A." || work.from === "") ? null : this._extractYear(work.from);
             workData.fromMonth = (work.from === "N.A." || work.from === "") ? null : this._extractMonth(work.from);
-            workData.to = (work.to === "N.A." || work.to === "") ? "N.A." : work.to;
-            workData.toYear = (work.to === "N.A." || work.to === "") ? null : this._extractYear(work.to);
-            workData.toMonth = (work.to === "N.A." || work.to === "") ? null : this._extractMonth(work.to);
+            workData.untilWhen = (work.to === "N.A." || work.to === "") ? "N.A." : work.to;
+            workData.toYear = (work.to === "N.A." || work.to === "") ? null : (work.to === "Present" ? "c" : this._extractYear(work.to));
+            workData.toMonth = (work.to === "N.A." || work.to === "") ? null : (work.to === "Present" ? "c" : this._extractMonth(work.to));
             return workData;
         });
         const allCompanies = [
             {
                 company: currentCompany,
                 designation: currentDesignation,
-                from: "N.A.",
                 fromYear: null,
                 fromMonth: null,
-                to: "N.A.",
+                untilWhen: "c",
                 toYear: "c",
                 toMonth: "c"
             },
@@ -217,7 +215,7 @@ class ATLISManager {
     private _valueInArray(array: Array<string>, value: string): boolean {
         for (var i = 0; i < array.length; i++) {
             const valAtI = array[i];
-            if (valAtI.indexOf(value) !== 0) {
+            if (valAtI.indexOf(value) !== -1) {
                 return true;
             }
         }
@@ -227,6 +225,7 @@ class ATLISManager {
     private async _updateAlumniData(alumniId: string, alumniData: object) {
         const existingAlumniData: any = await this._dataManager.getAlumniCompaniesAndInstitutions(alumniId);
         const newAlumniLIData: any = this._getCompaniesandInstitutionsList(alumniData);
+        console.log(newAlumniLIData);
         const newAlumniData: any = {
             companies: [],
             institutions: []
@@ -243,7 +242,9 @@ class ATLISManager {
                 newAlumniData.institutions.push(newAlumniLIData.institutions[j]);
             }
         }
+        console.log(newAlumniData);
         await this._updateAlmashineData(alumniId, newAlumniData);
+        await this._updateDBData(alumniId, newAlumniData);
     }
 
     private async _updateAlmashineData(alumniId: string, newAlumniData: any) {
@@ -252,6 +253,15 @@ class ATLISManager {
         }
         for (var j = 0; j < newAlumniData.institutions.length; j++) {
             await this._almashinesManager.addAlumniEducation(alumniId, newAlumniData.institutions[j]);
+        }
+    }
+
+    private async _updateDBData(alumniId: string, newAlumniData: any) {
+        for (var i = 0; i < newAlumniData.companies.length; i++) {
+            await this._dataManager.addAlumniWorkExperience(alumniId, newAlumniData.companies[i])
+        }
+        for (var j = 0; j < newAlumniData.institutions.length; j++) {
+            await this._dataManager.addAlumniEducation(alumniId, newAlumniData.institutions[j]);
         }
     }
 
