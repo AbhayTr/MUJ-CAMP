@@ -24,14 +24,13 @@ const Home = () => {
     const navigate = useNavigate();
 
     const [liveConnected, setLiveConnected] = useState(-1);
-
     const [updateDataLoading, setUpdateDataLoading] = useState(false);
-
     const [requestCount, setRequestCount] = useState(0);
-
     const [updateDataStatus, setUpdateDataStatus] = useState(null);
-
     const [newLIStatusReceived, setNewLIStatusReceived] = useState(null);
+
+    const INIT_STATUS_TEXT = "Loading... (Possible that Alumni Data Updation is in progress, so please wait)";
+    const [dataUpdateTime, setDataUpdateTime] = useState(INIT_STATUS_TEXT);
 
     const decrementRequestCount = () => {
         setRequestCount((currentRequestCount) => {
@@ -237,8 +236,6 @@ const Home = () => {
                         <Button
                             id={`sync${tableDataStats["alumniId"]}`}
                             onClick={() => {
-                                document.getElementById(`sync${tableDataStats["alumniId"]}`).disabled = true;
-                                document.getElementById(`sync${tableDataStats["alumniId"]}`).innerText = "Starting Syncing Process...";
                                 startLIDataUpdate(tableDataStats["alumniId"])
                             }}
                         >
@@ -347,10 +344,12 @@ const Home = () => {
                     if (messageType === "initDataUpdate") {
                         decrementRequestCount();
                     }
+                    setDataUpdateTime("Data Updation in progress...");
                     setUpdateDataLoading(true);
                     showAlert("Alumni Data Updation in progress...", toast.info, false);
                 } else {
                     decrementRequestCount();
+                    setDataUpdateTime(timestampToHumanTime(messageJSON.updateTime));
                     setUpdateDataStatus(messageJSON.status);
                     setFiltersApplied({});
                     setFilters({});
@@ -362,6 +361,10 @@ const Home = () => {
                 }
             } else if (messageType === "liData") {
                 setNewLIStatusReceived(messageJSON);
+            } else if (messageType === "successMessage") {
+                if (messageJSON.message != null) {
+                    showAlert(messageJSON.message, toast.success, false);
+                }
             }
         };
 
@@ -487,48 +490,80 @@ const Home = () => {
                             Alumni List
                         </h2>
                         {(true) ? (
-                            <div style={{
-                                display: "flex",
-                                gap: "0.5em",
-                                marginTop: "0.5em",
-                                flexWrap: "wrap",
-                                marginLeft: "calc(-0.5rem + 17px)",
-                                marginBottom: "0.8em"
-                            }}>
-                                <LoadButton
-                                    style={{
-                                        width: "fit-content"
-                                    }}
-                                    lbText="Update Alumni Data"
-                                    type="success"
-                                    lbId="updateData"
-                                    lbDisabled={tableLoading || updateDataLoading}
-                                    lbLoading={updateDataLoading}
-                                    clickHandler={async () => {
-                                        if (await confirm("Are you sure you want to update the Alumni Data? This will take 20 seconds to 5 minutes.", {
-                                            title: "Update Alumni Data",
-                                            okText: "Yes 😎",
-                                            cancelText: "No will do later 😅",
-                                            okButtonStyle: "success",
-                                            cancelButtonStyle: "warning"
-                                        })) {
-                                            startDataUpdate();
-                                        }
-                                    }}
-                                />
-                                <LoadButton
-                                    style={{
-                                        width: "fit-content"
-                                    }}
-                                    lbText="Sync All Alumni Data"
-                                    type="primary"
-                                    lbId="syncData"
-                                    lbDisabled={tableLoading || updateDataLoading}
-                                    clickHandler={() => {
-                                        showAlert("Coming Soon...", toast.info)
-                                    }}
-                                />
-                            </div>
+                            <>
+                                <p style={{
+                                    wordWrap: "break-word",
+                                    marginTop: "0.8em",
+                                    marginLeft: "calc(-0.5rem + 17px)"
+                                }}>
+                                    Alumni Data Last Updated At:&nbsp;
+                                    <span style={{
+                                        whiteSpace: (dataUpdateTime !== INIT_STATUS_TEXT) ? "nowrap" : "initial",
+                                        fontWeight: "bold",
+                                        color: "#198754"
+                                    }}>
+                                        {dataUpdateTime}
+                                    </span>
+                                </p>
+                                <div style={{
+                                    display: "flex",
+                                    gap: "0.5em",
+                                    marginTop: "0.5em",
+                                    flexWrap: "wrap",
+                                    marginLeft: "calc(-0.5rem + 17px)",
+                                    marginBottom: "0.8em"
+                                }}>
+                                    <LoadButton
+                                        style={{
+                                            width: "fit-content"
+                                        }}
+                                        lbText="Update Alumni Data"
+                                        type="success"
+                                        lbId="updateData"
+                                        lbDisabled={tableLoading || updateDataLoading}
+                                        lbLoading={updateDataLoading}
+                                        clickHandler={async () => {
+                                            if (await confirm("Are you sure you want to update the Alumni Data? This will take 20 seconds to 5 minutes.", {
+                                                title: "Update Alumni Data",
+                                                okText: "Yes 😎",
+                                                cancelText: "No will do later 😅",
+                                                okButtonStyle: "success",
+                                                cancelButtonStyle: "warning"
+                                            })) {
+                                                startDataUpdate();
+                                            }
+                                        }}
+                                    />
+                                    <LoadButton
+                                        style={{
+                                            width: "fit-content"
+                                        }}
+                                        lbText="Sync All Alumni Data"
+                                        type="primary"
+                                        lbId="syncData"
+                                        lbDisabled={tableLoading || updateDataLoading}
+                                        clickHandler={() => {
+                                            makeWebSocketRequest(webSocket, {
+                                                type: "fetchAllData"
+                                            });
+                                        }}
+                                    />
+                                    <LoadButton
+                                        style={{
+                                            width: "fit-content"
+                                        }}
+                                        lbText="Stop Syncing All Alumni Data"
+                                        type="danger"
+                                        lbId="stopSyncData"
+                                        lbDisabled={tableLoading || updateDataLoading}
+                                        clickHandler={() => {
+                                            makeWebSocketRequest(webSocket, {
+                                                type: "stopFetchAllData"
+                                            });
+                                        }}
+                                    />
+                                </div>
+                            </>
                         ) : (<></>)}
                     </div>
                 </DataTable>

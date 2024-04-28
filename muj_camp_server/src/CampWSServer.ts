@@ -45,7 +45,8 @@ const startWSServer = async (app: Application) => {
                         subscriberManager.addSubscriber(ws);
                         ws.send(JSON.stringify({
                             type: "initDataUpdate",
-                            dataIsBeingFetched: dataIsBeingFetched
+                            dataIsBeingFetched: dataIsBeingFetched,
+                            updateTime: await dataManager.getAlumniDataLastUpdatedTime()
                         }));
                     } else if (jsonData.type === "data") {
                         try {
@@ -90,14 +91,16 @@ const startWSServer = async (app: Application) => {
                                     subscriberManager.pushData({
                                         type: "dataUpdate",
                                         dataIsBeingFetched: dataIsBeingFetched,
-                                        status: fetchStatus
+                                        status: fetchStatus,
+                                        updateTime: await dataManager.getAlumniDataLastUpdatedTime()
                                     });
                                 }
                             } else {
                                 ws.send(JSON.stringify({
                                     type: "dataUpdate",
                                     dataIsBeingFetched: false,
-                                    status: false
+                                    status: false,
+                                    updateTime: await dataManager.getAlumniDataLastUpdatedTime()
                                 }));
                             }
                         });
@@ -117,8 +120,37 @@ const startWSServer = async (app: Application) => {
                         });
                     } else if (jsonData.type === "fetchAllData") {
                         await synchronizeCode(alumniOpsExclusivityMutex, async () => {
-
+                            if (!dataIsBeingFetched) {
+                                if (!(await dataManager.currentAlumniDataIsEligibleForSyncing())) {
+                                    ws.send(JSON.stringify({
+                                        type: "liData",
+                                        error: `Alumni data is outdated i.e. the Alumni Data was updated more than 7 days ago. Please update the alumni data by clicking on the "Update Alumni Data" button, and then try again once the data has been updated. If the issue still persists, please contact %t%`
+                                    }));
+                                } else {
+                                    atlisManager.fetchAllLIData(ws);
+                                }
+                            } else {
+                                ws.send(JSON.stringify({
+                                    type: "liData",
+                                    error: "Almashines Data Updation is in progress. Please wait for the data updation to complete and then try again."
+                                }));
+                            }
                         });
+                    } else if (jsonData.type === "stopFetchAllData") {
+                        await synchronizeCode(alumniOpsExclusivityMutex, async () => {
+                            if (!dataIsBeingFetched) {
+                                await atlisManager.stopSyncingAll();
+                                subscriberManager.pushData({
+                                    type: "successMessage",
+                                    message: `Successfully stopped "Sync All Alumni Data" operation`
+                                });
+                            } else {
+                                ws.send(JSON.stringify({
+                                    type: "liData",
+                                    error: "Almashines Data Updation is in progress. Please wait for the data updation to complete and then try again."
+                                }));
+                            }
+                        })
                     }
                 } else {
                     ws.close()

@@ -688,6 +688,42 @@ class DoARDataManager {
         await AlumniLSStatus.updateAlumniLIStatus(alumniId, updateObject, this._doarDbCollection);
     }
 
+    async getAlumniDataLastUpdatedTime(): Promise<number> {
+        const almaShineDataDetails: Document[] = await (await this._doarCollection.find({
+            desc: "Alumni Data Details"
+        })).project({
+            dataUpdatedAt: 1
+        }).toArray();
+        if (almaShineDataDetails == null || almaShineDataDetails.length === 0) {
+            throw new Error("Almashine Data Update Time Data Corrupted.");
+        } else {
+            if (almaShineDataDetails[0] == null || almaShineDataDetails[0]["dataUpdatedAt"] == null) {
+                throw new Error("Almashine Data Update Time Data Corrupted.");
+            } else {
+                return almaShineDataDetails[0]["dataUpdatedAt"];
+            }
+        }
+    }
+
+    async currentAlumniDataIsEligibleForSyncing(): Promise<boolean> {
+        return ((currentTime() - await this.getAlumniDataLastUpdatedTime()) <= 604800);
+    }
+
+    async getAllAlumniIDsandLIs(): Promise<Document[]> {
+        const alumniList: Document[] = await (await this._doarDbCollection.find({
+            linkedin: {
+                $ne: ""
+            },
+            "liStatus.currentStatus": {
+                $ne: "l"
+            }
+        })).project({
+            linkedin: 1,
+            alumniId: 1
+        }).toArray();
+        return alumniList;
+    }
+
 }
 
 export default DoARDataManager;

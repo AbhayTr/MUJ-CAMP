@@ -24,7 +24,7 @@ class CookieManager {
         if (almaShineCookies == null || almaShineCookies.length === 0) {
             return;
         } else {
-            if (almaShineCookies[0] == null || almaShineCookies[0].length === 0 || almaShineCookies[0]["cookies"] == null || almaShineCookies[0]["csrf"] == null) {
+            if (almaShineCookies[0] == null || almaShineCookies[0]["cookies"] == null || almaShineCookies[0]["csrf"] == null) {
                 return;
             } else {
                 this._cookieData = almaShineCookies[0]["cookies"];

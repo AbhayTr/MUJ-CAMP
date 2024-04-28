@@ -1,9 +1,11 @@
 import { WebSocket, Event, ErrorEvent, MessageEvent, CloseEvent } from "ws";
+import { Mutex } from "async-mutex";
 
 import SubscriberManager from "./subscriberManager";
 import DoARDataManager from "./dataManager";
 import AlmaShineManager from "./almashineManager";
-import { currentTime } from "../utils/common";
+import { currentTime, synchronizeCode } from "../utils/common";
+import { Document } from "mongodb";
 
 class ATLISManager {
 
@@ -18,10 +20,15 @@ class ATLISManager {
 
     private _pendingUpdates = 0;
 
+    private _syncAllInProgress = false;
+    private _stopSyncAll = false;
+    private _syncAllMutex: Mutex;
+
     constructor(subscriberManager: SubscriberManager, dataManager: DoARDataManager, almashinesManager: AlmaShineManager) {
         this._subscriberManager = subscriberManager;
         this._dataManager = dataManager;
         this._almashinesManager = almashinesManager;
+        this._syncAllMutex = new Mutex();
     }
 
     private _setConnectionStatus(connectionStatus: boolean) {
@@ -54,6 +61,7 @@ class ATLISManager {
                 try {
                     if (this._connected()) {
                         console.error("Error ocurred during ATLIS Connection. Retrying to connect...");
+                        this._syncAllInProgress = false;
                         await this._dataManager.updateAlumniLIData("", {
                             currentStatus: "nl"
                         });
@@ -87,6 +95,7 @@ class ATLISManager {
                 }
                 try {
                     console.error("ATLIS Connection was closed. Retrying to connect...");
+                    this._syncAllInProgress = false;
                     await this._dataManager.updateAlumniLIData("", {
                         currentStatus: "nl"
                     });
@@ -110,7 +119,11 @@ class ATLISManager {
 
             this._atlisWS.onmessage = async (messageEvent: MessageEvent) => {
                 this._pendingUpdates--;
-                const data: any = JSON.parse(messageEvent.data.toString());
+                const messageString = messageEvent.data.toString();
+                if (messageString === "DM") {
+                    return;
+                }
+                const data: any = JSON.parse(messageString);
                 if (data == null) {
                     return;
                 }
@@ -137,6 +150,7 @@ class ATLISManager {
 
     async fetchLIData(alumniLI: string, alumniId: string, sourceWebSocketConnection: WebSocket) {
         if (!this._connected()) {
+            this._syncAllInProgress = false;
             try {
                 sourceWebSocketConnection.send(JSON.stringify({
                     type: "liData",
@@ -146,6 +160,12 @@ class ATLISManager {
             } finally {
                 return;
             }
+        }
+        if (!(await this._dataManager.currentAlumniDataIsEligibleForSyncing())) {
+            sourceWebSocketConnection.send(JSON.stringify({
+                type: "liData",
+                error: `Alumni data is outdated i.e. the Alumni Data was updated more than 7 days ago. Please update the alumni data by clicking on the "Update Alumni Data" button, and then try again once the data has been updated. If the issue still persists, please contact %t%`
+            }));
         }
         if (this._atlisWS != null) {
             try {
@@ -160,10 +180,76 @@ class ATLISManager {
             } catch (e) {
                 sourceWebSocketConnection.send(JSON.stringify({
                     type: "liData",
-                    error: "Failed to connect to ATLIS Engine. Please try again after some time or contact %t%"
+                    error: "Failed to connect to ATLIS Engine and process Alumni Data Update Request. Please try again after some time or contact %t%"
                 }));
             }
         }
+    }
+
+    async fetchAllLIData(sourceWebSocketConnection: WebSocket) {
+        if (!this._connected()) {
+            try {
+                sourceWebSocketConnection.send(JSON.stringify({
+                    type: "liData",
+                    error: "ATLIS Engine is not connected. Please contact %t%"
+                }));
+            } catch (error) {
+            } finally {
+                return;
+            }
+        }
+        if (!this._syncAllInProgress && !(await this._dataManager.currentAlumniDataIsEligibleForSyncing())) {
+            sourceWebSocketConnection.send(JSON.stringify({
+                type: "liData",
+                error: `Alumni data is outdated i.e. the Alumni Data was updated more than 7 days ago. Please update the alumni data by clicking on the "Update Alumni Data" button, and then try again once the data has been updated. If the issue still persists, please contact %t%`
+            }));
+        }
+        const alumniList: Document[] = await this._dataManager.getAllAlumniIDsandLIs();
+        if (alumniList == null || alumniList.length === 0) {
+            sourceWebSocketConnection.send(JSON.stringify({
+                type: "liData",
+                error: "Unable to fetch Alumni List. Please try again after some time or contact %t%"
+            }));
+        }
+        this._syncAllInProgress = true;
+        this._subscriberManager.pushData({
+            type: "successMessage",
+            message: `Successfully started "Sync All Alumni Data" operation`
+        });
+        for (var i = 0; i < alumniList.length; i++) {
+            await synchronizeCode(this._syncAllMutex, async () => {
+                if (!this._syncAllInProgress) {
+                    this._stopSyncAll = true;
+                } else {
+                    const alumniLI = alumniList[i]["linkedin"];
+                    const alumniId = alumniList[i]["alumniId"];
+                    if (alumniLI != null || alumniId != null) {
+                        await this.fetchLIData(alumniLI, alumniId, sourceWebSocketConnection);
+                    }
+                }
+            });
+            if (this._stopSyncAll) {
+                this._stopSyncAll = false;
+                break;
+            }
+        }
+    }
+
+    async stopSyncingAll() {
+        await synchronizeCode(this._syncAllMutex, async () => {
+            this._syncAllInProgress = false;
+            if (this._atlisWS != null) {
+                try {
+                    this._atlisWS.send(`stop`);
+                } catch (e) {}
+            }
+            await this._dataManager.updateAlumniLIData("", {
+                currentStatus: "nl"
+            });
+            this._subscriberManager.pushData({
+                type: "liData"
+            });
+        });
     }
 
 }
