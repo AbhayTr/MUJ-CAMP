@@ -178,12 +178,12 @@ class ATLISManager {
         const otherWorkCompanies = alumniLIData.experience.map((work: any) => {
             const workData: any = {};
             workData.company = work.company_name.replaceAll(",", " ");
-            workData.designation = work.designation;
+            workData.designation = work.designation.replaceAll(",", " ");
             workData.fromYear = (work.from === "N.A." || work.from === "") ? null : this._extractYear(work.from);
             workData.fromMonth = (work.from === "N.A." || work.from === "") ? null : this._extractMonth(work.from);
             workData.untilWhen = (work.to === "N.A." || work.to === "") ? "N.A." : work.to;
-            workData.toYear = (work.to === "N.A." || work.to === "") ? null : (work.to === "Present" ? "c" : this._extractYear(work.to));
-            workData.toMonth = (work.to === "N.A." || work.to === "") ? null : (work.to === "Present" ? "c" : this._extractMonth(work.to));
+            workData.toYear = (work.to === "N.A." || work.to === "") ? null : (work.to === "Present" ? null : this._extractYear(work.to));
+            workData.toMonth = (work.to === "N.A." || work.to === "") ? null : (work.to === "Present" ? null : this._extractMonth(work.to));
             return workData;
         });
         const allCompanies = [
@@ -198,14 +198,17 @@ class ATLISManager {
             },
             ...otherWorkCompanies
         ];
+        if (currentCompany === "N.E.") {
+            allCompanies.splice(0, 1);
+        }
         result.companies = allCompanies;
 
         result.institutions = alumniLIData.education.map((education: any) => {
             const educationData: any = {};
             educationData.institute = education.institution_name.replaceAll(",", " ");
-            educationData.degree = education.program;
-            educationData.from = (education.from === "N.A." || education.from === "") ? null : education.from;
-            educationData.to = (education.to === "N.A." || education.to === "") ? null : education.to;
+            educationData.degree = education.program.replaceAll(",", " ");
+            educationData.from = (education.from === "N.A." || education.from === "") ? null : education.from.replaceAll(",", " ");
+            educationData.to = (education.to === "N.A." || education.to === "") ? null : education.to.replaceAll(",", " ");
             return educationData;
         });
 
@@ -213,9 +216,10 @@ class ATLISManager {
     }
 
     private _valueInArray(array: Array<string>, value: string): boolean {
+        value = value.toLowerCase();
         for (var i = 0; i < array.length; i++) {
             const valAtI = array[i];
-            if (valAtI.indexOf(value) !== -1) {
+            if (valAtI.toLowerCase() === value) {
                 return true;
             }
         }
@@ -225,7 +229,6 @@ class ATLISManager {
     private async _updateAlumniData(alumniId: string, alumniData: object) {
         const existingAlumniData: any = await this._dataManager.getAlumniCompaniesAndInstitutions(alumniId);
         const newAlumniLIData: any = this._getCompaniesandInstitutionsList(alumniData);
-        console.log(newAlumniLIData);
         const newAlumniData: any = {
             companies: [],
             institutions: []
@@ -242,7 +245,6 @@ class ATLISManager {
                 newAlumniData.institutions.push(newAlumniLIData.institutions[j]);
             }
         }
-        console.log(newAlumniData);
         await this._updateAlmashineData(alumniId, newAlumniData);
         await this._updateDBData(alumniId, newAlumniData);
     }
