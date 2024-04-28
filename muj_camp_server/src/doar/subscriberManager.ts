@@ -1,5 +1,7 @@
 import { WebSocket } from "ws";
 
+import { sendMessageToWSClient } from "../utils/common";
+
 class SubscriberManager {
 
     private _subscribersList: Set<WebSocket>;
@@ -20,7 +22,7 @@ class SubscriberManager {
         for (const subscriber of this._subscribersList) {
             if (subscriber != null) {
                 try {
-                    subscriber.send(JSON.stringify(data));
+                    sendMessageToWSClient(subscriber, data);
                 } catch (e) {
                     subscriber.close();
                     this.removeSubscriber(subscriber);

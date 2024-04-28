@@ -695,10 +695,12 @@ class DoARDataManager {
             dataUpdatedAt: 1
         }).toArray();
         if (almaShineDataDetails == null || almaShineDataDetails.length === 0) {
-            throw new Error("Almashine Data Update Time Data Corrupted.");
+            console.error("Almashine Data Update Time Data Corrupted.");
+            return 0;
         } else {
             if (almaShineDataDetails[0] == null || almaShineDataDetails[0]["dataUpdatedAt"] == null) {
-                throw new Error("Almashine Data Update Time Data Corrupted.");
+                console.error("Almashine Data Update Time Data Corrupted.");
+                return 0;
             } else {
                 return almaShineDataDetails[0]["dataUpdatedAt"];
             }
@@ -722,6 +724,27 @@ class DoARDataManager {
             alumniId: 1
         }).toArray();
         return alumniList;
+    }
+
+    async getAlumniCompaniesAndInstitutions(alumniId: string): Promise<object> {
+        const result: any = {};
+        
+        const alumniData: Document[] = await (await this._doarDbCollection.find({
+            alumniId: alumniId
+        })).project({
+            company: 1,
+            "prev_work.company": 1,
+            "education.institution": 1
+        }).toArray();
+        
+        const currentCompany = alumniData[0].company;
+        const otherWorkCompanies = alumniData[0].prev_work.map((work: any) => work.company);
+        const allCompanies = [currentCompany, ...otherWorkCompanies];
+        result.companies = allCompanies;
+
+        result.institutions = alumniData[0].education.map((education: any) => education.institution);
+
+        return result;
     }
 
 }

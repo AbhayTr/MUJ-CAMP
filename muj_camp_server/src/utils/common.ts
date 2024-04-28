@@ -1,5 +1,6 @@
 import { Mutex } from "async-mutex";
 import { createHash } from "crypto";
+import { WebSocket } from "ws";
 
 const sha256 = (text: string) => {
     return String(createHash("sha256").update(text).digest("hex"));
@@ -70,4 +71,14 @@ const synchronizeCode = async (mutex: Mutex, callback: Function) => {
     });
 }
 
-export { sha256, getSessionID, currentTime, timestampToHumanTime, synchronizeCode };
+const sendMessageToWSClient = (wsClient: WebSocket, jsonMessage: object) => {
+    if (wsClient == null) {
+        return;
+    }
+    try {
+        wsClient.send(JSON.stringify(jsonMessage));
+    } catch (e) {
+    }
+}
+
+export { sha256, getSessionID, currentTime, timestampToHumanTime, synchronizeCode, sendMessageToWSClient };
