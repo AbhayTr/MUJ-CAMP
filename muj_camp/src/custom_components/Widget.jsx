@@ -17,14 +17,14 @@ const Widget = (props) => {
     return (
         <>
             <section
-                className={widgetStyles.widget}
+                className={`${widgetStyles.widget} ${className}`}
                 {...restProps}
             >
                 {title && (
                     <div className={classNames(headerClass, widgetStyles.title)}>
                         {title}
                     </div>)}
-                <div className={className}>
+                <div>
                     {children}
                 </div>
             </section>
