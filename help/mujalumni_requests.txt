@@ -18,6 +18,27 @@ fetch("https://mujalumni.in/api/education/save_education", {
     "method": "POST"
 });
 
+// Location
+fetch("https://mujalumni.in/api/profile/updateUserInfo", {
+    "headers": {
+        "csrf": "%CSRF%",
+        "cookie": "tz=%TZ%; lgdomain=%LGDOMAIN%; u_i=%UI%; c_i=%CI%; l_c=%LC%; r_v=%RV%; mul=%MUL%; ast_login_id=%ASTLOGINID%; encToken=%ENCTOKEN%; PHPSESSID=%PHPSESSID%"
+    },
+    "body": "{\"current_city_name\":\"Testing\",\"uid\":\"1553165\"}",
+    "method": "POST"
+});
+
+// THEN:
+
+fetch("https://mujalumni.in/api/profile/user_data_updated", {
+    "headers": {
+        "csrf": "%CSRF%",
+        "cookie": "tz=%TZ%; lgdomain=%LGDOMAIN%; u_i=%UI%; c_i=%CI%; l_c=%LC%; r_v=%RV%; mul=%MUL%; ast_login_id=%ASTLOGINID%; encToken=%ENCTOKEN%; PHPSESSID=%PHPSESSID%"
+    },
+    "body": "{\"uid\":\"1553165\",\"updated_by_uid\":3442655,\"updated_field\":{\"current_city\":0}}",
+    "method": "POST"
+});
+
 // Alumni List
 fetch("https://mujalumni.in/api/search/checkPasswordOnDownload", {
     "headers": {

@@ -251,6 +251,48 @@ class AlmaShineManager {
         });
     }
 
+    async updateAlumniLocation(alumniID: string, location: any): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            fetch("https://mujalumni.in/api/profile/updateUserInfo", {
+                "headers": {
+                    "cookie": this._cookieManager.getCookies(["tz", "lgdomain", "u_i", "c_i", "l_c", "r_v", "mul", "ast_login_id", "encToken", "PHPSESSID"])!,
+                    "csrf": this._cookieManager.getCSRFToken()
+                },
+                "body": `{\"current_city_name\":\"${location}\",\"uid\":\"${alumniID}\"}`,
+                "method": "POST"
+            }).then(response => {
+                response.json().then(async status => {
+                    if (!(await this._wasSuccessful(status))) {
+                        console.error("DoAR Almashines Alumni Location Update Failed. Status Response:\n\n" + JSON.stringify(status));
+                        resolve(false);
+                    } else {
+                        fetch("https://mujalumni.in/api/profile/user_data_updated", {
+                            "headers": {
+                                "cookie": this._cookieManager.getCookies(["tz", "lgdomain", "u_i", "c_i", "l_c", "r_v", "mul", "ast_login_id", "encToken", "PHPSESSID"])!,
+                                "csrf": this._cookieManager.getCSRFToken()
+                            },
+                            "body": `{\"uid\":\"${alumniID}\",\"updated_by_uid\":3442655,\"updated_field\":{\"current_city\":0}}`,
+                            "method": "POST"
+                        }).then(response => {
+                            if (!(response.status === 200)) {
+                                console.error("DoAR Almashines Alumni Location Update Confirmation Failed. Status Response:\n\n" + JSON.stringify(response));
+                                resolve(false);
+                            } else {
+                                resolve(true);
+                            }
+                        }).catch(error => {
+                            console.error("DoAR Almashines Location Update Error: " + error);
+                            resolve(false);
+                        });
+                    }
+                });
+            }).catch(error => {
+                console.error("DoAR Almashines Location Update Error: " + error);
+                resolve(false);
+            });
+        });
+    }
+
 }
 
 export default AlmaShineManager;

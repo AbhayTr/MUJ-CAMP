@@ -747,7 +747,7 @@ class DoARDataManager {
         }
     }
 
-    async getAlumniCompaniesAndInstitutions(alumniId: string): Promise<object> {
+    async getAlumniCompaniesInstitutionsAndLocation(alumniId: string): Promise<object> {
         const result: any = {};
         
         const alumniData: Document[] = await (await this._doarDbCollection.find({
@@ -758,7 +758,8 @@ class DoARDataManager {
             "prev_work.company": 1,
             "prev_work.designation": 1,
             "education.institution": 1,
-            "education.degree": 1
+            "education.degree": 1,
+            location: 1
         }).toArray();
         
         const currentCompany = alumniData[0].company;
@@ -771,6 +772,7 @@ class DoARDataManager {
         result.companies = allCompanies;
 
         result.institutions = alumniData[0].education.map((education: any) => specialHash(education.institution, education.degree));
+        result.location = alumniData[0].location;
 
         return result;
     }
@@ -820,6 +822,26 @@ class DoARDataManager {
         );
         if (!(result.modifiedCount > 0)) {
             console.error(`Alumni DB Data Update Error (Work Experience) for:\n\nAlumni ID: ${alumniId}\nData: ${workDetails}`);
+        }
+    }
+
+    async updateAlumniLocation(alumniId: string, location: string, country: string) {
+        const toUpdate: any = {
+            "location": location
+        };
+        if (country != null && country.replaceAll(" ", "") !== "" && country !== "N.A.") {
+            toUpdate["country"] = country;
+        }
+        const result = await this._doarDbCollection.updateOne(
+            {
+                alumniId: alumniId
+            },
+            {
+                $set: toUpdate
+            }
+        );
+        if (!(result.modifiedCount > 0)) {
+            console.error(`Alumni DB Data Update Error (Location) for:\n\nAlumni ID: ${alumniId}\nData: ${location}`);
         }
     }
 

@@ -226,8 +226,37 @@ class ATLISManager {
         return false;
     }
 
-    private async _updateAlumniData(alumniId: string, alumniData: object) {
-        const existingAlumniData: any = await this._dataManager.getAlumniCompaniesAndInstitutions(alumniId);
+    private _stringsInEachOther(string1: string, string2: string): boolean {
+        return (string1.indexOf(string2) === -1) || (string2.indexOf(string1) === -1);
+    };
+
+    private _isNewLocation(existingAlumniData: any, alumniData: any): boolean {
+        return (
+            alumniData.location != null && 
+            alumniData.location.replaceAll(" ", "") !== "" && 
+            alumniData.location != "N.A."
+        ) && (
+            existingAlumniData.location == null || 
+            existingAlumniData.location.replaceAll(" ", "") === "" || 
+            existingAlumniData.location === "N.A." || 
+            !this._stringsInEachOther(
+                existingAlumniData.location
+                .toLowerCase()
+                .replaceAll(",", "")
+                .replaceAll("-", "")
+                .replaceAll(" ", "")
+            ,
+                alumniData.location
+                .toLowerCase()
+                .replaceAll(",", "")
+                .replaceAll("-", "")
+                .replaceAll(" ", "")
+            )
+        );
+    }
+
+    private async _updateAlumniData(alumniId: string, alumniData: any) {
+        const existingAlumniData: any = await this._dataManager.getAlumniCompaniesInstitutionsAndLocation(alumniId);
         const newAlumniLIData: any = this._getCompaniesandInstitutionsList(alumniData);
         const newAlumniData: any = {
             companies: [],
@@ -249,6 +278,10 @@ class ATLISManager {
         }
         await this._updateAlmashineData(alumniId, newAlumniData);
         await this._updateDBData(alumniId, newAlumniData);
+        if (this._isNewLocation(existingAlumniData, alumniData)) {
+            await this._almashinesManager.updateAlumniLocation(alumniId, (alumniData.location || "N.A."));
+            await this._dataManager.updateAlumniLocation(alumniId, (alumniData.location || "N.A."), alumniData.country);
+        }
     }
 
     private async _updateAlmashineData(alumniId: string, newAlumniData: any) {
