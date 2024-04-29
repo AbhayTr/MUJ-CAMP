@@ -227,7 +227,7 @@ class ATLISManager {
     }
 
     private _stringsInEachOther(string1: string, string2: string): boolean {
-        return (string1.indexOf(string2) === -1) || (string2.indexOf(string1) === -1);
+        return (string1.indexOf(string2) !== -1) || (string2.indexOf(string1) !== -1);
     };
 
     private _isNewLocation(existingAlumniData: any, alumniData: any): boolean {

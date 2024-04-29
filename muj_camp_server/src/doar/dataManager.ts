@@ -54,8 +54,22 @@ class DoARDataManager {
         return parsedData;
     }
     
-    private _parseExperienceData(dataString: string) {
-        return this._parseExperienceDataWithTimeline(dataString).concat(this._parseExperienceDataWithoutTimeline(dataString));
+    private _parseExperienceData(dataString: string, currentCompany: string, currentDesignation: string) {
+        const otherCompanies = []
+        if (currentCompany.indexOf("\n") !== -1 && currentDesignation.indexOf("\n") !== -1) {
+            const companiesData = currentCompany.split("\n");
+            const designationData = currentDesignation.split("\n");
+            for (var i = 1; i < companiesData.length; i++) {
+                const companyName = companiesData[i];
+                const designation = designationData[i];
+                otherCompanies.push({
+                    designation: designation.trim(),
+                    company: companyName.trim(),
+                    untilWhen: "N.A."
+                });
+            }
+        }
+        return this._parseExperienceDataWithTimeline(dataString).concat(this._parseExperienceDataWithoutTimeline(dataString)).concat(otherCompanies);
     }
 
     private _parseEducationData(inputString: string): object[] {
@@ -128,9 +142,9 @@ class DoARDataManager {
             "degree": alumniCSVDataRow["Course/ Degree"].trim(),
             "school": alumniCSVDataRow["Division/Department"].trim(),
             "faculty": alumniCSVDataRow["Institute"].trim(),
-            "designation": alumniCSVDataRow["Current Designation"].trim(),
-            "company": alumniCSVDataRow["Current Company"].trim(),
-            "prev_work": this._parseExperienceData(alumniCSVDataRow["Other Work"]),
+            "designation": alumniCSVDataRow["Current Designation"].split("\n")[0].trim(),
+            "company": alumniCSVDataRow["Current Company"].split("\n")[0].trim(),
+            "prev_work": this._parseExperienceData(alumniCSVDataRow["Other Work"], alumniCSVDataRow["Current Company"].trim(), alumniCSVDataRow["Current Designation"].trim()),
             "education": this._parseEducationData(alumniCSVDataRow["Other Education"]),
             "phone": alumniCSVDataRow["Phone"].trim(),
             "email": alumniCSVDataRow["secondary_email"].trim(),
