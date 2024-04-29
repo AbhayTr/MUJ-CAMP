@@ -25,21 +25,8 @@ const BarGraph = ({
     const chartSetting = {
         height: dataset.length * 28,
     };
-
-    // dataset.map((data) => {
-    //     if (data.key.length > 5) {
-    //         data.key = data.key.substring(0, 4) + "...";
-    //     }
-    //     return data;
-    // });
     
     const valueFormatter = (value) => `${value} ${unit}`;
-    const keyFormatter = (key) => {
-        if (key.length > 10) {
-            return key.substring(0, 10) + "...";
-        }
-        return key;
-    }
 
     return (
         <Widget className="bar-graph-widget">
@@ -61,8 +48,7 @@ const BarGraph = ({
                     yAxis={[
                         {
                             scaleType: "band",
-                            dataKey: "key",
-                            valueFormatter: keyFormatter
+                            dataKey: "key"
                         }
                     ]}
                     series={

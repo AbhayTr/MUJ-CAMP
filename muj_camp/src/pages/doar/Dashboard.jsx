@@ -19,7 +19,7 @@ const Dashboard = () => {
     const dataset = [
         {
             data: 70,
-            key: 'IIT Madras',
+            key: 'IIT Madrasaaaaa',
         },
         {
             data: 42,
@@ -155,14 +155,18 @@ const Dashboard = () => {
         (loading) ? (
             <LoadSpinner />
         ) : (
-            <>
+            <div style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "1em"
+            }}>
                 <BarGraph
                     dataset={dataset}
                     title="Alumni in Top 100 Universities"
                     xLabel="No. of Alumni"
                     unit="Alumni"
                 />
-            </>
+            </div>
         )
     );
 }

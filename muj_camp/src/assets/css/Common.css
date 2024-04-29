@@ -179,7 +179,7 @@ abbr, blockquote, body, button, dd, dl, dt, fieldset, figure, form, h1, h2, h3, 
 }
 
 .bar-graph-widget {
-    width: auto !important;
+    width: 100% !important;
     max-width: 550px !important;
     height: fit-content !important;
 }
