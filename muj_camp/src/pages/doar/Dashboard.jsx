@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 
-import optionsIcon from "../../assets/images/optionsIcon.svg";
+import aiIcon from "../../assets/images/ai.png";
 import tableStyles from "../../assets/scss/Tables.module.scss";
 
 import { useEffect, useState } from "react";
@@ -12,6 +12,7 @@ import LoadSpinner from "../../custom_components/LoadSpinner";
 import BarGraph from "../../custom_components/BarGraph";
 import { AuthStore } from "../../app_state/auth/auth";
 import Widget from "../../custom_components/Widget";
+import LoadButton from "../../custom_components/LoadButton";
 
 const Dashboard = () => {
 
@@ -25,7 +26,7 @@ const Dashboard = () => {
     const dataset = [
         {
             data: 70,
-            key: 'IIT Madrasaaaaa',
+            key: 'IIT Madras',
         },
         {
             data: 42,
@@ -194,9 +195,11 @@ const Dashboard = () => {
                                         <label htmlFor="dashboard">
                                             <img
                                                 className="d-sm-block"
-                                                src={optionsIcon}
+                                                src={aiIcon}
                                                 alt="Filters"
                                                 style={{
+                                                    height: "30px",
+                                                    width: "auto",
                                                     marginLeft: "0px",
                                                     marginRight: "10px"
                                                 }}
@@ -214,6 +217,17 @@ const Dashboard = () => {
                                                 borderColor: "black"
                                             }}
                                             rows="3"
+                                        />
+                                        <LoadButton
+                                            style={{
+                                                width: "fit-content",
+                                                marginLeft: "10px"
+                                            }}
+                                            lbText="✨ Visualize Data"
+                                            type="success"
+                                            lbId={`dashboardVisualize`}
+                                            clickHandler={() => {
+                                            }}
                                         />
                                     </div>
                                 </Widget>

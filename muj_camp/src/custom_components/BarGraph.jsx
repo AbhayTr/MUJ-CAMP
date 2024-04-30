@@ -16,7 +16,7 @@ const BarGraph = ({
 
     useEffect(() => {
 
-        setInterval(() => {
+        const fixSVGS = setInterval(() => {
             const barGraphSVGS = document.getElementsByClassName("css-13aj3tc-MuiChartsSurface-root");
             if (barGraphSVGS != null && barGraphSVGS.length !== 0) {
                 for (var i = 0; i < barGraphSVGS.length; i++) {
@@ -24,6 +24,10 @@ const BarGraph = ({
                 }
             }
         }, 10);
+
+        return (() => {
+            clearInterval(fixSVGS);
+        });
 
     }, []);
 
