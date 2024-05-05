@@ -36,8 +36,10 @@ const truncateLabels = () => {
 const BarGraph = ({
     dataset,
     title,
+    total = 0,
     unit = "",
-    id = "bg"
+    id = "bg",
+    color = "#0d6efd"
 }) => {
 
     const chartSetting = {
@@ -58,6 +60,20 @@ const BarGraph = ({
             }}>
                 {title}
             </h4>
+            {(true) ? (
+                <h5 style={{
+                    textAlign: "center",
+                    paddingBottom: "10px",
+                    fontSynthesis: "initial",
+                    fontWeight: "bold",
+                    wordWrap: "break-word",
+                    color: "#198754"
+                }}>
+                    {total} {unit}
+                </h5>
+            ) : (
+                <></>
+            )}
             <div style={{
                 maxHeight: "30vh",
                 overflowY: "auto"
@@ -74,6 +90,7 @@ const BarGraph = ({
                         [
                             {
                                 dataKey: "data",
+                                color: color,
                                 valueFormatter
                             }
                         ]

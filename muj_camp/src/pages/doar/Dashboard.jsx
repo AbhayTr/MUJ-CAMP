@@ -261,6 +261,7 @@ const Dashboard = () => {
                         xLabel="No. of Alumni"
                         unit="Alumni"
                         id="1"
+                        total={20}
                     />
                     <BarGraph
                         dataset={dataset}
