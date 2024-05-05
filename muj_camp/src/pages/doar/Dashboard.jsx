@@ -9,7 +9,7 @@ import { Row, Col } from "reactstrap";
 
 import { ensureAdminAccess } from "../../tools/Auth";
 import LoadSpinner from "../../custom_components/LoadSpinner";
-import BarGraph from "../../custom_components/BarGraph";
+import { BarGraph, fixSVGS, truncateLabels } from "../../custom_components/BarGraph";
 import { AuthStore } from "../../app_state/auth/auth";
 import Widget from "../../custom_components/Widget";
 import LoadButton from "../../custom_components/LoadButton";
@@ -20,10 +20,25 @@ const Dashboard = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
+
         ensureAdminAccess("DOAR_DASHBOARD", setLoading, navigate);
+        
+        const fixSVGSInterval = setInterval(fixSVGS, 10);
+        truncateLabels();
+
+        return (() => {
+
+            clearInterval(fixSVGSInterval);
+
+        });
+    
     }, []);
 
     const dataset = [
+        {
+            data: 100,
+            key: 'Manipal University',
+        },
         {
             data: 70,
             key: 'IIT Madras',

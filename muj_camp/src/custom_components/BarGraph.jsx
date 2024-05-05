@@ -2,10 +2,36 @@ import optionsIcon from "../assets/images/optionsIcon.svg";
 import tableStyles from "../assets/scss/Tables.module.scss";
 
 import { BarChart } from "@mui/x-charts/BarChart";
-import { useEffect } from "react";
 
 import Widget from "./Widget";
 import LoadButton from "./LoadButton";
+
+const fixSVGS = () => {
+    const barGraphSVGS = document.getElementsByClassName("css-13aj3tc-MuiChartsSurface-root");
+    if (barGraphSVGS != null && barGraphSVGS.length !== 0) {
+        for (var i = 0; i < barGraphSVGS.length; i++) {
+            barGraphSVGS[i].viewBox.baseVal.x = -35;
+        }
+    }
+}
+
+const truncateLabels = () => {
+
+    const MAX_LENGTH = 10;
+    
+    const startLooking = setInterval(() => {
+        const labels = document.querySelectorAll(`text[dominant-baseline="central"]`);
+        if (labels.length > 0) {
+            for (var i = 0; i < labels.length; i++) {
+                if (labels[i].textContent.length > MAX_LENGTH) {
+                    labels[i].textContent = labels[i].textContent.substring(0, MAX_LENGTH) + "...";
+                }
+            }
+            clearInterval(startLooking);
+        }
+    }, 10);
+
+}
 
 const BarGraph = ({
     dataset,
@@ -13,23 +39,6 @@ const BarGraph = ({
     unit = "",
     id = "bg"
 }) => {
-
-    useEffect(() => {
-
-        const fixSVGS = setInterval(() => {
-            const barGraphSVGS = document.getElementsByClassName("css-13aj3tc-MuiChartsSurface-root");
-            if (barGraphSVGS != null && barGraphSVGS.length !== 0) {
-                for (var i = 0; i < barGraphSVGS.length; i++) {
-                    barGraphSVGS[i].viewBox.baseVal.x = -35;
-                }
-            }
-        }, 10);
-
-        return (() => {
-            clearInterval(fixSVGS);
-        });
-
-    }, []);
 
     const chartSetting = {
         height: dataset.length * 28,
@@ -136,4 +145,4 @@ const BarGraph = ({
 
 }
 
-export default BarGraph;
+export { BarGraph, fixSVGS, truncateLabels };
