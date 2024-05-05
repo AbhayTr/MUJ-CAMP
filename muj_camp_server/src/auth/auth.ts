@@ -5,6 +5,7 @@ import User from "./user";
 import CAMPOTP from "./otp";
 import * as Common from "../utils/common";
 import JWTManger from "./jwtmanager";
+import CAMPRequest from "../utils/CAMPRequest";
 
 class CAMPAuthManager {
 
@@ -35,7 +36,7 @@ class CAMPAuthManager {
         }
     }
 
-    static async handleSignIn(req: Request, res: Response, app: Application) {
+    static async handleSignIn(req: CAMPRequest, res: Response, app: Application) {
         let userRequest: any = req.body;
         let userSessionID: string = userRequest.sid;
         if (userSessionID != null && !this._validateSID(userSessionID)) {
@@ -87,7 +88,7 @@ class CAMPAuthManager {
         res.send(userResponse);
     }
 
-    static async validateSignIn(req: Request, res: Response, app: Application) {
+    static async validateSignIn(req: CAMPRequest, res: Response, app: Application) {
         let userRequest = req.body;
         let otp: string = userRequest.otp;
         let userResponse: object = {};
@@ -116,6 +117,34 @@ class CAMPAuthManager {
         res.send(userResponse);
     }
 
+    static async setUserDataIfAuthRequest(req: CAMPRequest, app: Application): Promise<void> {
+        let authEmail = this._getAuthEmailIfAuthRequest(req);
+        if (authEmail === "") {
+            return;
+        }
+        
+        let userCollection = app.locals.campdb.collection("users");
+
+        const userData: Document[] = await (await userCollection.find({
+            email: authEmail
+        })).toArray();
+        const user: object = userData[0];
+        req.user = new User(user);
+    }
+
+    private static _getAuthEmailIfAuthRequest(req: CAMPRequest): string {
+        if (req == null || req.headers == null || req.headers.authorization == null) {
+            return "";
+        }
+        let userToken: string = String(req.headers.authorization).replace("Bearer ", "");
+        const userData = JWTManger.validateTokenAndReturnUser(userToken);
+        if (typeof userData === "object") {
+            return userData.email || "";
+        } else {
+            return "";
+        }
+    }
+
     private static async _getRoles(authEmail: string, app: Application): Promise<string[]> {
         let userCollection = app.locals.campdb.collection("users");
 
@@ -131,7 +160,7 @@ class CAMPAuthManager {
         return userRoles;
     }
 
-    static async validateToken(req: Request, res: Response, app: Application) {
+    static async validateToken(req: CAMPRequest, res: Response, app: Application) {
         let userRequest = req.body;
         let userToken: string = String(req.headers.authorization).replace("Bearer ", "");
         let fetchRoles = userRequest.fetchRoles;

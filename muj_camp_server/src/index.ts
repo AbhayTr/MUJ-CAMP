@@ -9,12 +9,17 @@ import CAMPMailer from "./utils/mail";
 import { CAMPDB } from "./utils/campdb";
 import CAMPAuthManager from "./auth/auth";
 import startWSServer from "./CampWSServer";
+import CAMPRequest from "./utils/CAMPRequest";
 
 var app: Application = express();
 
-app.use((req: Request, res: Response, next: Function) => {
+app.use(async (req: CAMPRequest, res: Response, next: Function) => {
+    
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    
+    await CAMPAuthManager.setUserDataIfAuthRequest(req, app);
+
     next();
 });
 app.use(express.json());
@@ -32,16 +37,20 @@ app.get("/", function (req, res) {
     `);
 });
 
-app.post("/signin/login", async (req: Request, res: Response) => {
+app.post("/signin/login", async (req: CAMPRequest, res: Response) => {
     CAMPAuthManager.handleSignIn(req, res, app);
 });
 
-app.post("/signin/validate", (req: Request, res: Response) => {
+app.post("/signin/validate", (req: CAMPRequest, res: Response) => {
     CAMPAuthManager.validateSignIn(req, res, app);
 });
 
-app.post("/auth/validate", (req: Request, res: Response) => {
+app.post("/auth/validate", (req: CAMPRequest, res: Response) => {
     CAMPAuthManager.validateToken(req, res, app);
+});
+
+app.get("/doar/dashboard", (req: CAMPRequest, res: Response) => {
+    res.send(req.user?.data);
 });
 
 app.locals.campdb = new CAMPDB();

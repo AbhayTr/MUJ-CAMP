@@ -2,6 +2,12 @@ import { CAMPDB, CAMPCollection } from "../utils/campdb";
 
 class User {
 
+    data: object;
+
+    constructor(userData: object) {
+        this.data = userData;
+    }
+
     private static _isValidEmail(email: string): boolean {
         return (/^\S+@jaipur.manipal.edu/.test(email) || /^\S+@muj.manipal.edu/.test(email));
     }
