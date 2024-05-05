@@ -1,103 +1,48 @@
 import optionsIcon from "../assets/images/optionsIcon.svg";
 import tableStyles from "../assets/scss/Tables.module.scss";
 
-import { BarChart } from "@mui/x-charts/BarChart";
-
 import Widget from "./Widget";
 import LoadButton from "./LoadButton";
 import { moneyFormatIndia } from "../tools/UI";
 
-const fixSVGS = () => {
-    const barGraphSVGS = document.getElementsByClassName("css-13aj3tc-MuiChartsSurface-root");
-    if (barGraphSVGS != null && barGraphSVGS.length !== 0) {
-        for (var i = 0; i < barGraphSVGS.length; i++) {
-            barGraphSVGS[i].viewBox.baseVal.x = -35;
-        }
-    }
-}
-
-const truncateLabels = () => {
-
-    const MAX_LENGTH = 10;
-    
-    const startLooking = setInterval(() => {
-        const labels = document.querySelectorAll(`text[dominant-baseline="central"]`);
-        if (labels.length > 0) {
-            for (var i = 0; i < labels.length; i++) {
-                if (labels[i].textContent.length > MAX_LENGTH) {
-                    labels[i].textContent = labels[i].textContent.substring(0, MAX_LENGTH) + "...";
-                }
-            }
-            clearInterval(startLooking);
-        }
-    }, 10);
-
-}
-
-const BarGraph = ({
-    dataset,
+const StatBox = ({
+    data,
     title,
-    total = 0,
     unit = "",
-    id = "bg",
-    color = "#0d6efd"
+    id = "ds",
+    color = "#198754"
 }) => {
-
-    const chartSetting = {
-        height: dataset.length * 28,
-    };
-    
-    const valueFormatter = (value) => `${moneyFormatIndia(String(value))} ${unit}`;
 
     return (
         <Widget className="bar-graph-widget">
             <h4 style={{
                 textAlign: "center",
                 paddingTop: "20px",
+                paddingBottom: "10px",
                 fontSynthesis: "initial",
                 fontWeight: "bold",
                 wordWrap: "break-word"
             }}>
                 {title}
             </h4>
-            {(true) ? (
-                <h5 style={{
+            <div style={{
+                height: "30vh",
+                overflowY: "auto",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                textAlign: "center",
+            }}>
+                <h1 style={{
                     textAlign: "center",
-                    paddingBottom: "10px",
                     fontSynthesis: "initial",
                     fontWeight: "bold",
                     wordWrap: "break-word",
-                    color: "#198754"
+                    fontSize: "4em",
+                    color: color
                 }}>
-                    {total} {unit}
-                </h5>
-            ) : (
-                <></>
-            )}
-            <div style={{
-                maxHeight: "30vh",
-                overflowY: "auto"
-            }}>
-                <BarChart
-                    dataset={dataset}
-                    yAxis={[
-                        {
-                            scaleType: "band",
-                            dataKey: "key"
-                        }
-                    ]}
-                    series={
-                        [
-                            {
-                                dataKey: "data",
-                                color: color,
-                                valueFormatter
-                            }
-                        ]
-                    }
-                    layout="horizontal"
-                    {...chartSetting}
-                />
+                    {moneyFormatIndia(String(data))} {unit}
+                </h1>
             </div>
             <div
                 className={`${tableStyles.tableTitle} ${tableStyles.search}`}
@@ -150,7 +95,7 @@ const BarGraph = ({
                     style={{
                         width: "fit-content"
                     }}
-                    lbText="Delete Graph"
+                    lbText="Delete Statistic"
                     type="danger"
                     lbId={`${id}delete`}
                     clickHandler={() => {
@@ -162,4 +107,4 @@ const BarGraph = ({
 
 }
 
-export { BarGraph, fixSVGS, truncateLabels };
+export default StatBox;

@@ -13,6 +13,7 @@ import { BarGraph, fixSVGS, truncateLabels } from "../../custom_components/BarGr
 import { AuthStore } from "../../app_state/auth/auth";
 import Widget from "../../custom_components/Widget";
 import LoadButton from "../../custom_components/LoadButton";
+import StatBox from "../../custom_components/StatBox";
 
 const Dashboard = () => {
 
@@ -276,6 +277,11 @@ const Dashboard = () => {
                         xLabel="No. of Alumni"
                         unit="Alumni"
                         id="3"
+                    />
+                    <StatBox
+                        data={10000}
+                        unit="Alumni"
+                        title="No. of Alumni living in USA"
                     />
                 </div>
             </>
