@@ -20,20 +20,26 @@ class DOARDashboardManager {
     }
 
     private async _executeQuery(query: object): Promise<any> {
-        const result = await this._campdb.command(query);
-        if (
-            result == null || 
-            result["cursor"] == null || 
-            result["cursor"]["firstBatch"] == null || 
-            result["cursor"]["firstBatch"][0] == null || 
-            result["ok"] == null || 
-            result["ok"] !== 1
-        ) {
+        try {
+            const result = await this._campdb.command(query);
+            if (
+                result == null || 
+                result["cursor"] == null || 
+                result["cursor"]["firstBatch"] == null || 
+                result["cursor"]["firstBatch"][0] == null || 
+                result["ok"] == null || 
+                result["ok"] !== 1
+            ) {
+                return {
+                    "error": "np"
+                };
+            }
+            return result["cursor"]["firstBatch"][0];
+        } catch (e) {
             return {
                 "error": "np"
             };
         }
-        return result["cursor"]["firstBatch"][0];
     }
 
     private async _fetchListOfVisuals(): Promise<object> {

@@ -75,7 +75,7 @@ const BarGraph = ({
                     wordWrap: "break-word",
                     color: "#198754"
                 }}>
-                    {totalState} {unitState}
+                    {moneyFormatIndia(String(totalState))} {unitState}
                 </h5>
             ) : (
                 <></>

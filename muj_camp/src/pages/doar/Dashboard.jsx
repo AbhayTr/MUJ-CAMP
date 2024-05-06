@@ -62,7 +62,11 @@ const Dashboard = () => {
                 title="Loading Dashboard 📊"
             />
         ) : (
-            <>
+            <div style={{
+                display: (visuals.length === 0) ? "flex" : "initial",
+                flexDirection: (visuals.length === 0) ? "column" : "initial",
+                height: "100%"
+            }}>
                 <Row>
                     <Col>
                         <Row className="mb-4">
@@ -138,10 +142,15 @@ const Dashboard = () => {
                 <div style={{
                     display: "flex",
                     flexWrap: "wrap",
-                    gap: "1em"
+                    gap: "1em",
+                    justifyContent: (visuals.length === 0) ? "center" : "initial",
+                    alignItems: (visuals.length === 0) ? "center" : "initial",
+                    flex: (visuals.length === 0) ? "1 1 0" : "initial"
                 }}>
                     {(visuals.length === 0) ? (
-                        <></>
+                        <>
+                            Your visuals will appear here.
+                        </>
                     ) : (
                         visuals.map((visual, index) => {
                             if (visual.type === "graph") {
@@ -175,7 +184,7 @@ const Dashboard = () => {
                         })
                     )}
                 </div>
-            </>
+            </div>
         )
     );
 }
