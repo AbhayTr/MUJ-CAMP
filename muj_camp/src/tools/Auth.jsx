@@ -62,7 +62,36 @@ const validateSession = (onLoggedOut, onLoggedIn = null, fetchRoles = false, val
     });
 }
 
-const makeSessionRequest = (requestPath, requestPayload, onSuccess, onLoggedOut, onSystemDown = appDown, headers = {}) => {
+const makeSessionRequestGet = (requestPath, onSuccess, onLoggedOut, onSystemDown = appDown, headers = {}) => {
+    let authState = validateToken(onLoggedOut);
+    if (authState == null) {
+        return;
+    }
+    let requestHeaders = {
+        ...headers,
+        Authorization: `Bearer ${authState.authToken}`
+    }
+    axios.get(`${process.env.REACT_APP_BACKEND}${requestPath}`, {
+        headers: requestHeaders
+    })
+    .then((response) => {
+        onSuccess(response);
+    })
+    .catch((errorReason) => {
+        errorReason = String(errorReason);
+        if (errorReason.toLowerCase().includes("request aborted")) {
+            window.location.reload();
+        }
+        if (errorReason.response?.status === 403) {
+            AuthStore.dispatch(revokeSessionAccess());
+            onLoggedOut(true);
+        } else {
+            onSystemDown();
+        }
+    });
+}
+
+const makeSessionRequestPost = (requestPath, requestPayload, onSuccess, onLoggedOut, onSystemDown = appDown, headers = {}) => {
     let authState = validateToken(onLoggedOut);
     if (authState == null) {
         return;
@@ -127,4 +156,4 @@ const makeWebSocketRequest = (webSocket, data) => {
     }));
 }
 
-export { validateSession, makeSessionRequest, ensureAdminAccess, makeWebSocketRequest };
+export { validateSession, makeSessionRequestPost, makeSessionRequestGet, ensureAdminAccess, makeWebSocketRequest };

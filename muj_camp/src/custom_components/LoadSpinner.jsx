@@ -1,6 +1,8 @@
 import { Spinner } from "react-bootstrap";
 
-const LoadSpinner = () => (
+const LoadSpinner = ({
+    title = ""
+}) => (
     <>
         <div
             style={{
@@ -16,14 +18,42 @@ const LoadSpinner = () => (
                 justifyContent: "center"
             }}
         >
-            <Spinner
-                as="span"
-                animation="border"
-                size="sm"
-                role="status"
-                aria-hidden="true"
-                className="component-loader"
-            />
+            {(title === "") ? (
+                <Spinner
+                    as="span"
+                    animation="border"
+                    size="sm"
+                    role="status"
+                    aria-hidden="true"
+                    className="component-loader"
+                />
+            ) : (
+                <div style={{
+                    width: "80%",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "1em",
+                    flexDirection: "column"
+                }}>
+                    <span style={{
+                        textAlign: "center",
+                        fontSize: "2.1em",
+                        fontWeight: "bold"
+                    }}>
+                        {title}
+                    </span>
+                    <Spinner
+                        as="span"
+                        animation="border"
+                        size="sm"
+                        role="status"
+                        aria-hidden="true"
+                        className="component-loader"
+                    />
+                </div>
+            )}
         </div>
     </>
 );

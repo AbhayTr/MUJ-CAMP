@@ -2,6 +2,7 @@ import optionsIcon from "../assets/images/optionsIcon.svg";
 import tableStyles from "../assets/scss/Tables.module.scss";
 
 import { BarChart } from "@mui/x-charts/BarChart";
+import { useState } from "react";
 
 import Widget from "./Widget";
 import LoadButton from "./LoadButton";
@@ -43,11 +44,16 @@ const BarGraph = ({
     color = "#0d6efd"
 }) => {
 
+    const [datasetState, setDatasetState] = useState(dataset);
+    const [titleState, setTitleState] = useState(title);
+    const [totalState, setTotalState] = useState(total);
+    const [unitState, setUnitState] = useState(unit);
+
     const chartSetting = {
-        height: dataset.length * 28,
+        height: datasetState.length * 28,
     };
     
-    const valueFormatter = (value) => `${moneyFormatIndia(String(value))} ${unit}`;
+    const valueFormatter = (value) => `${moneyFormatIndia(String(value))} ${unitState}`;
 
     return (
         <Widget className="bar-graph-widget">
@@ -58,7 +64,7 @@ const BarGraph = ({
                 fontWeight: "bold",
                 wordWrap: "break-word"
             }}>
-                {title}
+                {titleState}
             </h4>
             {(true) ? (
                 <h5 style={{
@@ -69,7 +75,7 @@ const BarGraph = ({
                     wordWrap: "break-word",
                     color: "#198754"
                 }}>
-                    {total} {unit}
+                    {totalState} {unitState}
                 </h5>
             ) : (
                 <></>
@@ -79,7 +85,7 @@ const BarGraph = ({
                 overflowY: "auto"
             }}>
                 <BarChart
-                    dataset={dataset}
+                    dataset={datasetState}
                     yAxis={[
                         {
                             scaleType: "band",
