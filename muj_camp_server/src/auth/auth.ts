@@ -1,4 +1,4 @@
-import { Application, Request, Response } from "express";
+import { Application, Response } from "express";
 import { Document } from "mongodb";
 
 import User from "./user";
@@ -8,6 +8,12 @@ import JWTManger from "./jwtmanager";
 import CAMPRequest from "../utils/CAMPRequest";
 
 class CAMPAuthManager {
+
+    private static _ACCESS_MAP: any = {
+        "doar": [
+            "DoAR Admin"
+        ]
+    };
 
     private static _validateSID(sessionID: string): boolean {
         return (/^[a-z0-9]+$/i.test(sessionID));
@@ -196,6 +202,43 @@ class CAMPAuthManager {
             }
         } else {
             return false;
+        }
+    }
+
+    private static _getAdminMode(url: string) {
+        var regex = /^\/admin\/([^\/]+)\//;
+        var match = url.match(regex);
+        return match ? match[1] : null;
+    }
+    
+
+    static validateAccessToRequestedResource(req: CAMPRequest, res: Response) {
+        const requestedResourcePath = req.originalUrl;
+        const adminMode = this._getAdminMode(requestedResourcePath);
+        if (adminMode == null) {
+            return;
+        }
+        if (req.user == null) {
+            res.status(403);
+            return;
+        }
+        const allowedRoles = this._ACCESS_MAP[adminMode];
+        if (allowedRoles == null) {
+            res.status(403);
+            return;
+        }
+        const currentUserRoles = req.user.data.roles;
+        var isAuthorizedToAccess = false;
+        for (var i = 0; i < currentUserRoles.length; i++) {
+            const userRole = currentUserRoles[i];
+            if (allowedRoles.includes(userRole)) {
+                isAuthorizedToAccess = true;
+                break;
+            }
+        }
+        if (!isAuthorizedToAccess) {
+            res.status(403);
+            return;
         }
     }
 

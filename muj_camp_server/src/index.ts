@@ -19,6 +19,7 @@ app.use(async (req: CAMPRequest, res: Response, next: Function) => {
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
     
     await CAMPAuthManager.setUserDataIfAuthRequest(req, app);
+    CAMPAuthManager.validateAccessToRequestedResource(req, res);
 
     next();
 });
@@ -49,7 +50,7 @@ app.post("/auth/validate", (req: CAMPRequest, res: Response) => {
     CAMPAuthManager.validateToken(req, res, app);
 });
 
-app.get("/doar/dashboard", (req: CAMPRequest, res: Response) => {
+app.get("/admin/doar/dashboard", (req: CAMPRequest, res: Response) => {
     res.send(req.user?.data);
 });
 

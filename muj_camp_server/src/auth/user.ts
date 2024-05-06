@@ -2,9 +2,9 @@ import { CAMPDB, CAMPCollection } from "../utils/campdb";
 
 class User {
 
-    data: object;
+    data: any;
 
-    constructor(userData: object) {
+    constructor(userData: any) {
         this.data = userData;
     }
 
