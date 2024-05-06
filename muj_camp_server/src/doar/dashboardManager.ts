@@ -1,7 +1,9 @@
 import { Document } from "mongodb";
 import { Response } from "express";
+import { nanoid } from "nanoid";
 
 import { CAMPCollection, CAMPDB } from "../utils/campdb";
+import { currentTime } from "../utils/common";
 
 class DOARDashboardManager {
 
@@ -11,6 +13,10 @@ class DOARDashboardManager {
     constructor(campdb: CAMPDB) {
         this._campdb = campdb;
         this._doarDashboardCollection = this._campdb.collection("doar_dashboard");
+    }
+
+    private _generateNewID(): string {
+        return nanoid() + String(currentTime());
     }
 
     private async _executeQuery(query: object): Promise<any> {
@@ -33,7 +39,8 @@ class DOARDashboardManager {
     private async _fetchListOfVisuals(): Promise<object> {
         const listOfVisuals: Document[] = await (await this._doarDashboardCollection.find({
         })).project({
-            query: 1
+            query: 1,
+            visualId: 1
         }).toArray();
         if (listOfVisuals == null || listOfVisuals.length === 0) {
             return {
@@ -42,11 +49,12 @@ class DOARDashboardManager {
         } else {
             const newListOfVisuals = [];
             for (var i = 0; i < listOfVisuals.length; i++) {
-                if (listOfVisuals[i] == null || listOfVisuals[i].query == null) {
+                if (listOfVisuals[i] == null || listOfVisuals[i].query == null || listOfVisuals[i].visualId == null) {
                     continue;
                 }
                 const queryResult: any = await this._executeQuery(listOfVisuals[i].query);
                 if (!queryResult["error"]) {
+                    queryResult["visualId"] = listOfVisuals[i].visualId;
                     newListOfVisuals.push(queryResult);   
                 }
             }

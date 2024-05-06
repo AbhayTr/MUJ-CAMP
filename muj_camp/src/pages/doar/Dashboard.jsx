@@ -152,7 +152,7 @@ const Dashboard = () => {
                                         title={visual.title}
                                         total={visual.total}
                                         unit={visual.unit}
-                                        id={index}
+                                        id={visual.visualId}
                                         color={visual.color}
                                     />
                                 );
@@ -163,7 +163,7 @@ const Dashboard = () => {
                                         data={visual.data}
                                         title={visual.title}
                                         unit={visual.unit}
-                                        id={index}
+                                        id={visual.visualId}
                                         color={visual.color}
                                     />
                                 );
