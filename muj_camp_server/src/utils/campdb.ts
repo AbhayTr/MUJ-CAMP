@@ -1,4 +1,4 @@
-import { MongoClient, Db, Collection } from "mongodb";
+import { MongoClient, Db, Collection, Document, RunCommandOptions } from "mongodb";
 
 class CAMPDB {
 
@@ -21,6 +21,10 @@ class CAMPDB {
 
     collection(collectionName: string): CAMPCollection {
         return new CAMPCollection(this._mongoDb, collectionName);
+    }
+
+    async command(command: object, options?: RunCommandOptions | undefined): Promise<Document> {
+        return await this._mongoDb.command(command, options);
     }
 
     close() {

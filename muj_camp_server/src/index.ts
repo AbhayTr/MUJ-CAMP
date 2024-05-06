@@ -3,13 +3,14 @@ dotenv.config();
 
 import "./utils/init";
 
-import express, { Application, Request, Response } from "express";
+import express, { Application, Response } from "express";
 
 import CAMPMailer from "./utils/mail";
 import { CAMPDB } from "./utils/campdb";
 import CAMPAuthManager from "./auth/auth";
 import startWSServer from "./CampWSServer";
 import CAMPRequest from "./utils/CAMPRequest";
+import DOARDashboardManager from "./doar/dashboardManager";
 
 var app: Application = express();
 
@@ -19,9 +20,8 @@ app.use(async (req: CAMPRequest, res: Response, next: Function) => {
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
     
     await CAMPAuthManager.setUserDataIfAuthRequest(req, app);
-    CAMPAuthManager.validateAccessToRequestedResource(req, res);
+    CAMPAuthManager.validateAccessToRequestedResource(req, res, next);
 
-    next();
 });
 app.use(express.json());
 
@@ -51,19 +51,23 @@ app.post("/auth/validate", (req: CAMPRequest, res: Response) => {
 });
 
 app.get("/admin/doar/dashboard", (req: CAMPRequest, res: Response) => {
-    res.send(req.user?.data);
+    app.locals.doarDashboardManager.handleVisualsListRequest(res);
 });
 
 app.locals.campdb = new CAMPDB();
 app.locals.campdbDoar = new CAMPDB();
+app.locals.campdbDoarDashboard = new CAMPDB();
 app.locals.campMailer = new CAMPMailer();
 
 app.locals.campdb.connect().then(() => {
     app.locals.campdbDoar.connect().then(() => {
-        app.listen(process.env.PORT, async () => {
-            console.clear();
-            console.log(`\x1b[32mMUJ CAMP Server is live on:\n\nPort ${process.env.PORT} for HTTP Requests!\nPort ${process.env.WS_PORT} for WS Requests!\x1b[0m\n`);
-            await startWSServer(app);
+        app.locals.campdbDoarDashboard.connect().then(() => {
+            app.listen(process.env.PORT, async () => {
+                app.locals.doarDashboardManager = new DOARDashboardManager(app.locals.campdbDoarDashboard);
+                console.clear();
+                console.log(`\x1b[32mMUJ CAMP Server is live on:\n\nPort ${process.env.PORT} for HTTP Requests!\nPort ${process.env.WS_PORT} for WS Requests!\x1b[0m\n`);
+                await startWSServer(app);
+            });
         });
     });
 });

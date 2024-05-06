@@ -212,34 +212,36 @@ class CAMPAuthManager {
     }
     
 
-    static validateAccessToRequestedResource(req: CAMPRequest, res: Response) {
-        const requestedResourcePath = req.originalUrl;
-        const adminMode = this._getAdminMode(requestedResourcePath);
-        if (adminMode == null) {
-            return;
-        }
-        if (req.user == null) {
-            res.status(403);
-            return;
-        }
-        const allowedRoles = this._ACCESS_MAP[adminMode];
-        if (allowedRoles == null) {
-            res.status(403);
-            return;
-        }
-        const currentUserRoles = req.user.data.roles;
-        var isAuthorizedToAccess = false;
-        for (var i = 0; i < currentUserRoles.length; i++) {
-            const userRole = currentUserRoles[i];
-            if (allowedRoles.includes(userRole)) {
-                isAuthorizedToAccess = true;
-                break;
+    static validateAccessToRequestedResource(req: CAMPRequest, res: Response, next: Function) {
+        if (req.method !== "OPTIONS") {
+            const requestedResourcePath = req.originalUrl;
+            const adminMode = this._getAdminMode(requestedResourcePath);
+            if (adminMode != null) {
+                if (req.user == null) {
+                    res.status(403).send(null);
+                    return;
+                }
+                const allowedRoles = this._ACCESS_MAP[adminMode];
+                if (allowedRoles == null) {
+                    res.status(403).send(null);
+                    return;
+                }
+                const currentUserRoles = req.user.data.roles;
+                var isAuthorizedToAccess = false;
+                for (var i = 0; i < currentUserRoles.length; i++) {
+                    const userRole = currentUserRoles[i];
+                    if (allowedRoles.includes(userRole)) {
+                        isAuthorizedToAccess = true;
+                        break;
+                    }
+                }
+                if (!isAuthorizedToAccess) {
+                    res.status(403).send(null);
+                    return;
+                }
             }
         }
-        if (!isAuthorizedToAccess) {
-            res.status(403);
-            return;
-        }
+        next();
     }
 
 }
