@@ -24,6 +24,8 @@ const Dashboard = () => {
 
     const [visuals, setVisuals] = useState([]);
 
+    const [aiWorking, setAiWorking] = useState(false);
+
     const loadPage = () => {
         makeSessionRequestGet("/admin/doar/dashboard", (response) => {
             const visualsData = response.data;
@@ -130,7 +132,9 @@ const Dashboard = () => {
                                             lbText="✨ Visualize Data"
                                             type="success"
                                             lbId={`dashboardVisualize`}
+                                            lbLoading={aiWorking}
                                             clickHandler={() => {
+                                                setAiWorking(true);
                                             }}
                                         />
                                     </div>

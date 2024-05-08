@@ -4,6 +4,8 @@ import { nanoid } from "nanoid";
 
 import { CAMPCollection, CAMPDB } from "../utils/campdb";
 import { currentTime } from "../utils/common";
+import AIManager from "./aiManager";
+import CAMPRequest from "../utils/CAMPRequest";
 
 class DOARDashboardManager {
 
@@ -72,6 +74,38 @@ class DOARDashboardManager {
 
     async handleVisualsListRequest(res: Response) {
         res.send(await this._fetchListOfVisuals());
+    }
+
+    private async _storeNewVisual(newQuery: object, prompt: string): Promise<string> {
+        const newId = this._generateNewID();
+        await this._doarDashboardCollection.insertOne({
+            visualId: newId,
+            prompt: prompt,
+            query: newQuery
+        });
+        return newId;
+    }
+
+    async createNewVisual(req: CAMPRequest, res: Response) {
+        const promptBody = req.body;
+        const prompt = promptBody.prompt;
+        if (prompt == null || prompt === "") {
+            res.status(422).send(null);
+            return;
+        }
+        const newQuery: any = await AIManager.getQuery(prompt);
+        if (!newQuery.error) {
+            const newId = await this._storeNewVisual(newQuery, prompt);
+            const queryResult: any = await this._executeQuery(newQuery);
+            if (!queryResult["error"]) {
+                queryResult["visualId"] = newId;   
+            }
+            res.send(queryResult);
+        } else {
+            res.send({
+                "error": "np"
+            })
+        }
     }
 
 }

@@ -54,6 +54,10 @@ app.get("/admin/doar/dashboard", (req: CAMPRequest, res: Response) => {
     app.locals.doarDashboardManager.handleVisualsListRequest(res);
 });
 
+app.post("/admin/doar/new", (req: CAMPRequest, res: Response) => {
+    app.locals.doarDashboardManager.createNewVisual(req, res);
+});
+
 app.locals.campdb = new CAMPDB();
 app.locals.campdbDoar = new CAMPDB();
 app.locals.campdbDoarDashboard = new CAMPDB();
