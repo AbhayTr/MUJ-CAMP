@@ -142,6 +142,7 @@ const Dashboard = () => {
                                                 makeSessionRequestPost("/admin/doar/new", {
                                                     prompt: document.getElementById("dashboardPrompt").value
                                                 }, (response) => {
+                                                    setAiWorking(false);
                                                     const newVisualData = response.data;
                                                     if (newVisualData.error) {
                                                         showAlert("No visual can be created for your request. Try another description.", toast.error);
@@ -151,7 +152,6 @@ const Dashboard = () => {
                                                     newData.push(newVisualData);
                                                     setVisuals(newData);
                                                     truncateLabels();
-                                                    setAiWorking(false);
                                                     document.getElementById("dashboardPrompt").value = "";
                                                     showAlert("Visual created successfully ✅");
                                                 }, (sessionExisted) => {

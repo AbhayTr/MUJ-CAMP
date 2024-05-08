@@ -117,12 +117,12 @@ const StatBox = ({
                             visualId: id,
                             prompt: document.getElementById(id).value
                         }, (response) => {
+                            setUpdateStatus(false);
                             const newData = response.data;
                             if (!newData.error) {
                                 newData.visualId = id;
                                 updateFunction(newData);
                                 document.getElementById(id).value = "";
-                                setUpdateStatus(false);
                             } else {
                                 showAlert("No filtered visual can be created for your request. Try another description.", toast.error);
                             }
@@ -156,10 +156,10 @@ const StatBox = ({
                             makeSessionRequestPost("/admin/doar/delete", {
                                 visualId: id
                             }, (response) => {
+                                setDeleteStatus(false);
                                 const statusData = response.data;
                                 if (statusData.status === "s") {
                                     deleteFunction();
-                                    setDeleteStatus(false);
                                 } else {
                                     showAlert(`Something went wrong, please try again after some time or contact ${process.env.REACT_APP_CONTACT_PERSON}`, toast.error);
                                 }
