@@ -104,7 +104,65 @@ class DOARDashboardManager {
         } else {
             res.send({
                 "error": "np"
-            })
+            });
+        }
+    }
+
+    async deleteVisual(req: CAMPRequest, res: Response) {
+        const requestBody = req.body;
+        const visualId = requestBody.visualId;
+        if (visualId == null || visualId === "") {
+            res.status(422).send(null);
+            return;
+        }
+        const result = await this._doarDashboardCollection.deleteOne({
+            visualId: visualId
+        });
+        if (result.deletedCount > 0) {
+            res.send({
+                "status": "s"
+            });
+        } else {
+            res.send({
+                "status": "f"
+            });
+        }
+    }
+
+    private async _getPrevPrompt(visualId: string): Promise<string> {
+        const promptData: Document[] = await (await this._doarDashboardCollection.find({
+            visualId: visualId
+        })).project({
+            prompt: 1
+        }).toArray();
+        if (promptData == null || promptData.length === 0 || promptData[0] == null || promptData[0].prompt == null) {
+            return "";
+        } else {
+            return promptData[0].prompt;
+        }
+    }
+
+    async updateVisual(req: CAMPRequest, res: Response) {
+        const requestBody = req.body;
+        const prompt = requestBody.prompt;
+        const visualId = requestBody.visualId;
+        if (prompt == null || prompt === "" || visualId == null || visualId === "") {
+            res.status(422).send(null);
+            return;
+        }
+        const prevPrompt = await this._getPrevPrompt(visualId);
+        if (prevPrompt === "") {
+            res.status(500).send(null);
+            return;
+        }
+        const newQuery: any = await AIManager.getQuery(prompt, prevPrompt);
+        if (!newQuery.error) {
+            const queryResult: any = await this._executeQuery(newQuery);
+            res.send(queryResult);
+        } else {
+            res.send({
+                "error": "np"
+            });
         }
     }
 

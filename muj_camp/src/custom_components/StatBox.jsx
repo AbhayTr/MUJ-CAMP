@@ -1,17 +1,35 @@
 import optionsIcon from "../assets/images/optionsIcon.svg";
 import tableStyles from "../assets/scss/Tables.module.scss";
 
+import { useNavigate } from "react-router-dom";
+import { confirm } from "react-bootstrap-confirmation";
+import { useState } from "react";
+import { toast } from "react-toastify";
+
 import Widget from "./Widget";
 import LoadButton from "./LoadButton";
-import { moneyFormatIndia } from "../tools/UI";
+import { moneyFormatIndia, showAlert } from "../tools/UI";
+import { AuthStore } from "../app_state/auth/auth";
+import { makeSessionRequestPost } from "../tools/Auth";
 
 const StatBox = ({
     data,
     title,
+    deleteFunction,
+    updateFunction,
     unit = "",
     id = "ds",
     color = "#198754"
 }) => {
+
+    const [dataState] = useState(data);
+    const [titleState] = useState(title);
+    const [unitState] = useState(unit);
+
+    const [deleteStatus, setDeleteStatus] = useState(false);
+    const [updateStatus, setUpdateStatus] = useState(false);
+
+    const navigate = useNavigate();
 
     return (
         <Widget className="bar-graph-widget">
@@ -23,7 +41,7 @@ const StatBox = ({
                 fontWeight: "bold",
                 wordWrap: "break-word"
             }}>
-                {title}
+                {titleState}
             </h4>
             <div style={{
                 height: "30vh",
@@ -41,7 +59,7 @@ const StatBox = ({
                     fontSize: "4em",
                     color: color
                 }}>
-                    {moneyFormatIndia(String(data))} {unit}
+                    {moneyFormatIndia(String(dataState))} {unitState}
                 </h1>
             </div>
             <div
@@ -88,7 +106,34 @@ const StatBox = ({
                     lbText="Apply Filters"
                     type="primary"
                     lbId={`${id}apply`}
+                    lbLoading={updateStatus}
                     clickHandler={() => {
+                        if (document.getElementById(id).value.replaceAll(" ", "") === "") {
+                            showAlert("Enter your description of what filter you want to see first 😡", toast.error);
+                            return;
+                        }
+                        setUpdateStatus(true);
+                        makeSessionRequestPost("/admin/doar/update", {
+                            visualId: id,
+                            prompt: document.getElementById(id).value
+                        }, (response) => {
+                            const newData = response.data;
+                            if (!newData.error) {
+                                newData.visualId = id;
+                                updateFunction(newData);
+                                document.getElementById(id).value = "";
+                                setUpdateStatus(false);
+                            } else {
+                                showAlert("No filtered visual can be created for your request. Try another description.", toast.error);
+                            }
+                        }, (sessionExisted) => {
+                            if (sessionExisted) {
+                                showAlert("Session expired! Please login again.", toast.error, false);
+                            } else {
+                                showAlert("Please sign-in to continue.", toast.info, false);
+                            }
+                            navigate("/");
+                        });
                     }}
                 />
                 <LoadButton
@@ -98,7 +143,35 @@ const StatBox = ({
                     lbText="Delete Statistic"
                     type="danger"
                     lbId={`${id}delete`}
-                    clickHandler={() => {
+                    lbLoading={deleteStatus}
+                    clickHandler={async () => {
+                        if (await confirm(`Are you sure you want to delete this visual, ${AuthStore.getState().authName} 🤨. The AI did pretty hard work to create it 😥...`, {
+                            title: "Are you sure?",
+                            okText: "Yes 😎",
+                            cancelText: "No pressed by mistake 😅",
+                            okButtonStyle: "danger",
+                            cancelButtonStyle: "warning"
+                        })) {
+                            setDeleteStatus(true);
+                            makeSessionRequestPost("/admin/doar/delete", {
+                                visualId: id
+                            }, (response) => {
+                                const statusData = response.data;
+                                if (statusData.status === "s") {
+                                    deleteFunction();
+                                    setDeleteStatus(false);
+                                } else {
+                                    showAlert(`Something went wrong, please try again after some time or contact ${process.env.REACT_APP_CONTACT_PERSON}`, toast.error);
+                                }
+                            }, (sessionExisted) => {
+                                if (sessionExisted) {
+                                    showAlert("Session expired! Please login again.", toast.error, false);
+                                } else {
+                                    showAlert("Please sign-in to continue.", toast.info, false);
+                                }
+                                navigate("/");
+                            });
+                        }
                     }}
                 />
             </div>

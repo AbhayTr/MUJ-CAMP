@@ -58,6 +58,14 @@ app.post("/admin/doar/new", (req: CAMPRequest, res: Response) => {
     app.locals.doarDashboardManager.createNewVisual(req, res);
 });
 
+app.post("/admin/doar/delete", (req: CAMPRequest, res: Response) => {
+    app.locals.doarDashboardManager.deleteVisual(req, res);
+});
+
+app.post("/admin/doar/update", (req: CAMPRequest, res: Response) => {
+    app.locals.doarDashboardManager.updateVisual(req, res);
+});
+
 app.locals.campdb = new CAMPDB();
 app.locals.campdbDoar = new CAMPDB();
 app.locals.campdbDoarDashboard = new CAMPDB();

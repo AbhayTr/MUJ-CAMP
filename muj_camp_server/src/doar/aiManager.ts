@@ -1,8 +1,8 @@
 class AIManager {
 
-    static async getQuery(prompt: string): Promise<object> {
-        return new Promise((resolve, reject) => {
-            const PROMPT = ``;
+    static async getQuery(prompt: string, prevPrompt?: string): Promise<object> {
+        const PROMPT = ``;
+        return new Promise((resolve) => {
             resolve({
                 "aggregate": "doar_db",
                 "cursor": {},

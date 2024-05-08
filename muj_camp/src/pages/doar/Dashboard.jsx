@@ -8,7 +8,7 @@ import { useNavigate } from "react-router";
 import { Row, Col } from "reactstrap";
 import { toast } from "react-toastify";
 
-import { ensureAdminAccess, makeSessionRequestGet } from "../../tools/Auth";
+import { ensureAdminAccess, makeSessionRequestGet, makeSessionRequestPost } from "../../tools/Auth";
 import LoadSpinner from "../../custom_components/LoadSpinner";
 import { BarGraph, fixSVGS, truncateLabels } from "../../custom_components/BarGraph";
 import { AuthStore } from "../../app_state/auth/auth";
@@ -134,7 +134,34 @@ const Dashboard = () => {
                                             lbId={`dashboardVisualize`}
                                             lbLoading={aiWorking}
                                             clickHandler={() => {
+                                                if (document.getElementById("dashboardPrompt").value.replaceAll(" ", "") === "") {
+                                                    showAlert("Enter your description of what you want to see first 😡", toast.error);
+                                                    return;
+                                                }
                                                 setAiWorking(true);
+                                                makeSessionRequestPost("/admin/doar/new", {
+                                                    prompt: document.getElementById("dashboardPrompt").value
+                                                }, (response) => {
+                                                    const newVisualData = response.data;
+                                                    if (newVisualData.error) {
+                                                        showAlert("No visual can be created for your request. Try another description.", toast.error);
+                                                        return;
+                                                    }
+                                                    const newData = [...visuals];
+                                                    newData.push(newVisualData);
+                                                    setVisuals(newData);
+                                                    truncateLabels();
+                                                    setAiWorking(false);
+                                                    document.getElementById("dashboardPrompt").value = "";
+                                                    showAlert("Visual created successfully ✅");
+                                                }, (sessionExisted) => {
+                                                    if (sessionExisted) {
+                                                        showAlert("Session expired! Please login again.", toast.error, false);
+                                                    } else {
+                                                        showAlert("Please sign-in to continue.", toast.info, false);
+                                                    }
+                                                    navigate("/");
+                                                });
                                             }}
                                         />
                                     </div>
@@ -167,6 +194,18 @@ const Dashboard = () => {
                                         unit={visual.unit}
                                         id={visual.visualId}
                                         color={visual.color}
+                                        deleteFunction={() => {
+                                            const newData = [...visuals];
+                                            newData.splice(index, 1);
+                                            setVisuals(newData);
+                                            showAlert("Visual deleted successfully ✅");
+                                        }}
+                                        updateFunction={(updatedData) => {
+                                            const newData = [...visuals];
+                                            newData[index] = updatedData;
+                                            setVisuals(newData);
+                                            showAlert("Visual Filter applied successfully ✅");
+                                        }}
                                     />
                                 );
                             } else if (visual.type === "stat") {
@@ -178,6 +217,19 @@ const Dashboard = () => {
                                         unit={visual.unit}
                                         id={visual.visualId}
                                         color={visual.color}
+                                        deleteFunction={() => {
+                                            const newData = [...visuals];
+                                            newData.splice(index, 1);
+                                            setVisuals(newData);
+                                            showAlert("Visual deleted successfully ✅");
+                                        }}
+                                        updateFunction={(updatedData) => {
+                                            const newData = [...visuals];
+                                            newData[index] = updatedData;
+                                            setVisuals(newData);
+                                            truncateLabels();
+                                            showAlert("Visual Filter applied successfully ✅");
+                                        }}
                                     />
                                 );
                             } else {
