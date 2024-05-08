@@ -95,10 +95,10 @@ class DOARDashboardManager {
         }
         const newQuery: any = await AIManager.getQuery(prompt);
         if (!newQuery.error) {
-            const newId = await this._storeNewVisual(newQuery, prompt);
             const queryResult: any = await this._executeQuery(newQuery);
             if (!queryResult["error"]) {
-                queryResult["visualId"] = newId;   
+                const newId = await this._storeNewVisual(newQuery, prompt);
+                queryResult["visualId"] = newId;
             }
             res.send(queryResult);
         } else {

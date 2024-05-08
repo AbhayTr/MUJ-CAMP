@@ -124,7 +124,7 @@ const StatBox = ({
                                 updateFunction(newData);
                                 document.getElementById(id).value = "";
                             } else {
-                                showAlert("No filtered visual can be created for your request. Try another description.", toast.error);
+                                showAlert("No filtered visual can be created for your request. Try another description or try again (Sometimes the AI just zones out...)", toast.error);
                             }
                         }, (sessionExisted) => {
                             if (sessionExisted) {

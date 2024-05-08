@@ -145,14 +145,13 @@ const Dashboard = () => {
                                                     setAiWorking(false);
                                                     const newVisualData = response.data;
                                                     if (newVisualData.error) {
-                                                        showAlert("No visual can be created for your request. Try another description.", toast.error);
+                                                        showAlert("No visual can be created for your request. Try another description or try again (Sometimes the AI just zones out...)", toast.error);
                                                         return;
                                                     }
                                                     const newData = [...visuals];
                                                     newData.push(newVisualData);
                                                     setVisuals(newData);
                                                     truncateLabels();
-                                                    document.getElementById("dashboardPrompt").value = "";
                                                     showAlert("Visual created successfully ✅");
                                                 }, (sessionExisted) => {
                                                     if (sessionExisted) {

@@ -1,5 +1,25 @@
 class AIManager {
 
+    private static _isValidOutput(query: any): boolean {
+        if (query.aggregate == null || query.cursor == null || query.pipeline == null) {
+            return false;
+        }
+        if (query.pipeline[query.pipeline.length - 1]["$project"] == null) {
+            return false;
+        }
+        const finalOutput = query.pipeline[query.pipeline.length - 1]["$project"];
+        if (finalOutput.title == null || finalOutput.data == null || finalOutput.type == null || finalOutput.color == null || finalOutput.unit == null) {
+            return false;
+        }
+        if (finalOutput.type === "graph" && finalOutput.total == null) {
+            return false;
+        }
+        if (finalOutput.type === "stat" && isNaN(finalOutput.data)) {
+            return false;
+        }
+        return true;
+    }
+
     static async getQuery(prompt: string, prevPrompt?: string): Promise<object> {
         const PROMPT = `
         
@@ -58,6 +78,8 @@ class AIManager {
                     "currentStatus": String which depicts the current status of the updation process of the Alumni Data. "l" means that the data is currently being synced from LinkedIn for the alumni, "nl" means that the data is current not being synced from LinkedIn for that alumni, and "-" means that there is no linkedin url available to the system for this alumni and hence data syncing is not possible.
                 }
             }
+
+            Remember for all the data fields in the document, the value can also be "N.A.", "" or null. So you have to remember to handle those as well, if required.
 
             Now that you have understood the data structure, let me explain what you have to do. Basically I am visualsing this data in the form of a dashboard. In the dashboard, there are 2 kinds of data: "graph" (Bar Graph) and "stat" (Simple Numerical Count). I also refer to these as "visuals". There can be any number of visuals in the dashboard, either of the type "graph" or "stat". Now the dashboard manager wants to add a new "visual". The "visual" can either be of the kind "graph" or "stat" as I mentioned before. But, how do we know the type of the new visual, also how do we get to know what data should be extracted exactly to match the requirements of the new "visual". Well, that's where you come in!
 
@@ -133,15 +155,15 @@ class AIManager {
                         [
                             {
                                 key: The key of the data point (eg. "India"),
-                                value: The value of the data point (eg. 9000)
+                                data: The data (value) of the data point (eg. 9000)
                             },
                             and so on...
                         ]
 
-                    If the visual type is "stat", then it will simply be a number depiciting the statistic require (eg. 8000).
+                    If the visual type is "stat", then it will simply be a number depiciting the statistic require (eg. 8000).,
 
-                "type": Type of the visual being created. It can strictly be only either "graph" or "stat".
-                "color": Color of the visual being created. It is used to represent the visual data. Just use "green" for this,
+                "type": Type of the visual being created. It can strictly be only either "graph" or "stat".,
+                "color": Color of the visual being created. It is used to represent the visual data. Just use either "green", "blue" or "orange" for this i.e. pick randomly from these 3 colors.,
                 "unit": The unit of the visual data set. You have to infer this from the prompt and what kind of data is required. If you are unable to decide any unit, then simply use "Alumni".
             }
 
@@ -165,6 +187,8 @@ class AIManager {
 
             - For countries, use their full names only. For eg. for USA use United States of America.
 
+            - In case of visuals of the type "graph", ensure that the data points are sorted based on the "data" of the data points. This can be achieved using the "$sort" aggregator.
+
             ${(prevPrompt === "") ? "" : `
             
             You should know that this input prompt is coming as a request to update an existing visual. The prompt which was used to create this visual was as follows:
@@ -179,7 +203,83 @@ class AIManager {
 
             "${prompt}"
 
-            Thoroughly ensure that your output is parsable by JSON.parse() JS Function.
+            Thoroughly ensure that your output is parsable by JSON.parse() JS Function. Also dont use "\\" in your string output as they could cause problems with JSON.parse() function.
+
+            For eg. in this kind of output:
+
+            "{
+                \"aggregate\": \"doar_db\",
+                \"cursor\": {},
+                \"pipeline\": [
+                  {
+                    \"$match\": {
+                      \"country\": {
+                        \"$in\": [
+                          \"United States of America\",
+                          \"Japan\"
+                        ]
+                      },
+                      \"country\": {
+                        \"$ne\": null
+                      }
+                    }
+                  },
+                  {
+                    \"$group\": {
+                      \"_id\": {
+                        \"country\": \"$country\"
+                      },
+                      \"count\": {
+                        \"$sum\": 1
+                      }
+                    }
+                  },
+                  {
+                    \"$project\": {
+                      \"_id\": 0,
+                      \"data\": \"$count\",
+                      \"key\": \"$_id.country\"
+                    }
+                  },
+                  {
+                    \"$sort\": {
+                      \"data\": -1
+                    }
+                  },
+                  {
+                    \"$group\": {
+                      \"_id\": null,
+                      \"total\": {
+                        \"$sum\": \"$data\"
+                      },
+                      \"data\": {
+                        \"$push\": \"$$ROOT\"
+                      }
+                    }
+                  },
+                  {
+                    \"$project\": {
+                      \"_id\": 0,
+                      \"title\": \"Alumni Count in USA and Japan\",
+                      \"total\": \"$total\",
+                      \"data\": \"$data\",
+                      \"type\": \"graph\",
+                      \"color\": \"green\",
+                      \"unit\": \"Alumni\"
+                    }
+                  }
+                ]
+              }"
+
+            You can clearly see that their are "\" in the string which will cause problem with JSON.parse(). So please ensure not to use "\" in your string output. Always ensure that your string output could be parsed by JSON.parse() function. Or else my program would crash. Please ensure.
+
+            In the "$project" field, ensure that you have set the "title", "total" (if visual type is "graph"), "data", "color" and "unit" thoroughly. If you won't, then my program will crash. Please ensure.
+
+            Also please always ensure, that if the type of the visual is "stat", then the "data" field in the project should be of numerical format, and if the type of the visual is "graph", then the "data" field is of the format as I have mentioned above (list of {"key": %KEY%, "data": %DATA%}). Please ensure this, else my program will crash.
+
+            Also, in case the visual is of the type "graph", then just sort the graph based on the values in the graph, in the descending order, so that the largest values are shown first, and so on. Please ensure.
+
+            Also remember that for anything related to companies, you have to take into consideration the current company details, along with the previous work ("prev_work") of the alumni as well.
 
             Now you have your input prompt. Analyze it and give the output as I have explained to you above. Good Luck. Thanks.
 
@@ -205,66 +305,25 @@ class AIManager {
                 response.text().then((rawData: any) => {
                     try {
                         const data = JSON.parse(rawData);
-                        var generatedQuery: string = data["candidates"][0]["content"]["parts"][0]["text"];
+                        var generatedQuery: any = data["candidates"][0]["content"]["parts"][0]["text"];
                         console.log(generatedQuery);
                         if (generatedQuery.toLowerCase() != "np") {
+                            if ((generatedQuery[0] === `"` && generatedQuery[generatedQuery.length - 1] === `"`) || (generatedQuery[0] === `'` && generatedQuery[generatedQuery.length - 1] === `'`)) {
+                                generatedQuery = generatedQuery.substring(1, generatedQuery.length - 1);
+                            }
                             generatedQuery = JSON.parse(generatedQuery);
+                            if (this._isValidOutput(generatedQuery)) {
+                                resolve(generatedQuery);
+                            } else {
+                                resolve({
+                                    error: "np"
+                                });    
+                            }
+                        } else {
+                            resolve({
+                                error: "np"
+                            });
                         }
-                        resolve({
-                            "aggregate": "doar_db",
-                            "cursor": {},
-                            "pipeline": [
-                                {
-                                    "$group": {
-                                        "_id": "$country",
-                                        "count": {
-                                            "$sum": 1
-                                        }
-                                    }
-                                },
-                                {
-                                    "$match": {
-                                        "_id": {
-                                            "$ne": ""
-                                        }
-                                    }
-                                },
-                                {
-                                    "$project": {
-                                        "_id": 0,
-                                        "data": "$count",
-                                        "key": "$_id"
-                                    }
-                                },
-                                {
-                                    "$sort": {
-                                        "data": -1
-                                    }
-                                },
-                                {
-                                    "$group": {
-                                        "_id": null,
-                                        "total": {
-                                            "$sum": "$data"
-                                        },
-                                        "data": {
-                                            "$push": "$$ROOT"
-                                        }
-                                    }
-                                },
-                                {
-                                    "$project": {
-                                        "_id": 0,
-                                        "title": "Alumni Count by Country",
-                                        "total": "$total",
-                                        "data": "$data",
-                                        "type": "graph",
-                                        "color": "green",
-                                        "unit": "Alumni"
-                                    }
-                                }
-                            ]
-                        });
                     } catch (err) {
                         resolve({
                             error: err
