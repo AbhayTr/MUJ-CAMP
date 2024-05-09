@@ -1,4 +1,4 @@
-import { getPrompt } from "../utils/doarData";
+import { getPrompt } from "./doarData";
 
 class AIManager {
 

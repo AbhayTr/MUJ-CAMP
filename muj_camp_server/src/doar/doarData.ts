@@ -53,7 +53,11 @@ const getPrompt = (prompt: string, prevPrompt?: string) => {
             "location": The current location of the alumni where the alumni is residing (eg. "Gurgaon, Haryana, India"),
             "country": The current country where the alumni is residing (eg. "India"),
             "alumniId": Our System ID for the alumni (eg. "3442655"),
+            "regNumber": Our System ID for the alumni when they were a student (eg. "219301226"),
             "linkedin": LinkedIn URL of the alumni (eg. "https://linkedin.com/in/abhaytri"),
+            "qs100": Tells whether the alumni was a student of any QS Ranking Top 100 University or not. Can have 2 values, "Yes" or "No".,
+            "fortune500": Tells whether the alumni was an employee of any Fortune 500 Company or not. Can have 2 values, "Yes" or "No".,
+            "membership": Tells the current membership status of the alumni with our college's alumni association. There can be 3 values for this field: "Yearly" implying that the alumni has the yearly membership, "Lifetime" implying that the alumni has the lifetime membership and "N.A." implying that the alumni has no membership.,
             "liStatus": { // This is the status of the alumni's linkedin data syncing and updation.
                 "lastUpdated": A timestamp which tells when the data was last synced successfully (eg. 1714470784). If it is "-", it means that data has been never synced from linkedin for this alumni,
                 "latestStatus": Single character to depict the last status of the alumni's linkedin data syncing update. "s" means data was updated successfully and "f" means that the data was not updated successfully,
@@ -263,7 +267,9 @@ const getPrompt = (prompt: string, prevPrompt?: string) => {
 
         Also remember that for anything related to companies, you have to take into consideration the current company details, along with the previous work ("prev_work") of the alumni as well.
 
-        Also remember this very clearly, if the prompt talks about Fortune 500 companies, then you should know that each alumni is marked that whether they are in a Fortune 500 company or not using the "fortune500" attribute in their mongodb collection document.
+        Also remember this very clearly, if the prompt talks about Fortune 500 companies, then you should know that each alumni is marked that whether they are in a Fortune 500 company or not using the "fortune500" attribute in their mongodb collection document. If they are a Fortune 500 Company Employee, then there "fortune500" value is "Yes", else it is "No".
+        
+        Also remember this very clearly, if the prompt talks about QS Ranking Top 100 Colleges, then you should know that each alumni is marked that whether they are in a QS Ranking Top 100 University or not using the "qs100" attribute in their mongodb collection document. If they are a QS Ranking Top 100 University Student, then there "qs100" value is "Yes", else it is "No".
 
         Now you have your input prompt. Analyze it and give the output as I have explained to you above. Good Luck. Thanks.
 

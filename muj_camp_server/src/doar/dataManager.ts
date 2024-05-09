@@ -5,7 +5,7 @@ import { Document } from "mongodb";
 import { CAMPCollection, CAMPDB } from "../utils/campdb";
 import AlumniLSStatus from "./alumniLIStatus";
 import { currentTime, specialHash } from "../utils/common";
-import { FORTUNE500_LIST, QS100_LIST } from "../utils/doarData";
+import { FORTUNE500_LIST, QS100_LIST } from "./doarData";
 
 class DoARDataManager {
 
