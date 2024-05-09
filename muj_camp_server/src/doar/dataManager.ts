@@ -5,6 +5,7 @@ import { Document } from "mongodb";
 import { CAMPCollection, CAMPDB } from "../utils/campdb";
 import AlumniLSStatus from "./alumniLIStatus";
 import { currentTime, specialHash } from "../utils/common";
+import { FORTUNE500_LIST, QS100_LIST } from "../utils/doarData";
 
 class DoARDataManager {
 
@@ -133,7 +134,58 @@ class DoARDataManager {
         }
     }
 
+    private _getMembershipType(membership: string): string {
+        if (membership === "Annual Membership") {
+            return "y";
+        } else if (membership === "Life Time Membership") {
+            return "l";
+        } else {
+            return "N.A.";
+        }
+    }
+
+    private _valueInArray(array: Array<string>, value: string): boolean {
+        if (value == null || array == null || value.replaceAll(" ", "") === "") {
+            return false;
+        }
+        value = value.toLowerCase().replaceAll(" ", "");
+        for (var i = 0; i < array.length; i++) {
+            const valAtI = array[i].toLowerCase().replaceAll(" ", "");
+            if (valAtI === value) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private _isFortune500(currentCompany: string, prevWork: any): boolean {
+        if (this._valueInArray(FORTUNE500_LIST, currentCompany)) {
+            return true;
+        } else {
+            for (var i = 0; i < prevWork.length; i++) {
+                if (this._valueInArray(FORTUNE500_LIST, prevWork[i].company)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    private _isQS100(education: any): boolean {
+        for (var i = 0; i < education.length; i++) {
+            if (this._valueInArray(QS100_LIST, education[i].institution)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private _getAlumniFormattedData(alumniCSVDataRow: any): object | null {
+        
+        const currentCompany = alumniCSVDataRow["Current Company"].split("\n")[0].trim();
+        const prevWork = this._parseExperienceData(alumniCSVDataRow["Other Work"], alumniCSVDataRow["Current Company"].trim(), alumniCSVDataRow["Current Designation"].trim());
+        const education = this._parseEducationData(alumniCSVDataRow["Other Education"]);
+
         return {
             "name": (alumniCSVDataRow["First_Name"] + " " + alumniCSVDataRow["Last_Name"]).trim(),
             "gender": alumniCSVDataRow["Gender"].trim(),
@@ -143,15 +195,19 @@ class DoARDataManager {
             "school": alumniCSVDataRow["Division/Department"].trim(),
             "faculty": alumniCSVDataRow["Institute"].trim(),
             "designation": alumniCSVDataRow["Current Designation"].split("\n")[0].trim(),
-            "company": alumniCSVDataRow["Current Company"].split("\n")[0].trim(),
-            "prev_work": this._parseExperienceData(alumniCSVDataRow["Other Work"], alumniCSVDataRow["Current Company"].trim(), alumniCSVDataRow["Current Designation"].trim()),
-            "education": this._parseEducationData(alumniCSVDataRow["Other Education"]),
+            "company": currentCompany,
+            "prev_work": prevWork,
+            "education": education,
             "phone": alumniCSVDataRow["Phone"].trim(),
             "email": alumniCSVDataRow["secondary_email"].trim(),
             "location": alumniCSVDataRow["Current Location"].trim(),
             "country": alumniCSVDataRow["Current Country"].trim(),
             "alumniId": alumniCSVDataRow["Unique Profile ID"].trim(),
-            "linkedin": this._returnProperLinkedInURLOrEmpty(alumniCSVDataRow["Public Profile Urls"])
+            "linkedin": this._returnProperLinkedInURLOrEmpty(alumniCSVDataRow["Public Profile Urls"]),
+            "membership": this._getMembershipType(alumniCSVDataRow["Membership"]),
+            "regNumber": (alumniCSVDataRow["Registration number / Roll Number"] === "") ? "N.A." : alumniCSVDataRow["Registration number / Roll Number"],
+            "fortune500": this._isFortune500(currentCompany, prevWork),
+            "qs100": this._isQS100(education)
         };
     }
 
