@@ -21,7 +21,7 @@ class DOARDashboardManager {
         return nanoid() + String(currentTime());
     }
 
-    private async _executeQuery(query: object): Promise<any> {
+    async executeQuery(query: object): Promise<any> {
         try {
             const result = await this._campdb.command(query);
             if (
@@ -33,13 +33,19 @@ class DOARDashboardManager {
                 result["ok"] !== 1
             ) {
                 return {
-                    "error": "np"
+                    "error": `
+                    The following result is comming after execution of query:
+
+                    ${JSON.stringify(result)}
+
+                    Which does not match the required format.
+                    `
                 };
             }
             return result["cursor"]["firstBatch"][0];
         } catch (e) {
             return {
-                "error": "np"
+                "error": e
             };
         }
     }
@@ -60,7 +66,7 @@ class DOARDashboardManager {
                 if (listOfVisuals[i] == null || listOfVisuals[i].query == null || listOfVisuals[i].visualId == null) {
                     continue;
                 }
-                const queryResult: any = await this._executeQuery(listOfVisuals[i].query);
+                const queryResult: any = await this.executeQuery(listOfVisuals[i].query);
                 if (!queryResult["error"]) {
                     queryResult["visualId"] = listOfVisuals[i].visualId;
                     newListOfVisuals.push(queryResult);   
@@ -93,9 +99,9 @@ class DOARDashboardManager {
             res.status(422).send(null);
             return;
         }
-        const newQuery: any = await AIManager.getQuery(prompt);
+        const newQuery: any = await AIManager.getQuery(this, prompt);
         if (!newQuery.error) {
-            const queryResult: any = await this._executeQuery(newQuery);
+            const queryResult: any = await this.executeQuery(newQuery);
             if (!queryResult["error"]) {
                 const newId = await this._storeNewVisual(newQuery, prompt);
                 queryResult["visualId"] = newId;
@@ -155,9 +161,9 @@ class DOARDashboardManager {
             res.status(500).send(null);
             return;
         }
-        const newQuery: any = await AIManager.getQuery(prompt, prevPrompt);
+        const newQuery: any = await AIManager.getQuery(this, prompt, prevPrompt);
         if (!newQuery.error) {
-            const queryResult: any = await this._executeQuery(newQuery);
+            const queryResult: any = await this.executeQuery(newQuery);
             res.send(queryResult);
         } else {
             res.send({

@@ -51,21 +51,16 @@ const BarGraph = ({
     color = "#0d6efd"
 }) => {
 
-    const [datasetState] = useState(dataset);
-    const [titleState] = useState(title);
-    const [totalState] = useState(total);
-    const [unitState] = useState(unit);
-
     const [deleteStatus, setDeleteStatus] = useState(false);
     const [updateStatus, setUpdateStatus] = useState(false);
 
     const navigate = useNavigate();
 
     const chartSetting = {
-        height: datasetState.length * 28,
+        height: dataset.length * 28,
     };
     
-    const valueFormatter = (value) => `${moneyFormatIndia(String(value))} ${unitState}`;
+    const valueFormatter = (value) => `${moneyFormatIndia(String(value))} ${unit}`;
 
     return (
         <Widget className="bar-graph-widget">
@@ -76,7 +71,7 @@ const BarGraph = ({
                 fontWeight: "bold",
                 wordWrap: "break-word"
             }}>
-                {titleState}
+                {title}
             </h4>
             {(true) ? (
                 <h5 style={{
@@ -87,7 +82,7 @@ const BarGraph = ({
                     wordWrap: "break-word",
                     color: "#198754"
                 }}>
-                    {moneyFormatIndia(String(totalState))} {unitState}
+                    {moneyFormatIndia(String(total))} {unit}
                 </h5>
             ) : (
                 <></>
@@ -97,7 +92,7 @@ const BarGraph = ({
                 overflowY: "auto"
             }}>
                 <BarChart
-                    dataset={datasetState}
+                    dataset={dataset}
                     yAxis={[
                         {
                             scaleType: "band",

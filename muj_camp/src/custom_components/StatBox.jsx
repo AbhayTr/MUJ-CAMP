@@ -22,10 +22,6 @@ const StatBox = ({
     color = "#198754"
 }) => {
 
-    const [dataState] = useState(data);
-    const [titleState] = useState(title);
-    const [unitState] = useState(unit);
-
     const [deleteStatus, setDeleteStatus] = useState(false);
     const [updateStatus, setUpdateStatus] = useState(false);
 
@@ -41,7 +37,7 @@ const StatBox = ({
                 fontWeight: "bold",
                 wordWrap: "break-word"
             }}>
-                {titleState}
+                {title}
             </h4>
             <div style={{
                 height: "30vh",
@@ -59,7 +55,7 @@ const StatBox = ({
                     fontSize: "4em",
                     color: color
                 }}>
-                    {moneyFormatIndia(String(dataState))} {unitState}
+                    {moneyFormatIndia(String(data))} {unit}
                 </h1>
             </div>
             <div
