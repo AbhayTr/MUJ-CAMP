@@ -157,11 +157,22 @@ const Home = () => {
                     ({tableDataStats["muj_from"]} - {tableDataStats["muj_to"]})
                 </span>
                 <br/>
+                <br/>
+                {tableDataStats["school"]}
+                <br/>
+                <br/>
                 Alumni ID:&nbsp;
                 <span style={{
                     userSelect: "text"
                 }}>
                     <b>{tableDataStats["alumniId"]}</b>
+                </span>
+                <br/>
+                Reg. No.:&nbsp;
+                <span style={{
+                    userSelect: "text"
+                }}>
+                    <b>{tableDataStats["regNo"]}</b>
                 </span>
                 {(tableDataStats["linkedin"] != null && tableDataStats["linkedin"] !== "") ? (
                     <>
@@ -183,6 +194,26 @@ const Home = () => {
                 ) : (
                     <></>
                 )}
+                {(tableDataStats["membership"] != null && (tableDataStats["membership"] === "Yearly" || tableDataStats["membership"] === "Lifetime")) ? (
+                    <>
+                        <br/>
+                        <br/>
+                        <span style={{
+                            fontWeight: "bold",
+                            color: "white",
+                            padding: "0.5em",
+                            borderRadius: "10px",
+                            backgroundColor: (tableDataStats["membership"] === "Lifetime" ? "goldenrod" : "green")
+                        }}>
+                            {tableDataStats["membership"].toUpperCase()} MEMBER
+                        </span>
+                    </>
+                ) : (
+                    <></>
+                )}
+                <br/>
+                <br/>
+                📍 {tableDataStats["location"]} ({tableDataStats["country"]})
             </span>
         );
     }
@@ -560,6 +591,17 @@ const Home = () => {
                                             makeWebSocketRequest(webSocket, {
                                                 type: "stopFetchAllData"
                                             });
+                                        }}
+                                    />
+                                    <LoadButton
+                                        style={{
+                                            width: "fit-content"
+                                        }}
+                                        lbText="Open Almashine Dashboard"
+                                        type="primary"
+                                        lbId="almashineOpen"
+                                        clickHandler={() => {
+                                            window.open("https://mujalumni.in/admin?category=none&tab=none&cbt=_");
                                         }}
                                     />
                                 </div>

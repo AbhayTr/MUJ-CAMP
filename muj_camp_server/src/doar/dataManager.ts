@@ -11,18 +11,96 @@ class DoARDataManager {
 
     private _doarDbCollection: CAMPCollection;
     private _doarCollection: CAMPCollection;
+    
     private _filterKeyMap: any = {
         Institute: "faculty",
         Country: "country",
         Gender: "gender",
         School: "school",
         "Syncing Status": "liStatus.currentStatus",
-        "Latest Status": "liStatus.latestStatus"
+        "Latest Status": "liStatus.latestStatus",
+        Membership: "membership",
+        "Fortune 500 Companies": "fortune500",
+        "QS Top 100 Universities": "qs100"
     };
 
     constructor(campdb: CAMPDB) {
         this._doarDbCollection = campdb.collection("doar_db");
         this._doarCollection = campdb.collection("doar");
+    }
+
+    private _getSearchFields(searchText: string): Array<any> {
+        return [
+            {
+                name: {
+                    $regex: searchText,
+                    $options: "i"
+                }
+            },
+            {
+                muj_from: searchText
+            },
+            {
+                muj_to: searchText
+            },
+            {
+                alumniId: searchText
+            },
+            {
+                company: {
+                    $regex: searchText,
+                    $options: "i"
+                }
+            },
+            {
+                designation: {
+                    $regex: searchText,
+                    $options: "i"
+                }
+            },
+            {
+                "prev_work.company": {
+                    $regex: searchText,
+                    $options: "i"
+                }
+            },
+            {
+                "prev_work.designation": {
+                    $regex: searchText,
+                    $options: "i"
+                }
+            },
+            {
+                "education.institution": {
+                    $regex: searchText,
+                    $options: "i"
+                }
+            },
+            {
+                "education.degree": {
+                    $regex: searchText,
+                    $options: "i"
+                }
+            },
+            {
+                regNumber: {
+                    $regex: searchText,
+                    $options: "i"
+                }
+            },
+            {
+                location: {
+                    $regex: searchText,
+                    $options: "i"
+                }
+            },
+            {
+                country: {
+                    $regex: searchText,
+                    $options: "i"
+                }
+            }
+        ];
     }
 
     private _parseExperienceDataWithTimeline(dataString: string): object[] {
@@ -136,30 +214,42 @@ class DoARDataManager {
 
     private _getMembershipType(membership: string): string {
         if (membership === "Annual Membership") {
-            return "y";
+            return "Yearly";
         } else if (membership === "Life Time Membership") {
-            return "l";
+            return "Lifetime";
         } else {
             return "N.A.";
         }
     }
 
-    private _valueInArray(array: Array<string>, value: string): boolean {
+    private _valueInArray(array: Array<string>, value: string, extensiveSearch: boolean = false): boolean {
         if (value == null || array == null || value.replaceAll(" ", "") === "") {
             return false;
         }
-        value = value.toLowerCase().replaceAll(" ", "");
-        for (var i = 0; i < array.length; i++) {
-            const valAtI = array[i].toLowerCase().replaceAll(" ", "");
-            if (valAtI === value) {
-                return true;
+        if (extensiveSearch) {
+            const valueParts = value.toLowerCase().split(" ");
+            for (var j = 0; j < valueParts.length; j++) {
+                const currentPart = valueParts[j].replaceAll(" ", "");
+                for (var i = 0; i < array.length; i++) {
+                    const valAtI = array[i].toLowerCase().replaceAll(" ", "");
+                    if (valAtI === currentPart) {
+                        return true;
+                    }
+                }
+            }
+        } else {
+            for (var i = 0; i < array.length; i++) {
+                const valAtI = array[i].toLowerCase().replaceAll(" ", "");
+                if (valAtI === value.toLowerCase().replaceAll(" ", "")) {
+                    return true;
+                }
             }
         }
         return false;
     }
 
     private _isFortune500(currentCompany: string, prevWork: any): boolean {
-        if (this._valueInArray(FORTUNE500_LIST, currentCompany)) {
+        if (this._valueInArray(FORTUNE500_LIST, currentCompany, true)) {
             return true;
         } else {
             for (var i = 0; i < prevWork.length; i++) {
@@ -206,8 +296,8 @@ class DoARDataManager {
             "linkedin": this._returnProperLinkedInURLOrEmpty(alumniCSVDataRow["Public Profile Urls"]),
             "membership": this._getMembershipType(alumniCSVDataRow["Membership"]),
             "regNumber": (alumniCSVDataRow["Registration number / Roll Number"] === "") ? "N.A." : alumniCSVDataRow["Registration number / Roll Number"],
-            "fortune500": this._isFortune500(currentCompany, prevWork),
-            "qs100": this._isQS100(education)
+            "fortune500": this._isFortune500(currentCompany, prevWork) ? "Yes" : "No",
+            "qs100": this._isQS100(education) ? "Yes" : "No"
         };
     }
 
@@ -332,41 +422,7 @@ class DoARDataManager {
             },
             {
                 $match: {
-                    $or: [
-                        {
-                            name: {
-                                $regex: searchText,
-                                $options: "i"
-                            }
-                        },
-                        {
-                            muj_from: searchText
-                        },
-                        {
-                            muj_to: searchText
-                        },
-                        {
-                            alumniId: searchText
-                        },
-                        {
-                            company: {
-                                $regex: searchText,
-                                $options: "i"
-                            }
-                        },
-                        {
-                            "prev_work.company": {
-                                $regex: searchText,
-                                $options: "i"
-                            }
-                        },
-                        {
-                            "education.institution": {
-                                $regex: searchText,
-                                $options: "i"
-                            }
-                        }
-                    ]
+                    $or: this._getSearchFields(searchText)
                 }
             },
             {
@@ -380,7 +436,14 @@ class DoARDataManager {
                     "prev_work.company": 1,
                     education: 1,
                     linkedin: 1,
-                    liStatus: 1
+                    liStatus: 1,
+                    location: 1,
+                    school: 1,
+                    membership: 1,
+                    fortune500: 1,
+                    qs100: 1,
+                    regNumber: 1,
+                    country: 1
                 }
             },
             {
@@ -465,7 +528,14 @@ class DoARDataManager {
                     muj_from: ((alumni.muj_from === "0") ? "N.A." : alumni.muj_from),
                     muj_to: ((alumni.muj_to === "0") ? "N.A." : alumni.muj_to),
                     alumniId: alumni.alumniId,
-                    linkedin: alumni.linkedin
+                    linkedin: alumni.linkedin,
+                    membership: alumni.membership,
+                    location: alumni.location || "N.A.",
+                    fortune500: alumni.fortune500,
+                    qs100: alumni.qs100,
+                    school: alumni.school || "N.A.",
+                    regNo: alumni.regNumber || "N.A.",
+                    country: alumni.country || "N.A."
                 },
                 alumni.company || "N.A.",
                 alumni.prev_work.length > 0 ? this._getCompany(alumni.prev_work, searchText) : "N.A.",
@@ -514,41 +584,7 @@ class DoARDataManager {
         const pipeline = [
             {
                 $match: {
-                    $or: [
-                        {
-                            name: {
-                                $regex: searchText,
-                                $options: "i"
-                            }
-                        },
-                        {
-                            muj_from: searchText
-                        },
-                        {
-                            muj_to: searchText
-                        },
-                        {
-                            alumniId: searchText
-                        },
-                        {
-                            company: {
-                                $regex: searchText,
-                                $options: "i"
-                            }
-                        },
-                        {
-                            "prev_work.company": {
-                                $regex: searchText,
-                                $options: "i"
-                            }
-                        },
-                        {
-                            "education.institution": {
-                                $regex: searchText,
-                                $options: "i"
-                            }
-                        }
-                    ]
+                    $or: this._getSearchFields(searchText)
                 }
             },
             matchQuery,

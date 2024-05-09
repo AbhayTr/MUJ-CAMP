@@ -410,7 +410,8 @@ const DataTable = (props) => {
                                                                                                     key={filter}
                                                                                                     active={filtersApplied[filter] != null && filtersApplied[filter].length !== 0}
                                                                                                     style={{
-                                                                                                        background: ((filtersApplied[filter] != null && filtersApplied[filter].length !== 0) ? "#198754" : "")
+                                                                                                        background: ((filtersApplied[filter] != null && filtersApplied[filter].length !== 0) ? "#198754" : ""),
+                                                                                                        whiteSpace: "normal"
                                                                                                     }}
                                                                                                     className={headerStyles.dropdownProfileItem}
                                                                                                     onClick={() => {
