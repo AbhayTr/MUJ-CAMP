@@ -1,19 +1,44 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-
 import optionsIcon from "../assets/images/optionsIcon.svg";
 import tableStyles from "../assets/scss/Tables.module.scss";
 
-import ApexCharts from "apexcharts";
-import { useEffect, useState } from "react";
+import { BarChart } from "@mui/x-charts/BarChart";
+import { useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { confirm } from "react-bootstrap-confirmation";
 
 import Widget from "./Widget";
 import LoadButton from "./LoadButton";
-import { colorNameToHex, moneyFormatIndia, showAlert } from "../tools/UI";
+import { moneyFormatIndia, showAlert } from "../tools/UI";
 import { makeSessionRequestPost } from "../tools/Auth";
 import { AuthStore } from "../app_state/auth/auth";
+
+const fixSVGS = () => {
+    const barGraphSVGS = document.getElementsByClassName("css-13aj3tc-MuiChartsSurface-root");
+    if (barGraphSVGS != null && barGraphSVGS.length !== 0) {
+        for (var i = 0; i < barGraphSVGS.length; i++) {
+            barGraphSVGS[i].viewBox.baseVal.x = -35;
+        }
+    }
+}
+
+const truncateLabels = () => {
+
+    const MAX_LENGTH = 10;
+    
+    const startLooking = setInterval(() => {
+        const labels = document.querySelectorAll(`text[dominant-baseline="central"]`);
+        if (labels.length > 0) {
+            for (var i = 0; i < labels.length; i++) {
+                if (labels[i].textContent.length > MAX_LENGTH) {
+                    labels[i].textContent = labels[i].textContent.substring(0, MAX_LENGTH) + "...";
+                }
+            }
+            clearInterval(startLooking);
+        }
+    }, 10);
+
+}
 
 const BarGraph = ({
     dataset,
@@ -31,66 +56,11 @@ const BarGraph = ({
 
     const navigate = useNavigate();
 
-    const formatKey = (key) => {
-        if (key.startsWith("School of ")) {
-            return key.substring(10, key.length);
-        } else if (key.startsWith("Faculty of ")) {
-            return key.substring(11, key.length);
-        } else {
-            return key;
-        }
-    }
-
-    const prepareData = () => {
-        
-        const data = [];
-        const categories = [];
-
-        for (var i = 0; i < dataset.length; i++) {
-            categories.push(formatKey(dataset[i]["key"]));
-            data.push(dataset[i]["data"]);
-        }
-
-        return [data, categories];
-    }
-
-    const colors = Array(dataset.length).fill(colorNameToHex(color), 0);
-
-    useEffect(() => {
-
-        const formattedData = prepareData();
-
-        const options = {
-            series: [{
-                data: formattedData[0]
-            }],
-            colors: colors,
-            chart: {
-                type: "bar",
-                height: dataset.length * 28
-            },
-            plotOptions: {
-                bar: {
-                    borderRadius: 4,
-                    borderRadiusApplication: "end",
-                    horizontal: true
-                }
-            },
-            dataLabels: {
-                enabled: true,
-                formatter: (val) => {
-                    return moneyFormatIndia(String(val))
-                }
-            },
-            xaxis: {
-                categories: formattedData[1]
-            }
-        };
-        
-        var chart = new ApexCharts(document.querySelector(`#chart${id}`), options);
-        chart.render();
-
-    }, []);
+    const chartSetting = {
+        height: dataset.length * 28,
+    };
+    
+    const valueFormatter = (value) => `${moneyFormatIndia(String(value))} ${unit}`;
 
     return (
         <Widget className="bar-graph-widget">
@@ -117,15 +87,30 @@ const BarGraph = ({
             ) : (
                 <></>
             )}
-            <div
-                style={{
-                    maxHeight: "40vh",
-                    overflowY: "auto",
-                    overflowX: "hidden"
-                }}
-                id={`chartContainer${id}`}
-            >
-                <div id={`chart${id}`}></div>
+            <div style={{
+                maxHeight: "30vh",
+                overflowY: "auto"
+            }}>
+                <BarChart
+                    dataset={dataset}
+                    yAxis={[
+                        {
+                            scaleType: "band",
+                            dataKey: "key"
+                        }
+                    ]}
+                    series={
+                        [
+                            {
+                                dataKey: "data",
+                                color: color,
+                                valueFormatter
+                            }
+                        ]
+                    }
+                    layout="horizontal"
+                    {...chartSetting}
+                />
             </div>
             <div
                 className={`${tableStyles.tableTitle} ${tableStyles.search}`}
@@ -245,4 +230,4 @@ const BarGraph = ({
 
 }
 
-export default BarGraph;
+export { BarGraph, fixSVGS, truncateLabels };

@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 
 import { ensureAdminAccess, makeSessionRequestGet, makeSessionRequestPost } from "../../tools/Auth";
 import LoadSpinner from "../../custom_components/LoadSpinner";
-import { BarGraph, fixSVGS, truncateLabels } from "../../custom_components/BarGraph";
+import BarGraph from "../../custom_components/BarGraph";
 import { AuthStore } from "../../app_state/auth/auth";
 import Widget from "../../custom_components/Widget";
 import LoadButton from "../../custom_components/LoadButton";
@@ -46,15 +46,6 @@ const Dashboard = () => {
     useEffect(() => {
 
         ensureAdminAccess("DOAR_DASHBOARD", loadPage, navigate);
-        
-        const fixSVGSInterval = setInterval(fixSVGS, 10);
-        truncateLabels();
-
-        return (() => {
-
-            clearInterval(fixSVGSInterval);
-
-        });
     
     }, []);
 
@@ -151,7 +142,6 @@ const Dashboard = () => {
                                                     const newData = [...visuals];
                                                     newData.push(newVisualData);
                                                     setVisuals(newData);
-                                                    truncateLabels();
                                                     showAlert("Visual created successfully ✅");
                                                 }, (sessionExisted) => {
                                                     if (sessionExisted) {
@@ -226,7 +216,6 @@ const Dashboard = () => {
                                             const newData = [...visuals];
                                             newData[index] = updatedData;
                                             setVisuals(newData);
-                                            truncateLabels();
                                             showAlert("Visual Filter applied successfully ✅");
                                         }}
                                     />

@@ -144,7 +144,6 @@ class AIManager {
                             if ((generatedQuery[0] === `"` && generatedQuery[generatedQuery.length - 1] === `"`) || (generatedQuery[0] === `'` && generatedQuery[generatedQuery.length - 1] === `'`)) {
                                 generatedQuery = generatedQuery.substring(1, generatedQuery.length - 1);
                             }
-                            console.log(generatedQuery);
                             eval(`generatedQuery = ${generatedQuery};`);
                             const queryFormatCheck: string = this._isValidOutput(generatedQuery);
                             if (queryFormatCheck === "s") {
@@ -155,7 +154,6 @@ class AIManager {
                                         resolve(generatedQuery);
                                     } else {
                                         if (retryLoop < parseInt(process.env.MAX_RETRY_LOOP!)) {
-                                            console.log("Execution Result Failed");
                                             resolve(this.getQuery(dashboardManager, prompt, prevPrompt, ++retryLoop, JSON.stringify(generatedQuery), queryFormatResultCheck, true));
                                         } else {
                                             resolve({
@@ -165,7 +163,6 @@ class AIManager {
                                     }
                                 } else {
                                     if (retryLoop < parseInt(process.env.MAX_RETRY_LOOP!)) {
-                                        console.log("Execution Failed: " + queryResult["error"]);
                                         resolve(this.getQuery(dashboardManager, prompt, prevPrompt, ++retryLoop, JSON.stringify(generatedQuery), queryResult["error"], true));
                                     } else {
                                         resolve({
@@ -175,13 +172,12 @@ class AIManager {
                                 }
                             } else {
                                 if (retryLoop < parseInt(process.env.MAX_RETRY_LOOP!)) {
-                                    console.log("Format error.");
                                     resolve(this.getQuery(dashboardManager, prompt, prevPrompt, ++retryLoop, JSON.stringify(generatedQuery), queryFormatCheck));
                                 } else {
                                     resolve({
                                         error: "np"
                                     });
-                                }    
+                                }
                             }
                         } else {
                             resolve({
@@ -189,7 +185,6 @@ class AIManager {
                             });
                         }
                     } catch (err) {
-                        console.log(err);
                         resolve({
                             error: err
                         });
