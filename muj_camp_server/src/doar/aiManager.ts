@@ -104,6 +104,25 @@ class AIManager {
 
             `;
         }
+        if (result.type === "graph" && (result.data[0].data == null || result.data[0].key == null)) {
+            return `The result generated after executing the query is for a Visual whose type is "graph", hence it is expected that the "data" should be of the following format:
+
+            [
+                {
+                    key: The key of the data point (eg. "India"),
+                    data: The data (value) of the data point (eg. 9000)
+                },
+                and so on...
+            ]
+
+            But it is not. So please ensure the data is represented in the key, data format as mentioned above.
+
+            Here are the variables output for your reference:
+
+            result.data = ${result.data}
+
+            `;
+        }
         if (result.type === "stat" && isNaN(result.data)) {
             return `The result generated after executing the query is for a Visual whose type is "stat", hence it is expected that the "data" should be of the following format:
 
