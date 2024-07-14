@@ -1,7 +1,7 @@
 {
     "name": "muj_camp",
     "version": "1.0.0",
-    "description": "The React.JS powered Wep App of MUJ Convocation and Alumni Management Portal.",
+    "description": "The React.JS powered Wep App of MUJ Collective Alumni Management Portal.",
     "author": "Abhay Tripathi, B.Tech CSE 2021 - 25, Manipal University Jaipur (Reg. No. 219301226)",
     "private": true,
     "dependencies": {

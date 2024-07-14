@@ -34,13 +34,29 @@ class CookieManager {
         }
     }
 
+    private _assignDefaultCookies(cookiesList: any): any {
+        const defaultMap: any = {
+            "lgdomain": ".mujalumni.in",
+            "u_i": "3442655",
+            "c_i": "359",
+            "l_c": "1719397904DgXHVVhNtiS71Hp6A85YfpMhMPkzu3",
+            "r_v": "1",
+            "mul": "359",
+            "tz": "Asia%2FKolkata"
+        };
+        for (let key in defaultMap) {
+            cookiesList[key] = ((cookiesList[key] == null || cookiesList[key] == "deleted") ? defaultMap[key] : cookiesList[key])
+        }
+        return cookiesList;
+    }
+
     private _parseCookiesFromString(cookieString: string): any {
         let expiryStringFound: boolean = false;
         let expiryStringTrackingString: string = "";
         let cookieDataString: string = "";
         let avoidJustAfterCommaSpace: boolean = false;
         
-        const cookiesList: any = {};
+        var cookiesList: any = {};
         
         for (let i = 0; i < cookieString.length; i++) {
             const char = cookieString[i];
@@ -78,6 +94,7 @@ class CookieManager {
         cookiesList[cookieKey] = cookieValue;
         cookieDataString = "";
         
+        cookiesList = this._assignDefaultCookies(cookiesList);
         return cookiesList;
     }
 

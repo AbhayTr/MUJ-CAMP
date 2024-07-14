@@ -29,7 +29,7 @@ app.get("/", function (req, res) {
     res.send(`
         <html>
             <body>
-                <h1>Welcome to MUJ Convocation and Alumni Management Portal (CAMP) Server!</h1>
+                <h1>Welcome to MUJ Collective Alumni Management Portal (CAMP) Server!</h1>
                 <b>&copy; ${new Date().getFullYear()} Abhay Tripathi</b> (Reg. No. 219301226), B.Tech CSE (2021 to 2025), Manipal University Jaipur (MUJ)<br>
                 <b>&copy; ${new Date().getFullYear()} Manipal University Jaipur</b> (MUJ)<br>
                 <b>&copy; ${new Date().getFullYear()} Manipal University Jaipur Alumni Association</b> (MUJAA)

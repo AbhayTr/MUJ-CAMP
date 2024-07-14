@@ -2,7 +2,7 @@
     "name": "muj_camp_server",
     "version": "1.0.0",
     "private": true,
-    "description": "The NodeJS + TypeScript + Express.js powered backend of MUJ Convocation and Alumni Management Portal.",
+    "description": "The NodeJS + TypeScript + Express.js powered backend of MUJ Collective Alumni Management Portal.",
     "main": "src/index.ts",
     "scripts": {
         "start": "nodemon --exec npx ts-node src/index.ts"

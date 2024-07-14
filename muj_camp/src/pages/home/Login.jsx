@@ -474,7 +474,7 @@ let Login = ({
                                 <span className="muj-camp-heading-hat">🎓</span>
                             </span>
                         </h1>
-                        <h6 style={{fontWeight: "bold"}}>Convocation and Alumni Management Portal</h6>
+                        <h6 style={{fontWeight: "bold"}}>Collective Alumni Management Portal</h6>
                         <br/>
                     </span>
                     {(isLoginLoading) ? (
