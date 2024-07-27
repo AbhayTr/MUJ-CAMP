@@ -136,7 +136,11 @@ const Dashboard = () => {
                                                     setAiWorking(false);
                                                     const newVisualData = response.data;
                                                     if (newVisualData.error) {
-                                                        showAlert("No visual can be created for your request. Try another description or try again (Sometimes the AI just zones out...)", toast.error);
+                                                        if (newVisualData.error === "np") {
+                                                            showAlert("No visual can be created for your request. Try another description or try again (Sometimes the AI just zones out...)", toast.error);
+                                                        } else {
+                                                            showAlert(newVisualData.error, toast.error);
+                                                        }
                                                         return;
                                                     }
                                                     const newData = [...visuals];

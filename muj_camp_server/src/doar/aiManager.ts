@@ -1,3 +1,5 @@
+import Groq from "groq-sdk";
+
 import DOARDashboardManager from "./dashboardManager";
 import { getPrompt, getCorrectionPrompt, getExecutionCorrectionPrompt } from "./doarData";
 
@@ -135,54 +137,61 @@ class AIManager {
         return "s";
     }
 
-    static async getQuery(dashboardManager: DOARDashboardManager, prompt: string, prevPrompt?: string, retryLoop: number = 0, generatedQuery: string = "", queryError: string = "", executionFailed = false): Promise<object> {
+    static extractTimeAndFormat(input: string): string {
+        const timeRegex = /(\d+)m(\d+)\.\d+s/;
+        const match = input.match(timeRegex);
+        if (match) {
+            const minutes = match[1];
+            const seconds = match[2];
+            return `${minutes} Minutes, ${seconds} Seconds`;
+        }
+        return "";
+    }
+
+    static async getQuery(dashboardManager: DOARDashboardManager, prompt: string, prevPrompt?: string, retryLoop: number = 0, generatedQuery: string = "", queryError: string = "", executionFailed = false, modelNumber = 0): Promise<object> {
+        
+        const models = [
+            "llama-3.1-70b-versatile"
+        ];
+
+        const groq: Groq = new Groq({
+            apiKey: process.env.GROQ_API_KEY
+        });
         const PROMPT = (retryLoop === 0) ? getPrompt(prompt, prevPrompt) : (executionFailed) ? getExecutionCorrectionPrompt(queryError, prompt, generatedQuery, prevPrompt) : getCorrectionPrompt(queryError, prompt, generatedQuery, prevPrompt);
         const requestBody: any = {
-            "contents": [
+            messages: [
                 {
-                    "role": "user",
-                    "parts": [
-                        {
-                            "text": PROMPT
-                        }
-                    ]
+                    role: "user",
+                    content: PROMPT,
                 }
-            ]
-        };
-        return new Promise((resolve) => {
-            fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`, {
-                method: "POST",
-                body: JSON.stringify(requestBody)
-            })
-            .then((response) => {
-                response.text().then(async (rawData: any) => {
-                    try {
-                        const data = JSON.parse(rawData);
-                        var generatedQuery: any = data["candidates"][0]["content"]["parts"][0]["text"];
-                        if (generatedQuery.toLowerCase() != "np") {
-                            if ((generatedQuery[0] === `"` && generatedQuery[generatedQuery.length - 1] === `"`) || (generatedQuery[0] === `'` && generatedQuery[generatedQuery.length - 1] === `'`)) {
-                                generatedQuery = generatedQuery.substring(1, generatedQuery.length - 1);
-                            }
-                            eval(`generatedQuery = ${generatedQuery};`);
-                            const queryFormatCheck: string = this._isValidOutput(generatedQuery);
-                            if (queryFormatCheck === "s") {
-                                const queryResult: any = await dashboardManager.executeQuery(generatedQuery);
-                                if (!queryResult["error"]) {
-                                    const queryFormatResultCheck: string = this._isValidResult(queryResult);
-                                    if (queryFormatResultCheck === "s") {
-                                        resolve(generatedQuery);
-                                    } else {
-                                        if (retryLoop < parseInt(process.env.MAX_RETRY_LOOP!)) {
-                                            resolve(this.getQuery(dashboardManager, prompt, prevPrompt, ++retryLoop, JSON.stringify(generatedQuery), queryFormatResultCheck, true));
-                                        } else {
-                                            resolve({
-                                                error: "np"
-                                            });
-                                        }
-                                    }
+            ],
+            model: models[modelNumber]
+        }
+        return new Promise(async (resolve) => {
+            try {
+                var generatedQuery: any = (await groq.chat.completions.create(requestBody)).choices[0]?.message?.content;
+                if (generatedQuery == null || generatedQuery == "") {
+                    console.error("AI Agent Error.")
+                    resolve({
+                        error: "np"
+                    });
+                }
+                try {
+                    if (generatedQuery.toLowerCase() != "np") {
+                        if ((generatedQuery[0] === `"` && generatedQuery[generatedQuery.length - 1] === `"`) || (generatedQuery[0] === `'` && generatedQuery[generatedQuery.length - 1] === `'`)) {
+                            generatedQuery = generatedQuery.substring(1, generatedQuery.length - 1);
+                        }
+                        eval(`generatedQuery = ${generatedQuery};`);
+                        const queryFormatCheck: string = this._isValidOutput(generatedQuery);
+                        if (queryFormatCheck === "s") {
+                            const queryResult: any = await dashboardManager.executeQuery(generatedQuery);
+                            if (!queryResult["error"]) {
+                                const queryFormatResultCheck: string = this._isValidResult(queryResult);
+                                if (queryFormatResultCheck === "s") {
+                                    resolve(generatedQuery);
                                 } else {
                                     if (retryLoop < parseInt(process.env.MAX_RETRY_LOOP!)) {
-                                        resolve(this.getQuery(dashboardManager, prompt, prevPrompt, ++retryLoop, JSON.stringify(generatedQuery), queryResult["error"], true));
+                                        resolve(this.getQuery(dashboardManager, prompt, prevPrompt, ++retryLoop, JSON.stringify(generatedQuery), queryFormatResultCheck, true, modelNumber));
                                     } else {
                                         resolve({
                                             error: "np"
@@ -191,7 +200,7 @@ class AIManager {
                                 }
                             } else {
                                 if (retryLoop < parseInt(process.env.MAX_RETRY_LOOP!)) {
-                                    resolve(this.getQuery(dashboardManager, prompt, prevPrompt, ++retryLoop, JSON.stringify(generatedQuery), queryFormatCheck));
+                                    resolve(this.getQuery(dashboardManager, prompt, prevPrompt, ++retryLoop, JSON.stringify(generatedQuery), queryResult["error"], true, modelNumber));
                                 } else {
                                     resolve({
                                         error: "np"
@@ -199,22 +208,51 @@ class AIManager {
                                 }
                             }
                         } else {
-                            resolve({
-                                error: "np"
-                            });
+                            if (retryLoop < parseInt(process.env.MAX_RETRY_LOOP!)) {
+                                resolve(this.getQuery(dashboardManager, prompt, prevPrompt, ++retryLoop, JSON.stringify(generatedQuery), queryFormatCheck, false, modelNumber));
+                            } else {
+                                resolve({
+                                    error: "np"
+                                });
+                            }
                         }
-                    } catch (err) {
+                    } else {
                         resolve({
-                            error: err
+                            error: "np"
                         });
                     }
-                });
-            })
-            .catch((error) => {
-                resolve({
-                    error: error
-                })
-            });
+                } catch (exception) {
+                    if (retryLoop < parseInt(process.env.MAX_RETRY_LOOP!)) {
+                        resolve(this.getQuery(dashboardManager, prompt, prevPrompt, ++retryLoop, JSON.stringify(generatedQuery), String(exception), false, modelNumber));
+                    } else {
+                        resolve({
+                            error: "np"
+                        });
+                    }
+                }
+            } catch (appException) {
+                if (String(appException).toLowerCase().includes("rate limit reached")) {
+                    if (modelNumber < models.length - 1) {
+                        resolve(this.getQuery(dashboardManager, prompt, prevPrompt, retryLoop, "", "", false, ++modelNumber));
+                    } else {
+                        const timeRemaining = this.extractTimeAndFormat(String(appException));
+                        var errorMessage = "";
+                        if (timeRemaining != "") {
+                            errorMessage = "Due to free tier limits, no new visual can be generated, nor filters can be applied to existing visuals for " + timeRemaining + ". If the problem still persists after that time, please contact " + process.env.CONTACT_PERSON + ".";
+                        } else {
+                            errorMessage = "Due to free tier limits, no new visual can be generated, nor filters can be applied to existing visuals for sometime. Please try again after 1 hour. If the problem still persists, please contact " + process.env.CONTACT_PERSON + ".";
+                        }
+                        resolve({
+                            error: errorMessage
+                        });
+                    }
+                } else {
+                    console.error("AI Agent Error: " + appException);
+                    resolve({
+                        error: "np"
+                    });
+                }
+            }
         });
     }
 

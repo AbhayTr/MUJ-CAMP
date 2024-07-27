@@ -5,7 +5,7 @@ const QS100_LIST = ['Massachusetts Institute of Technology', 'University of Camb
 const getPrompt = (prompt: string, prevPrompt?: string): string => {
     return `
         
-        Hello Gemini. Now understand my instructions very carefully. I have a MongoDB Database which basically stores data for my college's alumni data. That database has a collection which is named as "doar_db". That collection has documents, where each document represents one alumni. The structure of the document is as follows:
+        Hello Buddy. Now understand my instructions very carefully. I have a MongoDB Database which basically stores data for my college's alumni data. That database has a collection which is named as "doar_db". That collection has documents, where each document represents one alumni. The structure of the document is as follows:
 
         {
             "_id": {
@@ -272,6 +272,8 @@ const getPrompt = (prompt: string, prevPrompt?: string): string => {
         Also remember this very clearly, if the prompt talks about QS Ranking Top 100 Colleges, then you should know that each alumni is marked that whether they are in a QS Ranking Top 100 University or not using the "qs100" attribute in their mongodb collection document. If they are a QS Ranking Top 100 University Student, then there "qs100" value is "Yes", else it is "No".
 
         Now you have your input prompt. Analyze it and give the output as I have explained to you above. Good Luck. Thanks.
+
+        Also ensure that you only output the MongoDB query json. THAT'S IT. NO OTHER TEXT!
 
     `
 }

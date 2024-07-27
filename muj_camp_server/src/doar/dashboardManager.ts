@@ -109,7 +109,7 @@ class DOARDashboardManager {
             res.send(queryResult);
         } else {
             res.send({
-                "error": "np"
+                "error": newQuery.error
             });
         }
     }
@@ -167,7 +167,7 @@ class DOARDashboardManager {
             res.send(queryResult);
         } else {
             res.send({
-                "error": "np"
+                "error": newQuery.error
             });
         }
     }
