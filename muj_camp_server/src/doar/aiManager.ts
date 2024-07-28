@@ -137,13 +137,20 @@ class AIManager {
         return "s";
     }
 
-    static extractTimeAndFormat(input: string): string {
-        const timeRegex = /(\d+)m(\d+)\.\d+s/;
-        const match = input.match(timeRegex);
-        if (match) {
-            const minutes = match[1];
-            const seconds = match[2];
-            return `${minutes} Minutes, ${seconds} Seconds`;
+    private static _extractTimeAndFormat(input: string): string {
+        const timeRegexHours = /(\d+)h(\d+)m(\d+)\.\d+s/;
+        const timeRegexMinutes = /(\d+)m(\d+)\.\d+s/;
+        const matchHours = input.match(timeRegexHours);
+        const matchMinutes = input.match(timeRegexMinutes);
+        if (matchHours && matchHours[1] && matchHours[2] && matchHours[3]) {
+            const hours = matchHours[1]
+            const minutes = matchHours[2];
+            const seconds = matchHours[3];
+            return `${hours} Hour(s) ${minutes} Minute(s), ${seconds} Second(s)`;
+        } else if (matchMinutes && matchMinutes[1] && matchMinutes[2]) {
+            const minutes = matchMinutes[1];
+            const seconds = matchMinutes[2];
+            return `${minutes} Minute(s), ${seconds} Second(s)`;
         }
         return "";
     }
@@ -235,7 +242,7 @@ class AIManager {
                     if (modelNumber < models.length - 1) {
                         resolve(this.getQuery(dashboardManager, prompt, prevPrompt, retryLoop, "", "", false, ++modelNumber));
                     } else {
-                        const timeRemaining = this.extractTimeAndFormat(String(appException));
+                        const timeRemaining = this._extractTimeAndFormat(String(appException));
                         var errorMessage = "";
                         if (timeRemaining != "") {
                             errorMessage = "Due to free tier limits, no new visual can be generated, nor filters can be applied to existing visuals for " + timeRemaining + ". If the problem still persists after that time, please contact " + process.env.CONTACT_PERSON + ".";

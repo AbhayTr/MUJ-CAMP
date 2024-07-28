@@ -164,6 +164,7 @@ class AlmaShineManager {
             });
             setTimeout(() => {
                 request.abort();
+                console.error("DoAR Almashines Alumni Data Fetch Failed [Data Download Timed-Out].");
                 resolve(false);
             }, 1200000);
         });
@@ -188,6 +189,7 @@ class AlmaShineManager {
                             resolve(false);
                         }
                         if (!(await this._dataManager.updateDBDataFromCSV())) {
+                            console.error("DoAR Almashines Alumni Data Fetch Failed [CSV to DB Data Failed].");
                             resolve(false);
                         } else {
                             resolve(true);
