@@ -1,5 +1,3 @@
-import Groq from "groq-sdk";
-
 import DOARDashboardManager from "./dashboardManager";
 import { getPrompt, getCorrectionPrompt, getExecutionCorrectionPrompt } from "./doarData";
 
@@ -137,6 +135,7 @@ class AIManager {
         return "s";
     }
 
+    // Previous Code for Groq API.
     private static _extractTimeAndFormat(input: string): string {
         const timeRegexHours = /(\d+)h(\d+)m(\d+)\.\d+s/;
         const timeRegexMinutes = /(\d+)m(\d+)\.\d+s/;
@@ -161,22 +160,29 @@ class AIManager {
             "llama-3.1-70b-versatile"
         ];
 
-        const groq: Groq = new Groq({
-            apiKey: process.env.GROQ_API_KEY
-        });
         const PROMPT = (retryLoop === 0) ? getPrompt(prompt, prevPrompt) : (executionFailed) ? getExecutionCorrectionPrompt(queryError, prompt, generatedQuery, prevPrompt) : getCorrectionPrompt(queryError, prompt, generatedQuery, prevPrompt);
         const requestBody: any = {
-            messages: [
-                {
-                    role: "user",
-                    content: PROMPT,
-                }
-            ],
-            model: models[modelNumber]
+            prompt: PROMPT
         }
         return new Promise(async (resolve) => {
             try {
-                var generatedQuery: any = (await groq.chat.completions.create(requestBody)).choices[0]?.message?.content;
+                const aiResponse = await fetch("https://abhayllm.abhay-triipathi.workers.dev/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(requestBody),
+                });
+                if (!aiResponse.ok) {
+                    const errorResponse = await aiResponse.text();
+                    throw new Error(`AI API ERROR: ${errorResponse} ; Status: ${aiResponse.status} ; Error Text: ${aiResponse.statusText}.`);
+                }
+                const aiJSON: any = await aiResponse.json();
+                if (aiJSON.response == null) {
+                    const errorResponse = await aiResponse.text();
+                    throw new Error(`AI API ERROR [MISSING FIELD 'response']: ${errorResponse} ; Status: ${aiResponse.status} ; Error Text: ${aiResponse.statusText}.`);
+                }
+                var generatedQuery: any = aiJSON.response;
                 if (generatedQuery == null || generatedQuery == "") {
                     console.error("AI Agent Error.")
                     resolve({
@@ -238,7 +244,9 @@ class AIManager {
                     }
                 }
             } catch (appException) {
-                if (String(appException).toLowerCase().includes("rate limit reached")) {
+                // Previous Code for Groq API.
+                // if (String(appException).toLowerCase().includes("rate limit reached")) {
+                if (false) {
                     if (modelNumber < models.length - 1) {
                         resolve(this.getQuery(dashboardManager, prompt, prevPrompt, retryLoop, "", "", false, ++modelNumber));
                     } else {
