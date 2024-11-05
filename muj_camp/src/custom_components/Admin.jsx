@@ -70,12 +70,12 @@ let AdminLayout = ({
         validateSession((sessionExisted) => {
             if (!sessionExisted) {
                 showAlert("Please sign-in to continue.", toast.info, false);
-                navigate("/");
+                navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
                 return;
             } else {
                 if (AuthStore.getState().authRole == null) {
                     showAlert("Please select how you want to use the app first", toast.info, false);
-                    navigate("/");
+                    navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
                 }
                 setLoading(false);
             }
@@ -263,7 +263,7 @@ let AdminLayout = ({
                                                 className={headerStyles.dropdownProfileItem}
                                                 onClick={() => {
                                                     showAlert("Please chose how do you want to use the app, from here.", toast.info);
-                                                    navigate("/");
+                                                    navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
                                                 }}
                                             >
                                                 <ProfileIcon />

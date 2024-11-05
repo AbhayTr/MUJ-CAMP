@@ -9,7 +9,7 @@ const Error404 = () => {
         showAlert("Page not found", toast.error, false);
     }, []);
 
-    return (<Navigate to="/" />);
+    return (<Navigate to={`${process.env.REACT_APP_PATH_ROOT}/`} />);
 
 }
 

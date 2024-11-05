@@ -27,16 +27,16 @@ const Home = () => {
             } else {
                 showAlert("Please sign-in to continue.", toast.info, false);
             }
-            navigate("/");
+            navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
         }, () => {
             if (AuthStore.getState().authRole == null) {
                 showAlert("Please select how you want to use the app first", toast.info, false);
-                navigate("/");
+                navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
                 return;
             }
             if (!isAuthorized(AuthPages.STUDENT)) {
                 showAlert("You are not authorized to access this page.", toast.error, false);
-                navigate("/");
+                navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
             } else {
                 setLoading(false);
             }

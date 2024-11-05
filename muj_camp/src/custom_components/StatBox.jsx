@@ -128,7 +128,7 @@ const StatBox = ({
                             } else {
                                 showAlert("Please sign-in to continue.", toast.info, false);
                             }
-                            navigate("/");
+                            navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
                         });
                     }}
                 />
@@ -165,7 +165,7 @@ const StatBox = ({
                                 } else {
                                     showAlert("Please sign-in to continue.", toast.info, false);
                                 }
-                                navigate("/");
+                                navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
                             });
                         }
                     }}

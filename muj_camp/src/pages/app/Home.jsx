@@ -21,7 +21,7 @@ const Home = () => {
         validateSession((sessionExisted) => {
             if (!sessionExisted) {
                 showAlert("Please sign-in to continue.", toast.info, false);
-                navigate("/");
+                navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
             } else {
                 setLoading(false);
             }
@@ -35,8 +35,8 @@ const Home = () => {
             (AuthStore.getState().authRole === AuthRoles.STUDENT) ? (
                 (<StudentHome />)
             ) : (isAdmin(AuthStore.getState().authRole)) ? (
-                (<Navigate to="/admin/home" />)
-            ) : (<Navigate to="/" />)
+                (<Navigate to={`${process.env.REACT_APP_PATH_ROOT}/admin/home`} />)
+            ) : (<Navigate to={`${process.env.REACT_APP_PATH_ROOT}/`} />)
         )
     );
 }

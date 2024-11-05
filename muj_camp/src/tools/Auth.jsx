@@ -17,7 +17,7 @@ const validateToken = (onLoggedOut) => {
 }
 
 const appDown = () => {
-    window.location = "/down";
+    window.location = `${process.env.REACT_APP_PATH_ROOT}/down`;
 }
 
 const validateSession = (onLoggedOut, onLoggedIn = null, fetchRoles = false, validateTokenOnly = false) => {
@@ -127,16 +127,16 @@ const ensureAdminAccess = (pageName, setLoading, navigate) => {
         } else {
             showAlert("Please sign-in to continue.", toast.info, false);
         }
-        navigate("/");
+        navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
     }, () => {
         if (AuthStore.getState().authRole == null) {
             showAlert("Please select how you want to use the app first", toast.info, false);
-            navigate("/");
+            navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
             return;
         }
         if (!isAuthorized(AuthPages[pageName], true)) {
             showAlert("You are not authorized to access this page.", toast.error, false);
-            navigate("/");
+            navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
         } else {
             setLoading(false);
         }

@@ -50,7 +50,7 @@ const confirmLogout = async (navigate, onCancel = null) => {
     })) {
         showAlert(`Ok bye bye, ${AuthStore.getState().authName} 👋`);
         AuthStore.dispatch(revokeSessionAccess());
-        navigate("/");
+        navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
     } else {
         if (onCancel != null) {
             onCancel();

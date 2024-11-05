@@ -36,7 +36,7 @@ const ManipalBar = ({ type = 0 }) => {
                         <Navbar.Brand
                             disabled
                             onClick={() => {
-                                navigate("/");
+                                navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
                             }}
                             style={{
                                 cursor: "pointer"
@@ -99,7 +99,7 @@ const ManipalBar = ({ type = 0 }) => {
                         <Navbar.Brand
                             disabled
                             onClick={() => {
-                                navigate("/");
+                                navigate(`${process.env.REACT_APP_PATH_ROOT}/`);
                             }}
                             style={{
                                 cursor: "pointer"

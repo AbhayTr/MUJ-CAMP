@@ -23,15 +23,15 @@ root.render(
             <BrowserRouter>
                 <Routes>
                     <Route
-                        path="/"
+                        path={`${process.env.REACT_APP_PATH_ROOT}/`}
                         element={<RootHome/>}
                     />
                     <Route
-                        path="/home"
+                        path={`${process.env.REACT_APP_PATH_ROOT}/home`}
                         element={<AppHome/>}
                     />
                     <Route
-                        path="/admin/*"
+                        path={`${process.env.REACT_APP_PATH_ROOT}/admin/*`}
                         element={
                             <Provider store={NavigateStore}>
                                 <AdminLayout />
@@ -39,13 +39,13 @@ root.render(
                         }
                     />
                     <Route
-                        path="/down"
+                        path={`${process.env.REACT_APP_PATH_ROOT}/down`}
                         element={
                             <>Down!</>
                         }
                     />
                     <Route
-                        path="*"
+                        path={`${process.env.REACT_APP_PATH_ROOT}/*`}
                         element={<Error404 />}
                     />
                 </Routes>

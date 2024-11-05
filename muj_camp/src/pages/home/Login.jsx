@@ -399,7 +399,7 @@ let Login = ({
             });
             if (AuthStore.getState().authRoles.length === 1) {
                 AuthStore.dispatch(setSessionRole(AuthStore.getState().authRoles[0]));
-                navigate("/home");
+                navigate(`${process.env.REACT_APP_PATH_ROOT}/home`);
             }
         }
 
@@ -441,7 +441,7 @@ let Login = ({
                                 </>
                             }
                             transitionTime="0"
-                            path="/home"
+                            path={`${process.env.REACT_APP_PATH_ROOT}/home`}
                             style={(index > 0) ? {
                                 marginTop: "0.3em"
                             } : {}}
