@@ -1,4 +1,4 @@
-# MUJ CAMP
+# MUJ CAMP (Collective Alumni Management Portal)
 
 - Alumni LinkedIn Data Syncing Portal + AI dashboard for prompt-based insights via MongoDB queries + Llama.
 
