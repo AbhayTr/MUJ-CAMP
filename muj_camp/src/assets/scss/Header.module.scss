@@ -1,0 +1,57 @@
+@import "../../../node_modules/bootstrap/scss/functions";
+@import "variables";
+@import "../../../node_modules/bootstrap/scss/variables";
+@import "../../../node_modules/bootstrap/scss/mixins";
+
+.root {
+
+    :global {
+
+        .input-group {
+            overflow: hidden;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+}
+
+.navbarBlock {
+    display: flex;
+    color: $icon-color;
+}
+
+.avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    height: 56px;
+    width: 56px;
+    border-radius: 50%;
+
+    img {
+        height: 100%
+    }
+}
+
+.dropdownProfileItem {
+    display: flex;
+    &:hover {
+        svg {
+            path {
+                fill: $default;
+                stroke: $default;
+            }
+        }
+    }
+}
