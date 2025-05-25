@@ -6,4 +6,4 @@
 
 - Used for syncing data for 15,000+ alumni of Manipal University Jaipur.
 
-![image](https://github.com/user-attachments/assets/95ec879d-1e9f-407a-bd4a-b310b2a21db3)
+![image](https://github.com/user-attachments/assets/78ea2c2d-0f70-4bc1-9f85-cd5fb99d19eb)
