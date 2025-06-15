@@ -32,9 +32,13 @@ class ATLISDB:
 
     def update_sh_data(self, li_url: str, sh_id: str):
         try:
+            if not self.__db_instance.is_connected():
+                self.__init__()
             self.__db_cursor.execute(f"""INSERT INTO {SH_TABLE} VALUES(%s, %s);""", (li_url, sh_id,))
         except Exception as db_error:
             if "duplicate" in str(db_error).lower():
+                if not self.__db_instance.is_connected():
+                    self.__init__()
                 self.__db_cursor.execute(f"""UPDATE {SH_TABLE} SET sh_id = %s WHERE li_url = %s;""", (sh_id, li_url,))
             else:
                 raise db_error
@@ -42,6 +46,8 @@ class ATLISDB:
             self.__db_instance.commit()
 
     def get_sh_data(self, li_url: str) -> int:
+        if not self.__db_instance.is_connected():
+            self.__init__()
         self.__db_cursor.execute(f"""SELECT sh_id FROM {SH_TABLE} WHERE li_url = %s;""", (li_url,))
         sh_id_data = self.__db_cursor.fetchone()
         if sh_id_data == [] or sh_id_data is None:
@@ -50,9 +56,13 @@ class ATLISDB:
     
     def update_data(self, li_data: dict, li_url: str):
         try:
+            if not self.__db_instance.is_connected():
+                self.__init__()
             self.__db_cursor.execute(f"""INSERT INTO {CONTROL_TABLE} VALUES(%s, UNIX_TIMESTAMP(), UNIX_TIMESTAMP() + %s, "N", 0, 0);""", (li_url, UPDATION_PERIOD,))
         except Exception as db_error:
             if "duplicate" in str(db_error).lower():
+                if not self.__db_instance.is_connected():
+                    self.__init__()
                 self.__db_cursor.execute(f"""UPDATE {CONTROL_TABLE} SET previous_update_time = UNIX_TIMESTAMP(), scheduled_update_time = UNIX_TIMESTAMP() + %s, processing = "N", consecutive_data_fails = 0 WHERE li_url = %s;""", (UPDATION_PERIOD, li_url,))
             else:
                 raise db_error
@@ -66,9 +76,13 @@ class ATLISDB:
         country = li_data[li_url]["country"]
         location = li_data[li_url]["location"]
         try:
+            if not self.__db_instance.is_connected():
+                self.__init__()
             self.__db_cursor.execute(f"""INSERT INTO {DATA_TABLE} VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""", (li_url, muj_program, muj_from, muj_to, company_name, current_designation, previous_experience, other_education, country, location,))
         except Exception as db_error:
             if "duplicate" in str(db_error).lower():
+                if not self.__db_instance.is_connected():
+                    self.__init__()
                 self.__db_cursor.execute(f"""UPDATE {DATA_TABLE} SET muj_program = %s, muj_from = %s, muj_to = %s, company_name = %s, current_designation = %s, previous_experience = %s, other_education = %s, country = %s, location = %s WHERE li_url = %s;""", (muj_program, muj_from, muj_to, company_name, current_designation, previous_experience, other_education, country, location, li_url,))
             else:
                 raise db_error
@@ -76,15 +90,21 @@ class ATLISDB:
 
     def update_data_failure(self, li_url: str):
         try:
+            if not self.__db_instance.is_connected():
+                self.__init__()
             self.__db_cursor.execute(f"""INSERT INTO {CONTROL_TABLE} VALUES(%s, NULL, NULL, "N", 1, 1);""", (li_url,))
         except Exception as db_error:
             if "duplicate" in str(db_error).lower():
+                if not self.__db_instance.is_connected():
+                    self.__init__()
                 self.__db_cursor.execute(f"""UPDATE {CONTROL_TABLE} SET consecutive_data_fails = consecutive_data_fails + 1, data_fails = data_fails + 1 WHERE li_url = %s;""", (li_url,))
             else:
                 raise db_error
         self.__db_instance.commit()
 
     def get_data_from_db(self, li_url: str) -> dict:
+        if not self.__db_instance.is_connected():
+            self.__init__()
         self.__db_cursor.execute(f"""SELECT scheduled_update_time FROM {CONTROL_TABLE} WHERE li_url = %s;""", (li_url,))
         li_control_data = self.__db_cursor.fetchone()
         if li_control_data == [] or li_control_data is None or li_control_data[0] is None or int(li_control_data[0]) < int(time.time()):
@@ -109,6 +129,8 @@ class ATLISDB:
         }
 
     def get_consecutive_data_fails(self, li_url: str) -> int:
+        if not self.__db_instance.is_connected():
+            self.__init__()
         self.__db_cursor.execute(f"""SELECT consecutive_data_fails FROM {CONTROL_TABLE} WHERE li_url = %s;""", (li_url,))
         li_control_data = self.__db_cursor.fetchone()
         if li_control_data == [] or li_control_data is None:

@@ -75,11 +75,12 @@ class LinkedInInstance:
             
             if self.received_message:
                 response = json.loads(self.received_message)
-                if "sh_id" in response[url]:
-                    recvd_sh_id = response[url]["sh_id"]
-                    self.__atlis_db.update_sh_data(url, recvd_sh_id)
-                self.received_message = None
-                return response
+                if url in response:
+                    if "sh_id" in response[url]:
+                        recvd_sh_id = response[url]["sh_id"]
+                        self.__atlis_db.update_sh_data(url, recvd_sh_id)
+                    self.received_message = None
+                    return response
             
         except (ConnectionClosed, json.JSONDecodeError):
             pass

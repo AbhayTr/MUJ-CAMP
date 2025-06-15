@@ -11,6 +11,7 @@ import CAMPAuthManager from "./auth/auth";
 import startWSServer from "./CampWSServer";
 import CAMPRequest from "./utils/CAMPRequest";
 import DOARDashboardManager from "./doar/dashboardManager";
+import DoARDataManager from "./doar/dataManager";
 
 var app: Application = express();
 
@@ -66,6 +67,28 @@ app.post("/admin/doar/update", (req: CAMPRequest, res: Response) => {
     app.locals.doarDashboardManager.updateVisual(req, res);
 });
 
+app.get("/download-csv", async (req: CAMPRequest, res: Response) => {
+    try {
+        const csv: string = await app.locals.doarDataManager.getAlumniListHavingLinkedIn();
+        
+        const now = new Date();
+        const dateStr = now
+            .toLocaleDateString("en-GB")
+            .split("/")
+            .join("_");
+            
+        const filename = `${dateStr}_alumni_having_linkedin_data.csv`;
+        
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+        res.setHeader("Content-Type", "text/csv");
+        
+        res.send(csv);
+    } catch (err) {
+        console.error("Error generating CSV: ", err);
+        res.status(500).send("Error generating CSV");
+    }
+});
+
 app.locals.campdb = new CAMPDB();
 app.locals.campdbDoar = new CAMPDB();
 app.locals.campdbDoarDashboard = new CAMPDB();
@@ -76,6 +99,7 @@ app.locals.campdb.connect().then(() => {
         app.locals.campdbDoarDashboard.connect().then(() => {
             app.listen(process.env.PORT, async () => {
                 app.locals.doarDashboardManager = new DOARDashboardManager(app.locals.campdbDoarDashboard);
+                app.locals.doarDataManager = new DoARDataManager(app.locals.campdbDoar);
                 console.clear();
                 console.log(`\x1b[32mMUJ CAMP Server is live on:\n\nPort ${process.env.PORT} for HTTP Requests!\nPort ${process.env.WS_PORT} for WS Requests!\x1b[0m\n`);
                 await startWSServer(app);

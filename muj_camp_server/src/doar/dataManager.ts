@@ -634,6 +634,28 @@ class DoARDataManager {
         return filters;
     }
 
+    async getAlumniListHavingLinkedIn(): Promise<String> {
+        const cursor = await this._doarDbCollection.find({
+            linkedin: {
+                $ne: ""
+            }
+        });
+        const records = await cursor.toArray();
+        
+        let csv = "S. No.,Name,Almashines Alumni ID,LinkedIn\n";
+        records.forEach((doc: any, index: number) => {
+            const row = [
+                index + 1,
+                `"${doc.name}"`,
+                doc.alumniId || "",
+                `"${doc.linkedin}"`
+            ].join(",");
+            csv += row + "\n";
+        });
+
+        return csv;
+    }
+
     async getHomeFilters(filtersApplied: any, searchText: string): Promise<object> {
         const standardFilters: any = await this._getFilters(Object.keys(this._filterKeyMap), filtersApplied, searchText);
         if (standardFilters["Syncing Status"]) {
@@ -827,18 +849,23 @@ class DoARDataManager {
         return ((currentTime() - await this.getAlumniDataLastUpdatedTime()) <= 604800);
     }
 
-    async getAllAlumniIDsandLIs(): Promise<Document[]> {
-        const alumniList: Document[] = await (await this._doarDbCollection.find({
+    async getAllAlumniIDsandLIs(getOnlyThoseWhichHaveNotBeenSyncedInTheLastYear: boolean = false): Promise<Document[]> {
+        const filterToApply: any = {
             linkedin: {
                 $ne: ""
-            },
-            "liStatus.currentStatus": {
-                $ne: "l"
             }
-        })).project({
+        };
+        if (getOnlyThoseWhichHaveNotBeenSyncedInTheLastYear) {
+            filterToApply["liStatus.lastUpdated"] = "-";
+        } else {
+            filterToApply["liStatus.currentStatus"] = {
+                $ne: "l"
+            };
+        }
+        const alumniList: Document[] = await (await this._doarDbCollection.find(filterToApply)).project({
             linkedin: 1,
             alumniId: 1
-        }).toArray();
+        }).limit(40).toArray();
         return alumniList;
     }
 

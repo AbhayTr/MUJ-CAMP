@@ -356,7 +356,7 @@ class ATLISManager {
                 error: `Alumni data is outdated i.e. the Alumni Data was updated more than 7 days ago. Please update the alumni data by clicking on the "Update Alumni Data" button, and then try again once the data has been updated. If the issue still persists, please contact %t%`
             });
         }
-        const alumniList: Document[] = await this._dataManager.getAllAlumniIDsandLIs();
+        const alumniList: Document[] = await this._dataManager.getAllAlumniIDsandLIs(true);
         if (alumniList == null || alumniList.length === 0) {
             sendMessageToWSClient(sourceWebSocketConnection, {
                 type: "liData",
